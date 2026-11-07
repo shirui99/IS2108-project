@@ -1,11 +1,12 @@
 from django.db.models import Count, Avg
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import redirect, render, HttpResponse
 from django.utils import timezone
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
 from adminpanel.models import Customer, Product, Orders, Item
+from .restock import get_customer_purchase_history, get_restock_suggestions
 
 # Create your views here.
 
@@ -18,6 +19,47 @@ def index(request):
     )
 
     return render(request, 'store/index.html', {'products': products})
+
+
+def restock(request):
+    """Render due restock suggestions for the session's customer.
+
+    Args:
+        request: Django request containing the project's `Cid` session value.
+
+    Returns:
+        A redirect to the existing login route when unauthenticated, otherwise
+        the server-rendered restock page with due product suggestions.
+    """
+    customer_id = request.session.get('Cid')
+    if not customer_id:
+        return redirect('/store/login')
+
+    has_purchase_history = bool(get_customer_purchase_history(customer_id))
+    suggestions = get_restock_suggestions(customer_id)
+    today = timezone.localdate()
+    for suggestion in suggestions:
+        suggestion['due_status'] = (
+            'Overdue'
+            if suggestion['restock_date'] < today.isoformat()
+            else 'Due soon'
+        )
+        suggestion['estimate_label'] = (
+            'ML estimate'
+            if suggestion['status'] == 'MODEL'
+            else 'Initial estimate'
+        )
+
+    empty_message = (
+        'No qualifying purchase history is available for personalised suggestions.'
+        if not has_purchase_history
+        else 'No products are currently due for restocking.'
+    )
+    return render(
+        request,
+        'store/restock.html',
+        {'suggestions': suggestions, 'empty_message': empty_message},
+    )
 
 def generate_customer_id():
     customer_count = Customer.objects.count()

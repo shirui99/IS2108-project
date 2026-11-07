@@ -1,0 +1,37 @@
+{% extends 'store/store_base.html' %}
+
+{% block content %}
+
+    <p>
+        <h2>Restock Suggestions</h2>
+        {% if suggestions %}
+            <table border="1" width="100%">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Estimated Next Purchase</th>
+                        <th>Status</th>
+                        <th>Estimate</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for suggestion in suggestions %}
+                        <tr>
+                            <td>{{ suggestion.product_name }}</td>
+                            <td>{{ suggestion.restock_date }}</td>
+                            <td>{{ suggestion.due_status }}</td>
+                            <td>{{ suggestion.estimate_label }}</td>
+                            <td>
+                                <a href="/store/cart/{{ suggestion.product_id }}">Add to Cart</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>{{ empty_message }}</p>
+        {% endif %}
+    </p>
+
+{% endblock %}
