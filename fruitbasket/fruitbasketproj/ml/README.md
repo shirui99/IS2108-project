@@ -1,3 +1,6 @@
+## Restock Timing Model
+##Function: Predict the interval until a customer next purchases the same product, then automatically display products approaching their estimated repurchase date.
+
 # Restock data contract
 
 This prototype estimates when a customer may next purchase a product. It uses
