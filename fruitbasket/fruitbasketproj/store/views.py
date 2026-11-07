@@ -77,7 +77,23 @@ def login(request):
 
         if user is not None:
 
-            request.session['Cid'] = user.customer.Cid
+            customer = Customer.objects.filter(Cuser=user).first()
+
+            if customer is None:
+
+                customer = Customer.objects.create(
+                    Cid='C' + generate_customer_id(),
+                    Cname=user.username,
+                    Caddress='',
+                    Chouseholdsize=1,
+                    Cmealsperweek=0,
+                    Cuser=user
+                )
+            # error: when creating a new super user, the user.customer attribute does not exist.
+            # its a bit jury-rigged, but we can just set the session variable to the customer id directly.
+                request.session['Cid'] = customer.Cid
+            else:
+                request.session['Cid'] = customer.Cid
 
             return render(request, 'store/login.html', {'success_message': 'Authentication successful!'})
         
