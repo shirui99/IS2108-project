@@ -2,6 +2,10 @@
 
 {% block content %}
 
+    {% if success_message %}
+        <h3 style="color: green;">{{ success_message }}</h3>
+    {% endif %}
+
     <h2>Shop</h2>
     <p>Products will be listed here.</p>
 

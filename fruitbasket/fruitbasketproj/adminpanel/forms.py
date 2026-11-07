@@ -24,3 +24,14 @@ class CustomerForm(forms.ModelForm):
 
         model = Customer
         fields = ['Cid', 'Cname', 'Caddress', 'Chouseholdsize', 'Cmealsperweek', 'Cuser']
+
+class OrderForm(forms.ModelForm):
+
+    class Meta:
+
+        model = Orders
+        fields = ['Oid', 'Ocustomer', 'Oaddress', 'Odate', 'Ostatus']
+
+        widgets = {
+            'Odate': forms.DateInput(attrs={'type': 'date'})
+        }

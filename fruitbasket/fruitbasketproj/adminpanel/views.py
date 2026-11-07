@@ -4,10 +4,8 @@ from django.utils import timezone
 from django.views import View
 
 from .models import Product, Customer, Orders, Item
-from .forms import ProductForm, ItemBatchForm, CustomerForm
+from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm
 
-from .models import Product, Customer, Orders, Item
-from .forms import ProductForm
 
 # Create your views here.
 
@@ -357,6 +355,288 @@ class CustomerView(View):
             'form': rendered_form,
             'action': action,
             'customers': customers,
+            'status_type': status_type,
+            'status_message': status_message,
+        }
+
+        return render(request, self.template_name, context)
+
+class OrderView(View):
+
+    form_class = OrderForm
+    template_name = 'adminpanel/order_new.html'
+
+
+
+    def get(self, request, *args, **kwargs):
+
+        pk = kwargs.get('pk') # returns None if not provided
+        form = None
+        action = 'create'
+        status_type = None
+        status_message = None
+
+        if pk is not None:            
+
+            try:
+            
+                order = Orders.objects.get(pk=pk)
+
+                if request.GET.get('action') == 'delete':                
+                
+                    try:
+                    
+                        order.delete()
+                                        
+                        form = self.form_class()
+    
+                        status_type = 'success'
+                        status_message = 'Order deleted successfully.'                            
+    
+                    except Exception as e:
+    
+                        status_type = 'error'
+                        status_message = f'Error deleting order: {str(e)}'
+    
+                else: # update
+                    
+                    form = self.form_class(instance=order)
+                    action = 'update'
+            
+            except Orders.DoesNotExist:
+
+                form = self.form_class()
+
+                status_type = 'error'
+                status_message = 'Order not found.'            
+
+        else:
+            
+            form = self.form_class()
+        
+        rendered_form = form.render('adminpanel/form_template.html')
+
+        # Count the items in each order
+
+        orders = Orders.objects.annotate(items=Count('order_items'))
+
+        context = {
+            'form': rendered_form, 
+            'action': action, 
+            'orders': orders,
+            'status_type': status_type,
+            'status_message': status_message,
+        }
+
+        return render(request, self.template_name, context)
+
+
+
+    def post(self, request, *args, **kwargs):
+        
+        action = request.POST.get('action')  # returns None if not provided
+        form = self.form_class(request.POST)
+        status_type = None
+        status_message = None        
+
+
+        
+        if action == 'update':
+
+            order = Orders.objects.get(pk=request.POST.get('Oid'))
+            form = self.form_class(request.POST, instance=order)
+
+        else:
+            
+            form = self.form_class(request.POST)
+        
+        if form.is_valid():
+
+            if action == 'create':
+
+                newOrder = Orders(
+                    Oid=form.cleaned_data['Oid'],
+                    Ocustomer=form.cleaned_data['Ocustomer'],
+                    Oaddress=form.cleaned_data['Oaddress'],
+                    Odate=form.cleaned_data['Odate'],
+                    Ostatus=form.cleaned_data['Ostatus']
+                )
+
+                try:                    
+                    
+                    newOrder.save()
+                    status_type = 'success'
+                    status_message = 'Order created successfully.'
+    
+                except Exception as e:
+    
+                    status_type = 'error'
+                    status_message = f'Error creating order: {str(e)}'
+
+            elif action == 'update':
+                
+                try:
+
+                    order = Orders.objects.get(pk=form.cleaned_data['Oid'])
+                    order.Ocustomer = form.cleaned_data['Ocustomer']
+                    order.Oaddress = form.cleaned_data['Oaddress']
+                    order.Odate = form.cleaned_data['Odate']
+                    order.Ostatus = form.cleaned_data['Ostatus']
+                    
+                    try:
+
+                        order.save()
+
+                        status_type = 'success'
+                        status_message = 'Order updated successfully.'
+
+                    except Exception as e:
+                                        
+                        status_type = 'error'
+                        status_message = f'Error updating order: {str(e)}'
+
+                except Orders.DoesNotExist:
+
+                    status_type = 'error'
+                    status_message = 'Order not found.'           
+
+        else:
+
+            if action == 'create':
+            
+                status_type = 'error'
+                status_message = f'Error creating order'
+
+            else:
+                
+                status_type = 'error'
+                status_message = f'Error updating order'
+
+        form = self.form_class()
+        rendered_form = form.render('adminpanel/form_template.html')
+
+        # Count the items in each order
+
+        orders = Orders.objects.annotate(items=Count('order_items'))
+        action = 'create'
+
+        context = {
+            'form': rendered_form, 
+            'action': action, 
+            'orders': orders,
+            'status_type': status_type,
+            'status_message': status_message,
+        }
+
+        return render(request, self.template_name, context)
+
+class ItemView(View):
+
+    form_class = ItemBatchForm
+    template_name = 'adminpanel/item_new.html'
+
+
+
+    def get(self, request, *args, **kwargs):
+
+        form = self.form_class(initial={'Ireceived': timezone.localdate()})
+        status_type = None
+        status_message = None
+
+        if request.GET.get('action') == 'delete':
+
+            try:
+
+                batch = Item.objects.filter(
+                    Istatus='available',
+                    Iproduct_id=request.GET.get('product'),
+                    Ireceived=request.GET.get('received')
+                )
+
+                expiry = request.GET.get('expiry')
+
+                if expiry:
+
+                    batch = batch.filter(Iexpiry=expiry)
+
+                else:
+
+                    batch = batch.filter(Iexpiry__isnull=True)
+
+                count, _ = batch.delete()
+
+                status_type = 'success'
+                status_message = f'{count} item(s) removed from stock.'
+
+            except Exception as e:
+
+                status_type = 'error'
+                status_message = f'Error removing items: {str(e)}'
+
+        return self.render_page(request, form, status_type, status_message)
+
+
+
+    def post(self, request, *args, **kwargs):
+
+        form = self.form_class(request.POST)
+        status_type = None
+        status_message = None
+
+        if form.is_valid():
+
+            product = form.cleaned_data['Iproduct']
+            quantity = form.cleaned_data['Iquantity']
+
+            # Build one Item per physical unit, then save them all in one go
+
+            new_items = []
+
+            for i in range(quantity):
+
+                new_items.append(Item(
+                    Iproduct=product,
+                    Ireceived=form.cleaned_data['Ireceived'],
+                    Iexpiry=form.cleaned_data['Iexpiry']
+                ))
+
+            try:
+
+                Item.objects.bulk_create(new_items)
+
+                status_type = 'success'
+                status_message = f'{quantity} x {product.Pname} added to stock.'
+
+                form = self.form_class(initial={'Ireceived': timezone.localdate()})
+
+            except Exception as e:
+
+                status_type = 'error'
+                status_message = f'Error adding items: {str(e)}'
+
+        else:
+
+            status_type = 'error'
+            status_message = 'Please correct the errors below.'
+
+        return self.render_page(request, form, status_type, status_message)
+
+
+
+    def render_page(self, request, form, status_type, status_message):
+
+        rendered_form = form.render('adminpanel/form_template.html')
+
+        # Group warehouse items into batches: same product, received date and expiry date
+
+        batches = Item.objects.filter(Istatus='available').values(
+            'Iproduct', 'Iproduct__Pname', 'Ireceived', 'Iexpiry'
+        ).annotate(count=Count('id')).order_by('Iexpiry', 'Iproduct')
+
+        context = {
+            'form': rendered_form,
+            'batches': batches,
+            'today': timezone.localdate(),
             'status_type': status_type,
             'status_message': status_message,
         }

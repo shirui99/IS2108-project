@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Sign Up - Fruit Basket</title>
+    </head>
+    <body>
+        <h1>Sign Up</h1>
+
+        {% if message %}
+            <p><b>{{ message }}</b></p>
+        {% endif %}
+        
+        <form method="post">
+            
+            {% csrf_token %}
+            Username: <input type="text" name="username"><br>
+            Password: <input type="password" name="password"><br>
+            Email: <input type="email" name="email"><br>
+            Name: <input type="text" name="Cname"><br>
+            Address: <input type="text" name="Caddress"><br>
+            Household Size: <input type="number" name="Chouseholdsize"><br>
+            Meals Per Week: <input type="number" name="Cmealsperweek"><br>
+
+            <input type="reset" value="Reset">
+            <input type="submit" value="Create User">
+        </form>
+
+    </body>
+</html>

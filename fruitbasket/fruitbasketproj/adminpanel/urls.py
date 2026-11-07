@@ -9,4 +9,6 @@ urlpatterns = [
     path('item_new', views.ItemView.as_view(), name='item_new'),
     path('customer_new', views.CustomerView.as_view(), name='customer_new'),
     path('customer_new/<pk>', views.CustomerView.as_view(), name='customer_new'),
+    path('order_new', views.OrderView.as_view(), name='order_new'),
+    path('order_new/<pk>', views.OrderView.as_view(), name='order_new'),
 ]

@@ -20,7 +20,7 @@ class Product(models.Model):
     Pname = models.CharField(max_length=200)
     Pcategory = models.CharField(max_length=20, choices=CATEGORY)
     Psize = models.CharField(max_length=30)
-    Pprice = models.DecimalField(max_digits=10, decimal_places=2)
+    Pprice = models.FloatField()
     Plowstock = models.IntegerField()
     Pactive = models.BooleanField(default=True)
 
@@ -31,11 +31,11 @@ class Product(models.Model):
 
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(Pprice__gt=0),
+                check=models.Q(Pprice__gt=0),
                 name='Pprice_greater_than_zero'
             ),
             models.CheckConstraint(
-                condition=models.Q(Plowstock__gte=0),
+                check=models.Q(Plowstock__gte=0),
                 name='Plowstock_not_negative'
             )
         ]
@@ -63,11 +63,11 @@ class Customer(models.Model):
 
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(Chouseholdsize__gte=1),
+                check=models.Q(Chouseholdsize__gte=1),
                 name='Chouseholdsize_at_least_one'
             ),
             models.CheckConstraint(
-                condition=models.Q(Cmealsperweek__gte=0),
+                check=models.Q(Cmealsperweek__gte=0),
                 name='Cmealsperweek_not_negative'
             )
         ]
@@ -124,11 +124,11 @@ class Item(models.Model):
 
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(Iorder__isnull=True, Istatus='available') | (models.Q(Iorder__isnull=False) & ~models.Q(Istatus='available')),
+                check=models.Q(Iorder__isnull=True, Istatus='available') | (models.Q(Iorder__isnull=False) & ~models.Q(Istatus='available')),
                 name='Iorder_matches_Istatus'
             ),
             models.CheckConstraint(
-                condition=models.Q(Irating__isnull=True) | models.Q(Irating__gte=1, Irating__lte=5),
+                check=models.Q(Irating__isnull=True) | models.Q(Irating__gte=1, Irating__lte=5),
                 name='Irating_between_one_and_five'
             )
         ]
