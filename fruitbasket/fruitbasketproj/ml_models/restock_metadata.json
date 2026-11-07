@@ -1,0 +1,40 @@
+{
+  "model_version": "restock-random-forest-v1",
+  "feature_names": [
+    "household_size",
+    "category",
+    "purchased_quantity",
+    "previous_interval_days"
+  ],
+  "target_column": "target_days",
+  "training_only_category_medians": {
+    "bakery": 6.0,
+    "dairy": 11.0,
+    "frozen": 21.0,
+    "fruit": 9.0,
+    "household": 31.0,
+    "meat": 17.0,
+    "rice": 28.0,
+    "snacks": 11.0
+  },
+  "training_only_overall_median": 14.0,
+  "cutoff": "2024-09-01",
+  "counts": {
+    "eligible_examples": 4320,
+    "training_examples": 4092,
+    "test_examples": 107,
+    "cross_boundary_excluded": 121
+  },
+  "evaluation": {
+    "previous_interval_mae_days": 5.373831775700935,
+    "category_median_mae_days": 7.158878504672897,
+    "random_forest_mae_days": 5.071291673287618
+  },
+  "pipeline_reload_predictions_match": true,
+  "dependencies": {
+    "python": "3.13.5",
+    "pandas": "3.1.1",
+    "scikit_learn": "1.9.1",
+    "joblib": "1.6.0"
+  }
+}
