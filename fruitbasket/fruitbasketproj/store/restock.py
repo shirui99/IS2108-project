@@ -160,10 +160,6 @@ def load_restock_artifacts():
         model_path = artifact_dir / "restock_model.joblib"
         metadata_path = artifact_dir / "restock_metadata.json"
 
-        if joblib is None:
-            raise RuntimeError("joblib is not installed")
-        if not model_path.is_file():
-            raise FileNotFoundError(f"Missing restock pipeline: {model_path}")
         if not metadata_path.is_file():
             raise FileNotFoundError(f"Missing restock metadata: {metadata_path}")
 
@@ -173,7 +169,33 @@ def load_restock_artifacts():
             raise ValueError(
                 f"Unexpected restock feature names: {feature_names!r}"
             )
-        pipeline = joblib.load(model_path)
+        if joblib is None:
+            return {
+                "pipeline": None,
+                "metadata": metadata,
+                "error": "joblib is not installed",
+            }
+        if not model_path.is_file():
+            return {
+                "pipeline": None,
+                "metadata": metadata,
+                "error": f"Missing restock pipeline: {model_path}",
+            }
+        try:
+            pipeline = joblib.load(model_path)
+        except (
+            OSError,
+            EOFError,
+            ImportError,
+            AttributeError,
+            ModuleNotFoundError,
+            ValueError,
+        ) as error:
+            return {
+                "pipeline": None,
+                "metadata": metadata,
+                "error": f"Unable to load restock pipeline: {error}",
+            }
         return {"pipeline": pipeline, "metadata": metadata, "error": None}
     except (
         OSError,
