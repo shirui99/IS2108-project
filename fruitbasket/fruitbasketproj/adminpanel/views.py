@@ -1,3 +1,4 @@
+from django.contrib.auth import authenticate
 from django.db.models import Count, Q
 from django.shortcuts import render
 from django.utils import timezone
@@ -12,6 +13,40 @@ from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm
 def index(request):
 
     return render(request, 'adminpanel/index.html')
+
+
+
+def login(request):
+
+    if request.method == 'GET':
+
+        # Display the login form
+        return render(request, 'adminpanel/login.html')
+    
+    elif request.method == 'POST':
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(username=username, password=password)
+
+        if user is not None and user.is_staff:
+
+            request.session['isStaff'] = True
+
+            return render(request, 'adminpanel/login.html', {'success_message': 'Authentication successful!'})
+        
+        else:
+
+            return render(request, 'adminpanel/login.html', {'error_message': 'Invalid username or password.'})
+
+
+
+def logout(request):
+
+    request.session.flush()
+
+    return HttpResponse('You have logged out.')
 
 
 
