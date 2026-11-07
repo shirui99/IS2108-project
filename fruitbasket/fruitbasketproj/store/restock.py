@@ -1,9 +1,12 @@
 import json
 import math
+from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
+from django.db.models import Count, Q
+from django.utils import timezone
 
 try:
     import joblib
@@ -19,6 +22,124 @@ EXPECTED_FEATURES = [
     "purchased_quantity",
     "previous_interval_days",
 ]
+
+
+def get_customer_purchase_history(customer_id):
+    """Aggregate qualifying purchase history by product and order date.
+
+    Args:
+        customer_id: `Customer.Cid` identifying the personal customer history.
+
+    Returns:
+        A dictionary keyed by product ID. Each value is a chronologically
+        ordered list of dictionaries containing `purchased_at` and
+        `purchased_quantity`. Products with no qualifying history are absent.
+
+    Notes:
+        The ownership filter uses `Orders.Ocustomer_id` and delivered status.
+        There is no separate personal-order marker in the current schema, so
+        future subscription/group orders will need an explicit type or
+        ownership field before they can be excluded here.
+    """
+    from adminpanel.models import Item
+
+    events = (
+        Item.objects.filter(
+            Iorder__Ocustomer_id=customer_id,
+            Iorder__Ostatus="delivered",
+        )
+        .values("Iproduct_id", "Iorder__Odate")
+        .annotate(purchased_quantity=Count("id"))
+        .order_by("Iproduct_id", "Iorder__Odate")
+    )
+    history = {}
+    for event in events:
+        history.setdefault(event["Iproduct_id"], []).append(
+            {
+                "purchased_at": event["Iorder__Odate"],
+                "purchased_quantity": event["purchased_quantity"],
+            }
+        )
+    return history
+
+
+def get_restock_suggestions(customer_id, today=None, due_within_days=3):
+    """Return due restock suggestions for one customer.
+
+    Args:
+        customer_id: `Customer.Cid` whose personal purchase history is used.
+        today: Date used for due/stock screening; defaults to local Django date.
+        due_within_days: Inclusive number of future days to show.
+
+    Returns:
+        A list of dictionaries sorted by `restock_date`. Each result contains
+        `product_id`, `product_name`, `category`, `available_stock`,
+        `purchased_quantity`, `latest_purchase_at`, `interval_days`,
+        `restock_date`, `status`, and `reason`. Products with no history,
+        inactive products, unavailable stock, or dates beyond the due window
+        are not returned.
+    """
+    from adminpanel.models import Customer, Product
+
+    today = today or timezone.localdate()
+    due_until = today + timedelta(days=due_within_days)
+    history = get_customer_purchase_history(customer_id)
+    if not history:
+        return []
+    household_size = (
+        Customer.objects.filter(pk=customer_id)
+        .values_list("Chouseholdsize", flat=True)
+        .first()
+    )
+    if household_size is None:
+        return []
+
+    available_filter = Q(product_items__Istatus="available") & (
+        Q(product_items__Iexpiry__isnull=True)
+        | Q(product_items__Iexpiry__gt=today)
+    )
+    products = (
+        Product.objects.filter(Pactive=True, Pid__in=history)
+        .annotate(available_stock=Count("product_items", filter=available_filter))
+    )
+
+    suggestions = []
+    for product in products:
+        events = history[product.Pid]
+        latest = events[-1]
+        previous = events[-2] if len(events) >= 2 else None
+        previous_interval_days = (
+            (latest["purchased_at"] - previous["purchased_at"]).days
+            if previous
+            else None
+        )
+        prediction = predict_restock(
+            latest_purchase_at=latest["purchased_at"],
+            household_size=household_size,
+            category=product.Pcategory,
+            purchased_quantity=latest["purchased_quantity"],
+            previous_interval_days=previous_interval_days,
+            history_count=len(events),
+        )
+        restock_date = prediction["restock_date"]
+        if not product.available_stock or not restock_date:
+            continue
+        restock_date = pd.Timestamp(restock_date).date()
+        if restock_date > due_until:
+            continue
+        suggestions.append(
+            {
+                "product_id": product.Pid,
+                "product_name": product.Pname,
+                "category": product.Pcategory,
+                "available_stock": product.available_stock,
+                "purchased_quantity": latest["purchased_quantity"],
+                "latest_purchase_at": latest["purchased_at"],
+                **prediction,
+            }
+        )
+
+    return sorted(suggestions, key=lambda suggestion: suggestion["restock_date"])
 
 
 @lru_cache(maxsize=1)
