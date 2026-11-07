@@ -4,21 +4,26 @@ This prototype estimates when a customer may next purchase a product. It uses
 the existing Django `Customer`, `Product`, `Orders`, and `Item` records; no
 additional database fields are assumed.
 
-## Qualifying purchase events
+## Raw CSV contract
 
-- Include **delivered personal orders** (`Orders.Ostatus == "delivered"`).
-  `Orders.Odate` is the purchase date.
-- Identify the customer through `Orders.Ocustomer_id`, the product through
-  `Item.Iproduct_id`, and include each `Item` attached to the order through
-  `Item.Iorder_id`.
-- Count all attached Items, regardless of `Item.Istatus`. An Item remains part
-  of the purchase after it is used or discarded; do not filter on its current
-  status.
-- Exclude cancelled orders (`Orders.Ostatus == "cancelled"`). Filtering for
-  delivered orders already excludes them.
-- Aggregate by customer, product, and `Odate`. Multiple orders or Items for the
-  same customer-product on the same date form one event; sum their Items into
-  one `purchased_quantity`.
+The generated synthetic CSV has exactly these columns:
+
+`customer_id, product_id, category, household_size, purchased_quantity, purchased_at`
+
+`customer_id` is a synthetic customer identifier, not a Django primary key.
+`purchased_at` is the purchase date. The generator keeps product pack
+definitions internally to guide quantity ranges; they are not model inputs and
+are not included in the CSV.
+
+When preparing real events from Django, include **delivered personal orders**
+(`Orders.Ostatus == "delivered"`), using `Orders.Odate` as `purchased_at`.
+Identify customers through `Orders.Ocustomer_id`, products through
+`Item.Iproduct_id`, and include Items attached through `Item.Iorder_id`.
+Count every attached Item regardless of `Item.Istatus`; used or discarded Items
+still count toward the original purchase. Exclude cancelled orders.
+
+Aggregate by customer, product, and purchase date. Combine same-day orders into
+one event and sum their Items into `purchased_quantity`.
 
 ## Features and target
 
@@ -27,8 +32,13 @@ additional database fields are assumed.
 | `household_size` | `Customer.Chouseholdsize` |
 | `category` | `Product.Pcategory` |
 | `purchased_quantity` | Count of qualifying Items in the aggregated event |
-| `previous_interval_days` | Days between this event date and the preceding distinct purchase date for the same customer and product |
-| `target_days` | Days from this event date to the next distinct purchase date for the same customer and product |
+| `purchased_at` | Synthetic event date; `Orders.Odate` for real events |
+| `previous_interval_days` | Derived during training data preparation: days since the preceding distinct purchase date for the same customer and product |
+| `target_days` | Training label derived from the next distinct purchase date for the same customer and product |
+
+`previous_interval_days` and `target_days` are not raw CSV columns. Compute them
+after ordering events by customer, product, and `purchased_at`; `target_days`
+is only available for historical events with a later distinct purchase date.
 
 Use the customer’s current household size for historical events and assume it
 was stable over the prototype’s history. Do not infer changes from order data.
@@ -36,7 +46,8 @@ was stable over the prototype’s history. Do not infer changes from order data.
 ## History requirements
 
 - **Two or more distinct purchase dates** for the same customer-product provide
-  a prior interval and permit ML inference using the latest event.
+  a prior interval and permit ML inference using the latest event. For synthetic
+  data, eight purchase dates are generated for each selected customer-product.
 - **One distinct purchase date** permits only a labelled initial estimate; it
   does not provide a learned prior interval.
 - **No qualifying history** produces no personalised suggestion.
