@@ -1,0 +1,71 @@
+{% extends 'store/store_base.html' %}
+
+{% block content %}
+
+    <p>
+        {% if status_type and status_message %}
+            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+                {{ status_message }}
+            </h3>
+        {% endif %}
+    </p>
+
+    {% if expiring_soon > 0 %}
+        <h3 style="color: red;">Reminder: {{ expiring_soon }} item(s) in your pantry expire within 3 days!</h3>
+    {% endif %}
+
+    <p>
+        <h2>My Pantry</h2>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Pname</th>
+                    <th>Psize</th>
+                    <th>Bought</th>
+                    <th>Iexpiry</th>
+                    <th>Days Left</th>
+                    <th>Rating</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for p in pantry_items %}
+                
+                <tr>
+                    <td>{{ p.item.Iproduct.Pname }}</td>
+                    <td>{{ p.item.Iproduct.Psize }}</td>
+                    <td>{{ p.item.Iorder.Odate }}</td>
+                    <td>{% if p.item.Iexpiry %}{{ p.item.Iexpiry }}{% else %}No expiry{% endif %}</td>
+                    <td {% if p.days_left is not None and p.days_left <= 3 %}style="color: red; font-weight: bold;"{% endif %}>
+                        {% if p.days_left is None %}-{% elif p.days_left < 0 %}EXPIRED{% else %}{{ p.days_left }}{% endif %}
+                    </td>
+                    <td>
+                        {% if p.item.Irating %}
+                            {{ p.item.Irating }} / 5
+                        {% else %}
+                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=1">1</a>
+                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=2">2</a>
+                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=3">3</a>
+                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=4">4</a>
+                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=5">5</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/store/pantry/{{ p.item.pk }}?action=used">Used Up</a> | <a href="/store/pantry/{{ p.item.pk }}?action=expired" onclick="return confirm('Are you sure you want to throw this item away?');">Thrown Away</a>
+                    </td>
+                </tr>
+
+                {% empty %}
+                
+                <tr>
+                    <td colspan="7">Your pantry is empty.</td>
+                </tr>
+                
+                {% endfor %}
+                
+            </tbody>
+        </table>
+    </p>
+
+{% endblock %}

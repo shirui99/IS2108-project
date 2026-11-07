@@ -1,0 +1,62 @@
+{% extends 'store/store_base.html' %}
+
+{% block content %}
+
+    <p>
+        {% if status_type and status_message %}
+            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+                {{ status_message }}
+            </h3>
+        {% endif %}
+    </p>
+
+    <p>
+        <h2>My Cart</h2>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Pname</th>
+                    <th>Psize</th>
+                    <th>Pprice</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for item in cart_items %}
+                
+                <tr>
+                    <td>{{ item.product.Pname }}</td>
+                    <td>{{ item.product.Psize }}</td>
+                    <td>${{ item.product.Pprice|floatformat:2 }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.subtotal|floatformat:2 }}</td>
+                    <td>
+                        <a href="/store/cart/{{ item.product.Pid }}">Add One More</a> | <a href="/store/cart/{{ item.product.Pid }}?action=remove" onclick="return confirm('Are you sure you want to remove this product?');">Remove</a>
+                    </td>
+                </tr>
+
+                {% empty %}
+                
+                <tr>
+                    <td colspan="6">Your cart is empty.</td>
+                </tr>
+                
+                {% endfor %}
+                
+                <tr>
+                    <td colspan="4" style="text-align: right;"><b>Total</b></td>
+                    <td colspan="2"><b>${{ total|floatformat:2 }}</b></td>
+                </tr>
+
+            </tbody>
+        </table>
+    </p>
+    <hr />
+    <p>
+                <a href="/store/">Continue Shopping</a> | <a href="/store/checkout">Checkout</a>
+    </p>
+
+{% endblock %}

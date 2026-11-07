@@ -1,0 +1,83 @@
+{% extends 'store/store_base.html' %}
+
+{% block content %}
+
+    <p>
+        {% if status_type and status_message %}
+            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+                {{ status_message }}
+            </h3>
+        {% endif %}
+    </p>
+
+    <p>
+        <h2>Checkout</h2>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Pname</th>
+                    <th>Psize</th>
+                    <th>Pprice</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for item in cart_items %}
+                
+                <tr>
+                    <td>{{ item.product.Pname }}</td>
+                    <td>{{ item.product.Psize }}</td>
+                    <td>${{ item.product.Pprice|floatformat:2 }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.subtotal|floatformat:2 }}</td>
+                </tr>
+
+                {% empty %}
+                
+                <tr>
+                    <td colspan="5">Your cart is empty.</td>
+                </tr>
+                
+                {% endfor %}
+                
+                <tr>
+                    <td colspan="4" style="text-align: right;"><b>Total</b></td>
+                    <td><b>${{ total|floatformat:2 }}</b></td>
+                </tr>
+
+            </tbody>
+        </table>
+    </p>
+
+    {% if cart_items %}
+
+    <p>
+        <form action="/store/checkout" method="post">
+            {% csrf_token %}
+
+            <table border="1" width="100%">
+                <tbody>
+                    <tr>
+                        <td width="20%"><b>Delivery address</b></td>
+                        <td><input type="text" name="Oaddress" value="{{ address }}" required="required" style="width: 400px"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center;">
+                            <input type="submit" value="Place Order">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </p>
+
+    {% endif %}
+
+    <hr />
+    <p>
+        <a href="/store/cart">Back to Cart</a> | <a href="/store/orders">My Orders</a>
+    </p>
+
+{% endblock %}

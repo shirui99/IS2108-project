@@ -1,19 +1,31 @@
+from django.db.models import Count, Avg
 from django.shortcuts import render, HttpResponse
+from django.utils import timezone
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
-from adminpanel.models import Customer
+from adminpanel.models import Customer, Product, Orders, Item
 
 # Create your views here.
 
 def index(request):
 
-    return render(request, 'store/index.html')
+    # Find avg rating and number of ratings from all items
+    products = Product.objects.filter(Pactive=True).annotate(
+        rating=Avg('product_items__Irating'),
+        reviews=Count('product_items__Irating')
+    )
+
+    return render(request, 'store/index.html', {'products': products})
 
 def generate_customer_id():
     customer_count = Customer.objects.count()
     return str(customer_count + 1).zfill(4)
+
+def generate_order_id():
+    order_count = Orders.objects.count()
+    return str(order_count + 1).zfill(5)
 
 def signup(request):
 
@@ -80,3 +92,245 @@ def logout(request):
     request.session.flush()
 
     return HttpResponse('You have logged out.')
+
+def cart(request, pk=None):
+
+    status_type = None
+    status_message = None
+
+    if 'cart' not in request.session:
+
+        request.session['cart'] = {}
+
+    cart = request.session['cart']
+
+    if pk is not None:
+
+        if request.GET.get('action') == 'remove':
+
+            if pk in cart:
+
+                del cart[pk]
+
+                status_type = 'success'
+                status_message = 'Product removed from cart.'
+
+        else: # add
+
+            if pk in cart:
+
+                cart[pk] += 1
+
+            else:
+
+                cart[pk] = 1
+
+            status_type = 'success'
+            status_message = 'Product added to cart.'
+
+        request.session['cart'] = cart
+
+    cart_items = []
+    total = 0
+
+    for Pid in cart:
+
+        product = Product.objects.get(pk=Pid)
+        subtotal = product.Pprice * cart[Pid]
+        total += subtotal
+
+        cart_items.append({'product': product, 'quantity': cart[Pid], 'subtotal': subtotal})
+
+    context = {
+        'cart_items': cart_items,
+        'total': total,
+        'status_type': status_type,
+        'status_message': status_message,
+    }
+
+    return render(request, 'store/cart.html', context)
+
+def checkout(request):
+
+    cart = request.session.get('cart', {})
+
+    cart_items = []
+    total = 0
+
+    for Pid in cart:
+
+        product = Product.objects.get(pk=Pid)
+        subtotal = product.Pprice * cart[Pid]
+        total += subtotal
+
+        cart_items.append({'product': product, 'quantity': cart[Pid], 'subtotal': subtotal})
+
+    context = {
+        'cart_items': cart_items,
+        'total': total,
+        'status_type': None,
+        'status_message': None,
+    }
+
+    if request.method == 'GET':
+
+        # Display the order summary and delivery address
+        customer = Customer.objects.filter(pk=request.session.get('Cid')).first()
+        context['address'] = customer.Caddress if customer else ''
+
+        return render(request, 'store/checkout.html', context)
+
+    elif request.method == 'POST':
+
+        Oaddress = request.POST.get('Oaddress')
+        context['address'] = Oaddress
+
+        if len(cart) == 0:
+
+            context['status_type'] = 'error'
+            context['status_message'] = 'Your cart is empty.'
+
+            return render(request, 'store/checkout.html', context)
+
+        # Check that there is enough stock in the warehouse for every product
+
+        for Pid in cart:
+
+            available = Item.objects.filter(Iproduct_id=Pid, Istatus='available').count()
+
+            if available < cart[Pid]:
+
+                product = Product.objects.get(pk=Pid)
+
+                context['status_type'] = 'error'
+                context['status_message'] = f'Sorry, only {available} x {product.Pname} left in stock.'
+
+                return render(request, 'store/checkout.html', context)
+
+        newOrder = Orders(
+            Oid="O" + generate_order_id(),
+            Odate=timezone.localdate(),
+            Oaddress=Oaddress,
+            Ocustomer=Customer.objects.get(pk=request.session['Cid'])
+        )
+
+        newOrder.save()
+
+        # Give the customer the items that expire soonest
+
+        for Pid in cart:
+
+            items = Item.objects.filter(Iproduct_id=Pid, Istatus='available').order_by('Iexpiry')[:cart[Pid]]
+
+            for item in items:
+
+                item.Iorder = newOrder
+                item.Istatus = 'delivered'
+                item.save()
+
+        request.session['cart'] = {}
+
+        context['cart_items'] = []
+        context['total'] = 0
+        context['status_type'] = 'success'
+        context['status_message'] = f'Order {newOrder.Oid} placed successfully!'
+
+        return render(request, 'store/checkout.html', context)
+
+def orders(request, pk=None):
+
+    order = None
+    order_items = []
+
+    orders = Orders.objects.filter(Ocustomer_id=request.session.get('Cid')).annotate(items=Count('order_items'))
+
+    if pk is not None:
+
+        # Only show an order that belongs to the logged in customer
+        order = orders.filter(pk=pk).first()
+
+        if order is not None:
+
+            order_items = order.order_items.all()
+
+    context = {
+        'orders': orders,
+        'order': order,
+        'order_items': order_items,
+    }
+
+    return render(request, 'store/orders.html', context)
+
+
+
+def pantry(request, pk=None):
+
+    status_type = None
+    status_message = None
+    today = timezone.localdate()
+
+    if pk is not None:
+
+        # Only change an item that is in the logged in customer's pantry
+        item = Item.objects.filter(pk=pk, Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered').first()
+
+        if item is None:
+
+            status_type = 'error'
+            status_message = 'Item not found.'
+
+        elif request.GET.get('action') == 'used':
+
+            item.Istatus = 'used'
+            item.Ifinished = today
+            item.save()
+
+            status_type = 'success'
+            status_message = f'{item.Iproduct.Pname} marked as used up.'
+
+        elif request.GET.get('action') == 'expired':
+
+            item.Istatus = 'expired'
+            item.Ifinished = today
+            item.save()
+
+            status_type = 'success'
+            status_message = f'{item.Iproduct.Pname} marked as thrown away.'
+
+        elif request.GET.get('action') == 'rate':
+
+            item.Irating = request.GET.get('rating')
+            item.save()
+
+            status_type = 'success'
+            status_message = f'Thank you for rating {item.Iproduct.Pname}.'
+
+    items = Item.objects.filter(Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered').order_by('Iexpiry')
+
+    pantry_items = []
+    expiring_soon = 0
+
+    for item in items:
+
+        if item.Iexpiry is None:
+
+            days_left = None
+
+        else:
+
+            days_left = (item.Iexpiry - today).days
+
+            if days_left <= 3:
+
+                expiring_soon += 1
+
+        pantry_items.append({'item': item, 'days_left': days_left})
+
+    context = {
+        'pantry_items': pantry_items,
+        'expiring_soon': expiring_soon,
+        'status_type': status_type,
+        'status_message': status_message,
+    }
+
+    return render(request, 'store/pantry.html', context)

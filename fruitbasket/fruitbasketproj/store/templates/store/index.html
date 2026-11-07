@@ -2,11 +2,50 @@
 
 {% block content %}
 
-    {% if success_message %}
-        <h3 style="color: green;">{{ success_message }}</h3>
-    {% endif %}
+    <p>
+        <h2>All Products</h2>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Pname</th>
+                    <th>Pcategory</th>
+                    <th>Psize</th>
+                    <th>Pprice</th>
+                    <th>Rating</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
 
-    <h2>Shop</h2>
-    <p>Products will be listed here.</p>
+                {% for product in products %}
+                
+                <tr>
+                    <td>{{ product.Pname }}</td>
+                    <td>{{ product.get_Pcategory_display }}</td>
+                    <td>{{ product.Psize }}</td>
+                    <td>${{ product.Pprice|floatformat:2 }}</td>
+                    <td>
+                        {% if product.reviews > 0 %}
+                            {{ product.rating|floatformat:1 }} / 5 ({{ product.reviews }} reviews)
+                        {% else %}
+                            No reviews yet
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/store/cart/{{ product.Pid }}">Add to Cart</a>
+                    </td>
+                </tr>
+
+                {% empty %}
+                
+                <tr>
+                    <td colspan="6">No product record available.</td>
+                </tr>
+                
+                {% endfor %}
+                
+            </tbody>
+        </table>
+    </p>
 
 {% endblock %}
