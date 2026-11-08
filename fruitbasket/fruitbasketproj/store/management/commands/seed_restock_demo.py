@@ -4,12 +4,19 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from adminpanel.models import Customer, Item, Orders, Product
+from adminpanel.models import Customer, Item, Orders, Product, SupportTicket
 
 
 DEMO_CUSTOMER_ID = "CDEMO"
 DEMO_USERNAME = "restock_demo"
-DEMO_PRODUCT_IDS = ("DEMO1", "DEMO2", "DEMO3", "DEMO4", "DEMO5")
+DEMO_PRODUCTS = (
+    ("DEMO1", "Demo Apples", "fruit", "1 kg", 4.50, True),
+    ("DEMO2", "Demo Milk", "dairy", "1 L", 3.00, True),
+    ("DEMO3", "Inactive Demo Rice", "rice", "1 kg", 5.00, False),
+    ("DEMO4", "Expired Demo Bread", "bakery", "1 loaf", 2.50, True),
+    ("DEMO5", "No-history Demo Soap", "household", "1 pack", 4.00, True),
+)
+DEMO_PRODUCT_IDS = tuple(product[0] for product in DEMO_PRODUCTS)
 DEMO_ORDER_IDS = ("DMO001", "DMO002")
 
 
@@ -24,10 +31,13 @@ class Command(BaseCommand):
         DEMO*/CDEMO/DMO* identifiers, then creates valid delivered order
         items and separate available warehouse stock items.
         """
-        Item.objects.filter(Iorder__Oid__in=DEMO_ORDER_IDS).delete()
+        # Clear everything on the demo customer's orders. Tickets and items must go before the orders
+        SupportTicket.objects.filter(Torder__Ocustomer_id=DEMO_CUSTOMER_ID).delete()
+        Item.objects.filter(Iorder__Ocustomer_id=DEMO_CUSTOMER_ID).delete()
+        Orders.objects.filter(Ocustomer_id=DEMO_CUSTOMER_ID).delete()
+
+        # Clear demo stock that is not on any order
         Item.objects.filter(Iproduct_id__in=DEMO_PRODUCT_IDS, Iorder__isnull=True).delete()
-        Orders.objects.filter(Oid__in=DEMO_ORDER_IDS).delete()
-        Product.objects.filter(Pid__in=DEMO_PRODUCT_IDS).delete()
 
         user, _ = User.objects.get_or_create(username=DEMO_USERNAME)
         user.set_password("restock-demo-password")
@@ -43,53 +53,21 @@ class Command(BaseCommand):
             },
         )
 
-        products = {
-            "DEMO1": Product.objects.create(
-                Pid="DEMO1",
-                Pname="Demo Apples",
-                Pcategory="fruit",
-                Psize="1 kg",
-                Pprice=4.50,
-                Plowstock=1,
-                Pactive=True,
-            ),
-            "DEMO2": Product.objects.create(
-                Pid="DEMO2",
-                Pname="Demo Milk",
-                Pcategory="dairy",
-                Psize="1 L",
-                Pprice=3.00,
-                Plowstock=1,
-                Pactive=True,
-            ),
-            "DEMO3": Product.objects.create(
-                Pid="DEMO3",
-                Pname="Inactive Demo Rice",
-                Pcategory="rice",
-                Psize="1 kg",
-                Pprice=5.00,
-                Plowstock=1,
-                Pactive=False,
-            ),
-            "DEMO4": Product.objects.create(
-                Pid="DEMO4",
-                Pname="Expired Demo Bread",
-                Pcategory="bakery",
-                Psize="1 loaf",
-                Pprice=2.50,
-                Plowstock=1,
-                Pactive=True,
-            ),
-            "DEMO5": Product.objects.create(
-                Pid="DEMO5",
-                Pname="No-history Demo Soap",
-                Pcategory="household",
-                Psize="1 pack",
-                Pprice=4.00,
-                Plowstock=1,
-                Pactive=True,
-            ),
-        }
+        products = {}
+
+        for pid, name, category, size, price, active in DEMO_PRODUCTS:
+
+            products[pid], _ = Product.objects.update_or_create(
+                Pid=pid,
+                defaults={
+                    "Pname": name,
+                    "Pcategory": category,
+                    "Psize": size,
+                    "Pprice": price,
+                    "Plowstock": 1,
+                    "Pactive": active,
+                },
+            )
 
         today = date.today()
         orders = [
