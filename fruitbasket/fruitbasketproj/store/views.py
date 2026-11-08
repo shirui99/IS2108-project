@@ -1,5 +1,3 @@
-from pyexpat.errors import messages
-
 from django.db.models import Count, Avg
 from django.shortcuts import redirect, render, HttpResponse
 from django.utils import timezone
@@ -138,8 +136,6 @@ def login(request):
                 )
 
             request.session['Cid'] = customer.Cid
-
-            messages.success(request, "Authentication successful!")
 
             # Redirect directly to the store shop or restock suggestions
             return redirect('/store/')  # Or redirect('restock') / redirect('/store/restock/')
