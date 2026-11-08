@@ -138,3 +138,37 @@ class Item(models.Model):
     def __str__(self):
 
         return f'Item {self.pk} - {self.Iproduct.Pname} (expires {self.Iexpiry})'
+
+
+class SupportTicket(models.Model):
+
+    STATUS = [
+        ('open', 'Open'),
+        ('answered', 'Answered'),
+    ]
+
+    Tsubject = models.CharField(max_length=200)
+    Tmessage = models.TextField()
+    Tresponse = models.TextField(blank=True)
+    Tstatus = models.CharField(max_length=10, choices=STATUS, default='open')
+    Tsubmitted = models.DateTimeField(auto_now_add=True)
+    Tresponded = models.DateTimeField(blank=True, null=True)
+
+    Torder = models.ForeignKey(Orders, on_delete=models.RESTRICT, related_name='order_tickets')
+    Tresponder = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='answered_tickets', blank=True, null=True)
+
+    # Add constraint to ensure that an open ticket has no response, and an answered ticket has a response, responder and time
+
+    class Meta:
+
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(Tstatus='open', Tresponse='', Tresponder__isnull=True, Tresponded__isnull=True)
+                | (models.Q(Tstatus='answered', Tresponder__isnull=False, Tresponded__isnull=False) & ~models.Q(Tresponse='')),
+                name='Tstatus_matches_response'
+            )
+        ]
+
+    def __str__(self):
+
+        return f'Ticket {self.pk} - {self.Torder.Oid} ({self.Tstatus})'

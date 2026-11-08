@@ -75,6 +75,43 @@
         </table>
     </p>
 
+    <p>
+        {% if status_type and status_message %}
+            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+                {{ status_message }}
+            </h3>
+        {% endif %}
+    </p>
+
+    <h3>Need help with this order?</h3>
+    <form method="post" action="/store/orders/{{ order.Oid }}">
+        {% csrf_token %}
+        Subject: <input type="text" name="Tsubject" maxlength="200" required><br>
+        Message:<br><textarea name="Tmessage" rows="4" cols="50" required></textarea><br>
+        <input type="submit" value="Submit Issue">
+    </form>
+
+    <h3>Support Tickets</h3>
+    <table border="1" width="100%">
+        <thead>
+            <tr><th>Submitted</th><th>Subject</th><th>Message</th><th>Status</th><th>Response</th></tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket.Tsubmitted }}</td>
+                <td>{{ ticket.Tsubject }}</td>
+                <td>{{ ticket.Tmessage|linebreaksbr }}</td>
+                <td>{{ ticket.get_Tstatus_display }}</td>
+                <td>{% if ticket.Tresponse %}{{ ticket.Tresponse|linebreaksbr }}{% else %}Awaiting response{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No issues reported for this order.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
     {% endif %}
 
 {% endblock %}

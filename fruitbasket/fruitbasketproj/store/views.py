@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
-from adminpanel.models import Customer, Product, Orders, Item
+from adminpanel.models import Customer, Product, Orders, Item, SupportTicket
 from adminpanel.views import remove_expiring_stock
 from .restock import get_customer_purchase_history, get_restock_suggestions
 
@@ -303,6 +303,9 @@ def checkout(request):
 
 def orders(request, pk=None):
 
+    status_type = None
+    status_message = None
+    tickets = [] # status type, message and tickets is tied directly to order 
     order = None
     order_items = []
 
@@ -315,12 +318,34 @@ def orders(request, pk=None):
 
         if order is not None:
 
+
+            if request.method == 'POST': #handle the post request
+
+                subject = request.POST.get('Tsubject', '').strip()
+                message = request.POST.get('Tmessage', '').strip()
+
+                if subject and message:
+
+                    SupportTicket.objects.create(Torder=order, Tsubject=subject, Tmessage=message) #create the support ticket
+
+                    status_type = 'success'
+                    status_message = 'Your issue has been sent to our support team.'
+
+                else: #either subject or message missing
+
+                    status_type = 'error'
+                    status_message = 'Please enter a subject and a message.'
+
             order_items = order.order_items.all()
+            tickets = order.order_tickets.order_by('-Tsubmitted')
 
     context = {
         'orders': orders,
         'order': order,
         'order_items': order_items,
+        'tickets': tickets,
+        'status_type': status_type,
+        'status_message': status_message,
     }
 
     return render(request, 'store/orders.html', context)
