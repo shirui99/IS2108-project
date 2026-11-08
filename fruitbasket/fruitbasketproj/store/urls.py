@@ -15,5 +15,5 @@ urlpatterns = [
     path('pantry', views.pantry, name='pantry'),
     path('pantry/<pk>', views.pantry, name='pantry'),
     path('restock/', views.restock, name='restock'),
-    path('product/<pk>', views.product_detail, name='product_detail'),
+    path('product/<pk>', views.product_detail, name='product_detail'), #product always needs a pk
 ]
