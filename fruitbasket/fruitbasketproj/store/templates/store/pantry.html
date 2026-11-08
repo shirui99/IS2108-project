@@ -24,7 +24,7 @@
                     <th>Purchased</th>
                     <th>Expiry Date</th>
                     <th>Days Left</th>
-                    <th>Rating</th>
+                    #rating no longer needed cause reviews
                     <th>Action</th>
                 </tr>
             </thead>
@@ -40,7 +40,7 @@
                     <td {% if p.days_left is not None and p.days_left <= 3 %}style="color: red; font-weight: bold;"{% endif %}>
                         {% if p.days_left is None %}-{% elif p.days_left < 0 %}EXPIRED{% else %}{{ p.days_left }}{% endif %}
                     </td>
-                    <td>
+                    <!-- <td> #no longer needed after reviews
                         {% if p.item.Irating %}
                             {{ p.item.Irating }} / 5
                         {% else %}
@@ -50,7 +50,7 @@
                             <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=4">4</a>
                             <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=5">5</a>
                         {% endif %}
-                    </td>
+                    </td> -->
                     <td>
                         <a href="/store/pantry/{{ p.item.pk }}?action=used">Used Up</a> | <a href="/store/pantry/{{ p.item.pk }}?action=expired" onclick="return confirm('Are you sure you want to throw this item away?');">Thrown Away</a>
                     </td>
@@ -59,7 +59,8 @@
                 {% empty %}
                 
                 <tr>
-                    <td colspan="7">Your pantry is empty.</td>
+                    <td colspan="6">Your pantry is empty.</td>
+                    <!-- <td colspan="7">Your pantry is empty.</td> -->
                 </tr>
                 
                 {% endfor %}

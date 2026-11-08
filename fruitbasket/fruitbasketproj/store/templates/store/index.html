@@ -22,7 +22,8 @@
                 
                 <tr>
                     <td>{% if product.Pimage %}<img src="{{ product.Pimage.url }}" width="80">{% else %}No image{% endif %}</td>
-                    <td>{{ product.Pname }}</td>
+                    <td><a href="/store/product/{{ product.Pid }}">{{ product.Pname }}</a></td> 
+                    {# turn it into a link #}
                     <td>{{ product.get_Pcategory_display }}</td>
                     <td>{{ product.Psize }}</td>
                     <td>${{ product.Pprice|floatformat:2 }}</td>
