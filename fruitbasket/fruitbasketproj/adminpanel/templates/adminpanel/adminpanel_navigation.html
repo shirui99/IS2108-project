@@ -1,11 +1,10 @@
-<h2>Main Menu</h2>
-<ul>
-    <li><a href="/adminpanel/">Home</a></li>
-    <li><a href="/adminpanel/product_new">Product</a></li>
-    <li><a href="/adminpanel/item_new">Stock (Items)</a></li>
-    <li><a href="/adminpanel/customer_new">Customer</a></li>
-    <li><a href="/adminpanel/order_new">Order</a></li>
-    <li><a href="/adminpanel/support">Support</a></li>
-    <li><a href="/adminpanel/logout">Log Out</a></li>
-    <li><a href="/">Back to Fruit Basket</a></li>
+<ul class="fb-nav">
+    <li><a href="{% url 'adminpanel_index' %}"{% if request.resolver_match.url_name == 'adminpanel_index' %} aria-current="page"{% endif %}>Home</a></li>
+    <li><a href="{% url 'product_new' %}"{% if request.resolver_match.url_name == 'product_new' %} aria-current="page"{% endif %}>Products</a></li>
+    <li><a href="{% url 'item_new' %}"{% if request.resolver_match.url_name == 'item_new' %} aria-current="page"{% endif %}>Stock</a></li>
+    <li><a href="{% url 'customer_new' %}"{% if request.resolver_match.url_name == 'customer_new' %} aria-current="page"{% endif %}>Customers</a></li>
+    <li><a href="{% url 'order_new' %}"{% if request.resolver_match.url_name == 'order_new' %} aria-current="page"{% endif %}>Orders</a></li>
+    <li><a href="{% url 'support' %}"{% if request.resolver_match.url_name == 'support' %} aria-current="page"{% endif %}>Support</a></li>
+    <li><a href="{% url 'adminpanel_logout' %}"{% if request.resolver_match.url_name == 'adminpanel_logout' %} aria-current="page"{% endif %}>Log out</a></li>
+    <li><a href="{% url 'index' %}"{% if request.resolver_match.url_name == 'index' %} aria-current="page"{% endif %}>Back to Fruit Basket</a></li>
 </ul>

@@ -1,24 +1,27 @@
-<html>
-    <head>
-        <title>Welcome to Fruit Basket</title>        
-    </head>
-    <body>
-
-        <div style="width: 100%;">
-
-            <div style="width: 100%; text-align: center; vertical-align: top;">
-                {% include 'proj_header.html' %}
-            </div>            
-
-            <div style="width: 20%; float: left; vertical-align: top;">
-                {% include 'proj_navigation.html' %}
-            </div>
-
-            <div style="width: 80%; float: left; vertical-align: top;">
-                {% block content %}
-                {% endblock %}
-            </div>
-
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fruit Basket</title>
+    <link rel="stylesheet" href="{% static 'store/vendor/bootstrap/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'store/css/site.css' %}">
+</head>
+<body class="fb-site">
+    <a class="fb-skip" href="#main-content">Skip to content</a>
+    <header class="fb-header">
+        <div class="fb-container fb-masthead">
+            {% include 'proj_header.html' %}
         </div>
-    </body>
+        <nav class="fb-container fb-navigation" aria-label="Public area navigation">
+            {% include 'proj_navigation.html' %}
+        </nav>
+    </header>
+    <main id="main-content" class="fb-container fb-content" tabindex="-1">
+        {% include 'store/shared/messages.html' %}
+        {% block content %}
+        {% endblock %}
+    </main>
+</body>
 </html>
