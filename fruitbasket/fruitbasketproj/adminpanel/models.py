@@ -23,6 +23,8 @@ class Product(models.Model):
     Pprice = models.FloatField()
     Plowstock = models.IntegerField()
     Pactive = models.BooleanField(default=True)
+    Pimage = models.ImageField(upload_to='products/', blank=True, null=True)
+    Pexpirydays = models.PositiveIntegerField(default=0)
 
     # Add constraint to ensure that Pprice is greater than 0
     # Add constraint to ensure that Plowstock is not negative
@@ -124,7 +126,7 @@ class Item(models.Model):
 
         constraints = [
             models.CheckConstraint(
-                check=models.Q(Iorder__isnull=True, Istatus='available') | (models.Q(Iorder__isnull=False) & ~models.Q(Istatus='available')),
+                check=models.Q(Iorder__isnull=True, Istatus__in=['available', 'expired']) | (models.Q(Iorder__isnull=False) & ~models.Q(Istatus='available')),
                 name='Iorder_matches_Istatus'
             ),
             models.CheckConstraint(

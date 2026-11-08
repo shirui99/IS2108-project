@@ -39,6 +39,14 @@
     </p>
     <hr />
     <p>
+        {% if removed %}
+            <h3 style="color: red;">{{ removed }} item(s) were just written off as expired.</h3>
+        {% endif %}
+
+        Total written off as expired: {{ written_off }}
+    </p>
+    <hr />
+    <p>
         <h2>View All Stock</h2>
         <table border="1" width="100%">
             <thead>

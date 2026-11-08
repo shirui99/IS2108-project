@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from django.db.models import Count, Q
-from django.shortcuts import render
+from django.shortcuts import render, HttpResponse
+from datetime import timedelta
 from django.utils import timezone
 from django.views import View
 
@@ -126,7 +127,7 @@ class ProductView(View):
     def post(self, request, *args, **kwargs):
 
         action = request.POST.get('action')  # returns None if not provided
-        form = self.form_class(request.POST)
+        form = self.form_class(request.POST, request.FILES)
         status_type = None
         status_message = None
 
@@ -135,11 +136,11 @@ class ProductView(View):
         if action == 'update':
 
             product = Product.objects.get(pk=request.POST.get('Pid'))
-            form = self.form_class(request.POST, instance=product)
+            form = self.form_class(request.POST, request.FILES, instance=product)
 
         else:
 
-            form = self.form_class(request.POST)
+            form = self.form_class(request.POST, request.FILES)
 
         if form.is_valid():
 
@@ -152,7 +153,9 @@ class ProductView(View):
                     Psize=form.cleaned_data['Psize'],
                     Pprice=form.cleaned_data['Pprice'],
                     Plowstock=form.cleaned_data['Plowstock'],
-                    Pactive=form.cleaned_data['Pactive']
+                    Pactive=form.cleaned_data['Pactive'],
+                    Pimage=form.cleaned_data['Pimage'] or None,
+                    Pexpirydays=form.cleaned_data['Pexpirydays']
                 )
 
                 try:
@@ -178,6 +181,8 @@ class ProductView(View):
                     product.Pprice = form.cleaned_data['Pprice']
                     product.Plowstock = form.cleaned_data['Plowstock']
                     product.Pactive = form.cleaned_data['Pactive']
+                    product.Pimage=form.cleaned_data['Pimage'] or None
+                    product.Pexpirydays=form.cleaned_data['Pexpirydays']
 
                     try:
 
@@ -565,6 +570,24 @@ class OrderView(View):
 
         return render(request, self.template_name, context)
 
+def remove_expiring_stock():
+
+    # For each product, warehouse items with fewer than Pexpirydays days left are written off as expired
+
+    today = timezone.localdate()
+    removed = 0
+
+    for product in Product.objects.all():
+
+        cutoff = today + timedelta(days=product.Pexpirydays)
+
+        removed += Item.objects.filter(Iproduct=product, Istatus='available', Iexpiry__lt=cutoff).update(
+            Istatus='expired',
+            Ifinished=today
+        )
+
+    return removed
+
 class ItemView(View):
 
     form_class = ItemBatchForm
@@ -662,6 +685,12 @@ class ItemView(View):
 
         rendered_form = form.render('adminpanel/form_template.html')
 
+        # Write off anything inside each products expiry window before showing the stock
+
+        removed = remove_expiring_stock()
+
+        written_off = Item.objects.filter(Iorder__isnull=True, Istatus='expired').count()
+
         # Group warehouse items into batches: same product, received date and expiry date
 
         batches = Item.objects.filter(Istatus='available').values(
@@ -671,6 +700,8 @@ class ItemView(View):
         context = {
             'form': rendered_form,
             'batches': batches,
+            'removed': removed,
+            'written_off': written_off,
             'today': timezone.localdate(),
             'status_type': status_type,
             'status_message': status_message,

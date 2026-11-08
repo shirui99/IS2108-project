@@ -6,12 +6,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
 from adminpanel.models import Customer, Product, Orders, Item
+from adminpanel.views import remove_expiring_stock
 from .restock import get_customer_purchase_history, get_restock_suggestions
 
 # Create your views here.
 
 def index(request):
 
+    remove_expiring_stock()
     # Find avg rating and number of ratings from all items
     products = Product.objects.filter(Pactive=True).annotate(
         rating=Avg('product_items__Irating'),
@@ -208,6 +210,8 @@ def cart(request, pk=None):
 
 def checkout(request):
 
+    remove_expiring_stock()
+    
     cart = request.session.get('cart', {})
 
     cart_items = []

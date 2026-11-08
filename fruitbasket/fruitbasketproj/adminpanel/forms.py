@@ -9,7 +9,7 @@ class ProductForm(forms.ModelForm):
     class Meta:
 
         model = Product
-        fields = ['Pid', 'Pname', 'Pcategory', 'Psize', 'Pprice', 'Plowstock', 'Pactive']
+        fields = ['Pid', 'Pname', 'Pcategory', 'Psize', 'Pprice', 'Plowstock', 'Pactive', 'Pimage', 'Pexpirydays']
 
 class ItemBatchForm(forms.Form):
 
@@ -35,3 +35,4 @@ class OrderForm(forms.ModelForm):
         widgets = {
             'Odate': forms.DateInput(attrs={'type': 'date'})
         }
+
