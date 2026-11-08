@@ -119,7 +119,21 @@ def login(request):
 
         if user is not None:
 
-            request.session['Cid'] = user.customer.Cid
+            customer = Customer.objects.filter(Cuser=user).first()
+
+            # Users made outside signup (e.g. createsuperuser) have no Customer yet, so create one
+            if customer is None:
+
+                customer = Customer.objects.create(
+                    Cid='C' + generate_customer_id(),
+                    Cname=user.username,
+                    Caddress='',
+                    Chouseholdsize=1,
+                    Cmealsperweek=0,
+                    Cuser=user
+                )
+
+            request.session['Cid'] = customer.Cid
 
             return render(request, 'store/login.html', {'success_message': 'Authentication successful!'})
         
