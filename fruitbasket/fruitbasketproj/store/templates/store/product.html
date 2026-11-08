@@ -1,0 +1,63 @@
+{% extends 'store/store_base.html' %}
+
+{% block content %}
+
+    <p>
+        {% if status_type and status_message %}
+            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+                {{ status_message }}
+            </h3>
+        {% endif %}
+    </p>
+
+    <h2>{{ product.Pname }}</h2>
+
+    {% if product.Pimage %}<img src="{{ product.Pimage.url }}" width="200"><br>{% endif %}
+
+    <p>
+        {{ product.get_Pcategory_display }} | {{ product.Psize }} | ${{ product.Pprice|floatformat:2 }}<br>
+        <a href="/store/cart/{{ product.Pid }}">Add to Cart</a>
+    </p>
+
+    <hr />
+
+    {% if can_review %}
+    <h3>Write a Review</h3>
+    <form method="post" action="/store/product/{{ product.Pid }}">
+        {% csrf_token %}
+        Rating:
+        <select name="Rrating" required>
+            <option value="">Choose...</option>
+            <option value="5">5</option>
+            <option value="4">4</option>
+            <option value="3">3</option>
+            <option value="2">2</option>
+            <option value="1">1</option>
+        </select><br>
+        Review (optional):<br>
+        <textarea name="Rcomment" rows="4" cols="50"></textarea><br>
+        <input type="submit" value="Submit Review">
+    </form>
+    <hr />
+    {% endif %}
+
+    <h3>Customer Reviews</h3>
+    <table border="1" width="100%">
+        <thead>
+            <tr><th>Customer</th><th>Rating</th><th>Review</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+            {% for review in reviews %}
+            <tr>
+                <td>{{ review.Rcustomer.Cname }}</td>
+                <td>{{ review.Rrating }} / 5</td>
+                <td>{{ review.Rcomment|linebreaksbr }}</td>
+                <td>{{ review.Rcreated|date:"j M Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">No reviews yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}

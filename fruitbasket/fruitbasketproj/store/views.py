@@ -1,11 +1,11 @@
-from django.db.models import Count, Avg
-from django.shortcuts import redirect, render, HttpResponse
+from django.db.models import Count, Avg, Q
+from django.shortcuts import redirect, render, HttpResponse, get_object_or_404
 from django.utils import timezone
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
-from adminpanel.models import Customer, Product, Orders, Item, SupportTicket
+from adminpanel.models import Customer, Product, Orders, Item, SupportTicket, Review
 from adminpanel.views import remove_expiring_stock
 from .restock import get_customer_purchase_history, get_restock_suggestions
 
@@ -16,8 +16,8 @@ def index(request):
     remove_expiring_stock()
     # Find avg rating and number of ratings from all items
     products = Product.objects.filter(Pactive=True).annotate(
-        rating=Avg('product_items__Irating'),
-        reviews=Count('product_items__Irating')
+        rating=Avg('product_reviews__Rrating', filter=Q(product_reviews__Rvisible=True)),
+        reviews=Count('product_reviews', filter=Q(product_reviews__Rvisible=True))
     )
 
     return render(request, 'store/index.html', {'products': products})
@@ -382,13 +382,13 @@ def pantry(request, pk=None):
             status_type = 'success'
             status_message = f'{item.Iproduct.Pname} marked as thrown away.'
 
-        elif request.GET.get('action') == 'rate':
+        # elif request.GET.get('action') == 'rate':
 
-            item.Irating = request.GET.get('rating')
-            item.save()
+        #     item.Irating = request.GET.get('rating')
+        #     item.save()
 
-            status_type = 'success'
-            status_message = f'Thank you for rating {item.Iproduct.Pname}.'
+        #     status_type = 'success'
+        #     status_message = f'Thank you for rating {item.Iproduct.Pname}.'
 
     items = Item.objects.filter(Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered').order_by('Iexpiry')
 
@@ -419,3 +419,64 @@ def pantry(request, pk=None):
     }
 
     return render(request, 'store/pantry.html', context)
+
+def product_detail(request, pk):
+
+    product = get_object_or_404(Product, pk=pk, Pactive=True)
+    customer_id = request.session.get('Cid')
+    status_type = None
+    status_message = None
+
+    # The earliest delivered unit of this product bought by the logged in customer
+    purchase = Item.objects.filter(
+        Iproduct=product,
+        Iorder__Ocustomer_id=customer_id,
+        Iorder__Ostatus='delivered'
+    ).order_by('Iorder__Odate', 'pk').first()
+
+    already_reviewed = Review.objects.filter(Rcustomer_id=customer_id, Rproduct=product).exists()
+
+    if request.method == 'POST':
+
+        rating = request.POST.get('Rrating')
+        comment = request.POST.get('Rcomment', '').strip()
+
+        if purchase is None:
+
+            status_type = 'error'
+            status_message = 'You can only review products that have been delivered to you.'
+
+        elif already_reviewed:
+
+            status_type = 'error'
+            status_message = 'You have already reviewed this product.'
+
+        elif rating not in ('1', '2', '3', '4', '5'):
+
+            status_type = 'error'
+            status_message = 'Please choose a rating from 1 to 5.'
+
+        else:
+
+            Review.objects.create(
+                Rcustomer_id=customer_id,
+                Rproduct=product,
+                Ritem=purchase,
+                Rrating=int(rating),
+                Rcomment=comment
+            )
+
+            already_reviewed = True
+
+            status_type = 'success'
+            status_message = 'Thank you for your review.'
+
+    context = {
+        'product': product,
+        'reviews': product.product_reviews.filter(Rvisible=True).select_related('Rcustomer').order_by('-Rcreated'),
+        'can_review': purchase is not None and not already_reviewed,
+        'status_type': status_type,
+        'status_message': status_message,
+    }
+
+    return render(request, 'store/product.html', context)

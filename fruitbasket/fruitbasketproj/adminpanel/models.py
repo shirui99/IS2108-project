@@ -172,3 +172,31 @@ class SupportTicket(models.Model):
     def __str__(self):
 
         return f'Ticket {self.pk} - {self.Torder.Oid} ({self.Tstatus})'
+
+class Review(models.Model):
+
+    Rrating = models.IntegerField()
+    Rcomment = models.TextField(blank=True)
+    Rvisible = models.BooleanField(default=True)
+    Rcreated = models.DateTimeField(auto_now_add=True)
+
+    Rcustomer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='customer_reviews')
+    Rproduct = models.ForeignKey(Product, on_delete=models.RESTRICT, related_name='product_reviews')
+    Ritem = models.OneToOneField(Item, on_delete=models.RESTRICT, related_name='item_review')
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['Rcustomer', 'Rproduct'],
+                name='one_review_per_customer_and_product'
+            ),
+            models.CheckConstraint(
+                condition=models.Q(Rrating__gte=1, Rrating__lte=5),
+                name='Rrating_between_one_and_five'
+            )
+        ]
+
+    def __str__(self):
+
+        return f'{self.Rproduct.Pname} - {self.Rrating} / 5 by {self.Rcustomer.Cname}'

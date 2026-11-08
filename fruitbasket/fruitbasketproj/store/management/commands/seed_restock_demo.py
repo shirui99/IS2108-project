@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from adminpanel.models import Customer, Item, Orders, Product, SupportTicket
+from adminpanel.models import Customer, Item, Orders, Product, SupportTicket, Review
 
 
 DEMO_CUSTOMER_ID = "CDEMO"
@@ -32,6 +32,7 @@ class Command(BaseCommand):
         items and separate available warehouse stock items.
         """
         # Clear everything on the demo customer's orders. Tickets and items must go before the orders
+        Review.objects.filter(Rcustomer_id=DEMO_CUSTOMER_ID).delete()
         SupportTicket.objects.filter(Torder__Ocustomer_id=DEMO_CUSTOMER_ID).delete()
         Item.objects.filter(Iorder__Ocustomer_id=DEMO_CUSTOMER_ID).delete()
         Orders.objects.filter(Ocustomer_id=DEMO_CUSTOMER_ID).delete()
