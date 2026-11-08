@@ -34,6 +34,7 @@ def login(request):
         if user is not None and user.is_staff:
 
             request.session['isStaff'] = True
+            request.session['staff_user_id'] = user.pk #for ticket answering
 
             return render(request, 'adminpanel/login.html', {'success_message': 'Authentication successful!'})
         
