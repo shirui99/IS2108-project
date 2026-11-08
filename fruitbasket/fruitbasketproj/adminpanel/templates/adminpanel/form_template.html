@@ -1,15 +1,15 @@
 {% if form.non_field_errors %}
     <tr>
-        <td colspan="3" style="color: red;">{{ form.non_field_errors }}</td>
+        <td colspan="3" class="text-danger">{{ form.non_field_errors }}</td>
     </tr>
 {% endif %}
 
 {% for field in form %}
 
     <tr>
-        <td width="20%"><b>{{ field.label_tag }}</b></td>
-        <td width="60%">{{ field }}</td>
-        <td style="color: red;">{{ field.errors }}</td>
+        <td class="fb-field-label"><b>{{ field.label_tag }}</b></td>
+        <td >{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}</td>
+        <td class="text-danger">{{ field.errors }}</td>
     </tr>
 
 {% endfor %}

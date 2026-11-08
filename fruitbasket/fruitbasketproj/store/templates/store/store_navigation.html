@@ -5,7 +5,7 @@
     <li><a href="{% url 'cart' %}"{% if request.resolver_match.url_name == 'cart' %} aria-current="page"{% endif %}>Cart</a></li>
     <li><a href="{% url 'orders' %}"{% if request.resolver_match.url_name == 'orders' %} aria-current="page"{% endif %}>My orders</a></li>
     <li><a href="{% url 'restock' %}"{% if request.resolver_match.url_name == 'restock' %} aria-current="page"{% endif %}>Restock suggestions</a></li>
-    <li><a href="{% url 'logout' %}"{% if request.resolver_match.url_name == 'logout' %} aria-current="page"{% endif %}>Log out</a></li>
+    <li><form action="{% url 'logout' %}" method="post">{% csrf_token %}<button type="submit">Log out</button></form></li>
     {% else %}
     <li><a href="{% url 'login' %}"{% if request.resolver_match.url_name == 'login' %} aria-current="page"{% endif %}>Log in</a></li>
     <li><a href="{% url 'signup' %}"{% if request.resolver_match.url_name == 'signup' %} aria-current="page"{% endif %}>Sign up</a></li>

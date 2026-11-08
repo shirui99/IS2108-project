@@ -2,17 +2,17 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         <h2>Restock Suggestions</h2>
         {% if suggestions %}
-            <table border="1" width="100%">
+            <div class="table-responsive"><table class="table fb-table align-middle">
                 <thead>
                     <tr>
-                        <th>Product</th>
-                        <th>Estimated Next Purchase</th>
-                        <th>Status</th>
-                        <th>Estimate</th>
-                        <th>Action</th>
+                        <th scope="col">Product</th>
+                        <th scope="col">Estimated Next Purchase</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Estimate</th>
+                        <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -20,21 +20,23 @@
                         <tr>
                             <td>{{ suggestion.product_name }}</td>
                             <td>{{ suggestion.restock_date }}</td>
-                            <td>{{ suggestion.due_status }}</td>
-                            <td>{{ suggestion.estimate_label }}</td>
+                            <td><span class="fb-badge fb-badge-warning">{{ suggestion.due_status }}</span></td>
+                            <td>
+                                {# The label identifies whether a model or the existing baseline supplied the date. #}
+                                <span class="fb-badge {% if suggestion.status == 'MODEL' %}fb-badge-success{% endif %}">{{ suggestion.estimate_label }}</span>
+                            </td>
                             <td>
                                 <form action="/store/cart/{{ suggestion.product_id }}" method="post">
                                     {% csrf_token %}
-                                    <button type="submit">Add to Cart</button>
+                                    <button class="btn btn-primary btn-sm" type="submit">Add to Cart</button>
                                 </form>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
-            </table>
+            </table></div>
         {% else %}
             <p>{{ empty_message }}</p>
         {% endif %}
-    </p>
-
+    </div>
 {% endblock %}

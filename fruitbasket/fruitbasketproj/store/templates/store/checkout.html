@@ -2,24 +2,23 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
+            <div class="alert {% if status_type == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="status">
+                <strong>{% if status_type == 'success' %}Success:{% else %}Error:{% endif %}</strong> {{ status_message }}
+            </div>
         {% endif %}
-    </p>
-
-    <p>
+    </div>
+    <div class="fb-section">
         <h2>Checkout</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <thead>
                 <tr>
-                    <th>Pname</th>
-                    <th>Psize</th>
-                    <th>Pprice</th>
-                    <th>Quantity</th>
-                    <th>Subtotal</th>
+                    <th scope="col">Product</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Subtotal</th>
                 </tr>
             </thead>
             <tbody>
@@ -48,36 +47,33 @@
                 </tr>
 
             </tbody>
-        </table>
-    </p>
-
+        </table></div>
+    </div>
     {% if cart_items %}
 
-    <p>
+    <div class="fb-section">
         <form action="/store/checkout" method="post">
             {% csrf_token %}
 
-            <table border="1" width="100%">
+            <div class="table-responsive"><table class="table fb-table align-middle">
                 <tbody>
                     <tr>
                         <td width="20%"><b>Delivery address</b></td>
-                        <td><input type="text" name="Oaddress" value="{{ address }}" required="required" style="width: 400px"></td>
+                        <td><label class="visually-hidden" for="delivery-address">Delivery address</label><input class="form-control" id="delivery-address" type="text" name="Oaddress" value="{{ address }}" required="required"></td>
                     </tr>
                     <tr>
                         <td colspan="2" style="text-align: center;">
-                            <input type="submit" value="Place Order">
+                            <input class="btn btn-primary" type="submit" value="Place Order">
                         </td>
                     </tr>
                 </tbody>
-            </table>
+            </table></div>
         </form>
-    </p>
-
+    </div>
     {% endif %}
 
     <hr />
-    <p>
+    <div class="fb-section">
         <a href="/store/cart">Back to Cart</a> | <a href="/store/orders">My Orders</a>
-    </p>
-
+    </div>
 {% endblock %}

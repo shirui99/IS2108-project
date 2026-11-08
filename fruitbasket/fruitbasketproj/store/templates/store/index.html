@@ -2,55 +2,39 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         <h2>All Products</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th scope="col" style="width: 80px;">Image</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Size</th>
-                    <th scope="col">Price</th>
-                    <th scope="col">Rating</th>
-                    <th scope="col" class="text-end">Action</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="fb-product-grid">
 
                 {% for product in products %}
                 
-                <tr>
-                    <td>{% if product.Pimage %}<img src="{{ product.Pimage.url }}" width="80">{% else %}No image{% endif %}</td>
-                    <td>{{ product.Pname }}</td>
-                    <td>{{ product.get_Pcategory_display }}</td>
-                    <td>{{ product.Psize }}</td>
-                    <td>${{ product.Pprice|floatformat:2 }}</td>
-                    <td>
+                <article class="fb-product">
+                    <div class="fb-product-image">{% if product.Pimage %}<img src="{{ product.Pimage.url }}" alt="{{ product.Pname }}" loading="lazy">{% else %}<span>Image unavailable</span>{% endif %}</div>
+                    <h3>{{ product.Pname }}</h3>
+                    <div class="fb-product-category">{{ product.get_Pcategory_display }}</div>
+                    <div>{{ product.Psize }}</div>
+                    <div class="fb-price">${{ product.Pprice|floatformat:2 }}</div>
+                    <div>
                         {% if product.reviews > 0 %}
                             {{ product.rating|floatformat:1 }} / 5 ({{ product.reviews }} reviews)
                         {% else %}
                             No reviews yet
                         {% endif %}
-                    </td>
-                    <td>
+                    </div>
+                    <div>
                         <form action="/store/cart/{{ product.Pid }}" method="post">
                             {% csrf_token %}
-                            <button type="submit">Add to Cart</button>
+                            <button class="btn btn-primary btn-sm" type="submit">Add to Cart</button>
                         </form>
-                    </td>
-                </tr>
+                    </div>
+                </article>
 
                 {% empty %}
                 
-                <tr>
-                    <td colspan="6">No product record available.</td>
-                </tr>
+                <p class="fb-empty">No products are available at the moment.</p>
                 
                 {% endfor %}
                 
-            </tbody>
-        </table>
-    </p>
-
+            </div>
+    </div>
 {% endblock %}

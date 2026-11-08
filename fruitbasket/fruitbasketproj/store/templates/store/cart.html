@@ -2,25 +2,24 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
+            <div class="alert {% if status_type == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="status">
+                <strong>{% if status_type == 'success' %}Success:{% else %}Error:{% endif %}</strong> {{ status_message }}
+            </div>
         {% endif %}
-    </p>
-
-    <p>
+    </div>
+    <div class="fb-section">
         <h2>My Cart</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <thead>
                 <tr>
-                    <th>Product</th>
-                    <th>Size</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Subtotal</th>
-                    <th>Action</th>
+                    <th scope="col">Product</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Subtotal</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,12 +35,12 @@
                     <td>
                         <form action="/store/cart/{{ item.product.Pid }}" method="post">
                             {% csrf_token %}
-                            <button type="submit">Add One More</button>
+                            <button class="btn btn-primary btn-sm" type="submit">Add One More</button>
                         </form>
                         <form action="/store/cart/{{ item.product.Pid }}" method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="remove">
-                            <button type="submit" onclick="return confirm('Are you sure you want to remove this product?');">Remove</button>
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Are you sure you want to remove this product?');">Remove</button>
                         </form>
                     </td>
                 </tr>
@@ -60,11 +59,10 @@
                 </tr>
 
             </tbody>
-        </table>
-    </p>
+        </table></div>
+    </div>
     <hr />
-    <p>
+    <div class="fb-section">
                 <a href="/store/">Continue Shopping</a> | <a href="/store/checkout">Checkout</a>
-    </p>
-
+    </div>
 {% endblock %}

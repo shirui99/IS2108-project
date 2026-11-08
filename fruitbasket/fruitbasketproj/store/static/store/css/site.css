@@ -44,3 +44,32 @@
     .fb-content h1 { font-size: 1.75rem; }
     .fb-content h2 { font-size: 1.5rem; }
 }
+
+/* Explicit classes limit these refinements to the existing content templates. */
+.fb-section { margin-bottom: 24px; }
+.fb-table { --bs-table-bg: #fff; --bs-table-border-color: #e0e5df; margin-bottom: 0; }
+.fb-table th { background: #edf1eb; color: #3c4d40; font-size: .875rem; font-weight: 650; white-space: nowrap; }
+.fb-table :is(th, td) { padding: 12px 16px; }
+.fb-table td form { margin-block: 4px; }
+.fb-table :is(input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    max-width: 100%; padding: 6px 10px; border: 1px solid #89998d; border-radius: 4px; background: #fff; color: #25312b;
+}
+.fb-table textarea { width: 100%; }
+.fb-field-label { width: 25%; }
+.fb-product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 24px; }
+.fb-product { display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid #dce2dc; padding: 16px; border-radius: 4px; }
+.fb-product-image { display: grid; place-items: center; height: 180px; background: #f1f3ee; color: #657060; font-size: .875rem; margin-bottom: 8px; }
+.fb-product-image img { width: 100%; height: 180px; object-fit: contain; }
+.fb-product h3 { margin: 0; font-size: 1.125rem; }
+.fb-product-category { color: #5c685e; font-size: .875rem; }
+.fb-price { font-weight: 700; font-size: 1.25rem; color: #20543b; }
+.fb-product > div:last-child { margin-top: auto; padding-top: 12px; }
+.fb-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; background: #e9eeea; color: #415046; font-size: .8125rem; font-weight: 600; }
+.fb-badge-success { background: #e3efe5; color: #20543b; }
+.fb-badge-warning { background: #fff0cc; color: #745000; }
+.fb-badge-danger { background: #fae5e5; color: #8d292f; }
+.fb-empty { padding: 24px; border: 1px dashed #b4bfb3; color: #536151; }
+
+.fb-nav form { margin: 0; }
+.fb-nav button { display: block; padding: 12px 0; border: 0; border-bottom: 3px solid transparent; background: none; color: #48564c; font: inherit; font-size: .9375rem; }
+.fb-nav button:hover { color: #20543b; border-bottom-color: #9baea0; }

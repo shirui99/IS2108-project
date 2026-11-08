@@ -2,41 +2,39 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
+            <div class="alert {% if status_type == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="status">
+                <strong>{% if status_type == 'success' %}Success:{% else %}Error:{% endif %}</strong> {{ status_message }}
+            </div>
         {% endif %}
-    </p>
-
+    </div>
     {% if ticket %}
 
-    <p>
+    <div class="fb-section">
         <h2>Ticket {{ ticket.pk }}: {{ ticket.Tsubject }}</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <tbody>
-                <tr><th>Order</th><td>{{ ticket.Torder.Oid }}</td></tr>
-                <tr><th>Customer</th><td>{{ ticket.Torder.Ocustomer }}</td></tr>
-                <tr><th>Submitted</th><td>{{ ticket.Tsubmitted }}</td></tr>
-                <tr><th>Status</th><td>{{ ticket.get_Tstatus_display }}</td></tr>
-                <tr><th>Message</th><td>{{ ticket.Tmessage|linebreaksbr }}</td></tr>
+                <tr><th scope="row">Order</th><td>{{ ticket.Torder.Oid }}</td></tr>
+                <tr><th scope="row">Customer</th><td>{{ ticket.Torder.Ocustomer }}</td></tr>
+                <tr><th scope="row">Submitted</th><td>{{ ticket.Tsubmitted }}</td></tr>
+                <tr><th scope="row">Status</th><td>{{ ticket.get_Tstatus_display }}</td></tr>
+                <tr><th scope="row">Message</th><td>{{ ticket.Tmessage|linebreaksbr }}</td></tr>
 
                 {% if ticket.Tstatus != 'open' %}
-                <tr><th>Response</th><td>{{ ticket.Tresponse|linebreaksbr }}</td></tr>
-                <tr><th>Answered by</th><td>{{ ticket.Tresponder.username }}</td></tr>
-                <tr><th>Answered at</th><td>{{ ticket.Tresponded }}</td></tr>
+                <tr><th scope="row">Response</th><td>{{ ticket.Tresponse|linebreaksbr }}</td></tr>
+                <tr><th scope="row">Answered by</th><td>{{ ticket.Tresponder.username }}</td></tr>
+                <tr><th scope="row">Answered at</th><td>{{ ticket.Tresponded }}</td></tr>
                 {% endif %}
             </tbody>
-        </table>
-    </p>
-
+        </table></div>
+    </div>
     {% if ticket.Tstatus == 'open' %}
     <form action="/adminpanel/support/{{ ticket.pk }}" method="post">
         {% csrf_token %}
-        Response:<br>
-        <textarea name="Tresponse" rows="5" cols="60" required></textarea><br>
-        <input type="submit" value="Send Response">
+        <label for="ticket-response">Response</label>
+        <textarea class="form-control" id="ticket-response" name="Tresponse" rows="5" cols="60" required></textarea><br>
+        <input class="btn btn-primary" type="submit" value="Send Response">
     </form>
     {% endif %}
 
@@ -44,18 +42,18 @@
 
     {% endif %}
 
-    <p>
+    <div class="fb-section">
         <h2>View All Tickets</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <thead>
                 <tr>
-                    <th>Ticket</th>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Subject</th>
-                    <th>Submitted</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th scope="col">Ticket</th>
+                    <th scope="col">Order</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Subject</th>
+                    <th scope="col">Submitted</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -79,11 +77,10 @@
                 {% endfor %}
 
             </tbody>
-        </table>
-    </p>
+        </table></div>
+    </div>
     <hr />
-    <p>
+    <div class="fb-section">
         <a href="/adminpanel">Admin Panel Home</a>
-    </p>
-
+    </div>
 {% endblock %}

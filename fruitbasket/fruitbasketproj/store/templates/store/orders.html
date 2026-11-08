@@ -2,17 +2,17 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         <h2>My Orders</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <thead>
                 <tr>
-                    <th>Oid</th>
-                    <th>Odate</th>
-                    <th>Oaddress</th>
-                    <th>Ostatus</th>
-                    <th>Items</th>
-                    <th>Action</th>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Order date</th>
+                    <th scope="col">Delivery address</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Items</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -39,22 +39,21 @@
                 {% endfor %}
                 
             </tbody>
-        </table>
-    </p>
-
+        </table></div>
+    </div>
     {% if order %}
 
     <hr />
-    <p>
+    <div class="fb-section">
         <h2>Order {{ order.Oid }}</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <thead>
                 <tr>
-                    <th>Pname</th>
-                    <th>Psize</th>
-                    <th>Pprice</th>
-                    <th>Iexpiry</th>
-                    <th>Istatus</th>
+                    <th scope="col">Product</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Expiry date</th>
+                    <th scope="col">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,29 +71,27 @@
                 {% endfor %}
                 
             </tbody>
-        </table>
-    </p>
-
-    <p>
+        </table></div>
+    </div>
+    <div class="fb-section">
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
+            <div class="alert {% if status_type == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="status">
+                <strong>{% if status_type == 'success' %}Success:{% else %}Error:{% endif %}</strong> {{ status_message }}
+            </div>
         {% endif %}
-    </p>
-
+    </div>
     <h3>Need help with this order?</h3>
     <form method="post" action="/store/orders/{{ order.Oid }}">
         {% csrf_token %}
-        Subject: <input type="text" name="Tsubject" maxlength="200" required><br>
-        Message:<br><textarea name="Tmessage" rows="4" cols="50" required></textarea><br>
-        <input type="submit" value="Submit Issue">
+        <label for="issue-subject">Subject</label><input class="form-control" id="issue-subject" type="text" name="Tsubject" maxlength="200" required><br>
+        <label for="issue-message">Message</label><textarea class="form-control" id="issue-message" name="Tmessage" rows="4" cols="50" required></textarea><br>
+        <input class="btn btn-primary" type="submit" value="Submit Issue">
     </form>
 
     <h3>Support Tickets</h3>
-    <table border="1" width="100%">
+    <div class="table-responsive"><table class="table fb-table align-middle">
         <thead>
-            <tr><th>Submitted</th><th>Subject</th><th>Message</th><th>Status</th><th>Response</th></tr>
+            <tr><th scope="col">Submitted</th><th scope="col">Subject</th><th scope="col">Message</th><th scope="col">Status</th><th scope="col">Response</th></tr>
         </thead>
         <tbody>
             {% for ticket in tickets %}
@@ -109,7 +106,7 @@
             <tr><td colspan="5">No issues reported for this order.</td></tr>
             {% endfor %}
         </tbody>
-    </table>
+    </table></div>
 
 
     {% endif %}

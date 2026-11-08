@@ -4,52 +4,48 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
+            <div class="alert {% if status_type == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="status">
+                <strong>{% if status_type == 'success' %}Success:{% else %}Error:{% endif %}</strong> {{ status_message }}
+            </div>
         {% endif %}
-    </p>
-
-    <p>
+    </div>
+    <div class="fb-section">
         <h2>
             Create/Update Order
-            <!-- HTML5 -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16"> <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/> <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/> </svg>
         </h2>
         
         <form action="/adminpanel/order_new" method="post">
             {% csrf_token %}
 
-            <table border="1" width="100%">
+            <div class="table-responsive"><table class="table fb-table align-middle">
                 <tbody>
-                    {{ form }}
+                    {% include 'adminpanel/form_template.html' %}
 
                     <tr>
                         <td colspan="3" style="text-align: center;">
                             <input type="hidden" id="action" name="action" value="{{ action }}" />
-                            <input type="reset" value="Clear">
-                            <input type="submit" value="Create/Update">
+                            <input class="btn btn-primary" type="submit" value="Create/Update">
                         </td>
                     </tr>
                 </tbody>
-            </table>
+            </table></div>
         </form>
-    </p>
+    </div>
     <hr />
-    <p>
+    <div class="fb-section">
         <h2>View All Orders</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <thead>
                 <tr>
-                    <th>Oid</th>
-                    <th>Ocustomer</th>
-                    <th>Oaddress</th>
-                    <th>Odate</th>
-                    <th>Ostatus</th>
-                    <th>Items</th>
-                    <th>Action</th>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Delivery address</th>
+                    <th scope="col">Order date</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Items</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -69,7 +65,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="Oid" value="{{ order.Oid }}">
-                            <button type="submit">Delete</button>
+                            <button class="btn btn-danger btn-sm" type="submit">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -81,11 +77,10 @@
                 {% endfor %}
 
             </tbody>
-        </table>
-    </p>
-    <hr /
-    <p>
+        </table></div>
+    </div>
+    <hr />
+    <div class="fb-section">
         <a href="/adminpanel">Admin Panel Home</a>
-    </p>
-
+    </div>
 {% endblock %}

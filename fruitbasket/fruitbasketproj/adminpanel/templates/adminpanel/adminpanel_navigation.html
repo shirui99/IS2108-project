@@ -5,6 +5,6 @@
     <li><a href="{% url 'customer_new' %}"{% if request.resolver_match.url_name == 'customer_new' %} aria-current="page"{% endif %}>Customers</a></li>
     <li><a href="{% url 'order_new' %}"{% if request.resolver_match.url_name == 'order_new' %} aria-current="page"{% endif %}>Orders</a></li>
     <li><a href="{% url 'support' %}"{% if request.resolver_match.url_name == 'support' %} aria-current="page"{% endif %}>Support</a></li>
-    <li><a href="{% url 'adminpanel_logout' %}"{% if request.resolver_match.url_name == 'adminpanel_logout' %} aria-current="page"{% endif %}>Log out</a></li>
+    <li><form action="{% url 'adminpanel_logout' %}" method="post">{% csrf_token %}<button type="submit">Log out</button></form></li>
     <li><a href="{% url 'index' %}"{% if request.resolver_match.url_name == 'index' %} aria-current="page"{% endif %}>Back to Fruit Basket</a></li>
 </ul>

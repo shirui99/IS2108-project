@@ -2,30 +2,29 @@
 
 {% block content %}
 
-    <p>
+    <div class="fb-section">
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
+            <div class="alert {% if status_type == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="status">
+                <strong>{% if status_type == 'success' %}Success:{% else %}Error:{% endif %}</strong> {{ status_message }}
+            </div>
         {% endif %}
-    </p>
-
+    </div>
     {% if expiring_soon > 0 %}
-        <h3 style="color: red;">Reminder: {{ expiring_soon }} item(s) in your pantry expire within 3 days!</h3>
+        <div class="alert alert-warning" role="status"><strong>Use soon:</strong> {{ expiring_soon }} pantry item(s) expire within 3 days.</div>
     {% endif %}
 
-    <p>
+    <div class="fb-section">
         <h2>My Pantry</h2>
-        <table border="1" width="100%">
+        <div class="table-responsive"><table class="table fb-table align-middle">
             <thead>
                 <tr>
-                    <th>Product</th>
-                    <th>Size</th>
-                    <th>Purchased</th>
-                    <th>Expiry Date</th>
-                    <th>Days Left</th>
-                    <th>Rating</th>
-                    <th>Action</th>
+                    <th scope="col">Product</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Purchased</th>
+                    <th scope="col">Expiry Date</th>
+                    <th scope="col">Days Left</th>
+                    <th scope="col">Rating</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,8 +36,11 @@
                     <td>{{ p.item.Iproduct.Psize }}</td>
                     <td>{{ p.item.Iorder.Odate }}</td>
                     <td>{% if p.item.Iexpiry %}{{ p.item.Iexpiry }}{% else %}No expiry{% endif %}</td>
-                    <td {% if p.days_left is not None and p.days_left <= 3 %}style="color: red; font-weight: bold;"{% endif %}>
-                        {% if p.days_left is None %}-{% elif p.days_left < 0 %}EXPIRED{% else %}{{ p.days_left }}{% endif %}
+                    <td>
+                        {% if p.days_left is None %}<span class="fb-badge">No expiry</span>
+                        {% elif p.days_left < 0 %}<span class="fb-badge fb-badge-danger">Expired</span>
+                        {% elif p.days_left <= 3 %}<span class="fb-badge fb-badge-warning">Use soon · {{ p.days_left }} day(s)</span>
+                        {% else %}<span class="fb-badge fb-badge-success">Fresh · {{ p.days_left }} days</span>{% endif %}
                     </td>
                     <td>
                         {% if p.item.Irating %}
@@ -55,7 +57,7 @@
                                     <option value="4">4</option>
                                     <option value="5">5</option>
                                 </select>
-                                <button type="submit">Submit</button>
+                                <button class="btn btn-primary btn-sm" type="submit">Submit</button>
                             </form>
                         {% endif %}
                     </td>
@@ -63,12 +65,12 @@
                         <form action="/store/pantry/{{ p.item.pk }}" method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="used">
-                            <button type="submit">Used Up</button>
+                            <button class="btn btn-primary btn-sm" type="submit">Used Up</button>
                         </form>
                         <form action="/store/pantry/{{ p.item.pk }}" method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="expired">
-                            <button type="submit" onclick="return confirm('Are you sure you want to throw this item away?');">Thrown Away</button>
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Are you sure you want to throw this item away?');">Thrown Away</button>
                         </form>
                     </td>
                 </tr>
@@ -82,7 +84,6 @@
                 {% endfor %}
                 
             </tbody>
-        </table>
-    </p>
-
+        </table></div>
+    </div>
 {% endblock %}
