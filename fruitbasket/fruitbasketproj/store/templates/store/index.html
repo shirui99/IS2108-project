@@ -34,7 +34,10 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/store/cart/{{ product.Pid }}">Add to Cart</a>
+                        <form action="/store/cart/{{ product.Pid }}" method="post">
+                            {% csrf_token %}
+                            <button type="submit">Add to Cart</button>
+                        </form>
                     </td>
                 </tr>
 

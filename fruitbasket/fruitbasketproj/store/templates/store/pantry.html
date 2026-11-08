@@ -44,15 +44,32 @@
                         {% if p.item.Irating %}
                             {{ p.item.Irating }} / 5
                         {% else %}
-                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=1">1</a>
-                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=2">2</a>
-                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=3">3</a>
-                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=4">4</a>
-                            <a href="/store/pantry/{{ p.item.pk }}?action=rate&rating=5">5</a>
+                            <form action="/store/pantry/{{ p.item.pk }}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="rate">
+                                <label for="rating-{{ p.item.pk }}">Rating</label>
+                                <select id="rating-{{ p.item.pk }}" name="rating">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                                <button type="submit">Submit</button>
+                            </form>
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/store/pantry/{{ p.item.pk }}?action=used">Used Up</a> | <a href="/store/pantry/{{ p.item.pk }}?action=expired" onclick="return confirm('Are you sure you want to throw this item away?');">Thrown Away</a>
+                        <form action="/store/pantry/{{ p.item.pk }}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="used">
+                            <button type="submit">Used Up</button>
+                        </form>
+                        <form action="/store/pantry/{{ p.item.pk }}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="expired">
+                            <button type="submit" onclick="return confirm('Are you sure you want to throw this item away?');">Thrown Away</button>
+                        </form>
                     </td>
                 </tr>
 

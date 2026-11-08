@@ -32,6 +32,152 @@ class CustomerAuthenticationMiddlewareTests(TestCase):
         self.assertFalse(view_executed)
 
 
+class StoreMutationTests(TestCase):
+    def setUp(self):
+        user = User.objects.create_user(username="store_test", password="password")
+        self.customer = Customer.objects.create(
+            Cid="CSTORE",
+            Cname="Store Customer",
+            Caddress="Store Address",
+            Chouseholdsize=2,
+            Cmealsperweek=5,
+            Cuser=user,
+        )
+        self.product = Product.objects.create(
+            Pid="S001",
+            Pname="Store Apples",
+            Pcategory="fruit",
+            Psize="1 pack",
+            Pprice=2.0,
+            Plowstock=1,
+            Pactive=True,
+        )
+        session = self.client.session
+        session["Cid"] = self.customer.Cid
+        session.save()
+
+    def test_add_to_cart_uses_post_redirect_get(self):
+        response = self.client.post(f"/store/cart/{self.product.Pid}")
+
+        self.assertRedirects(response, "/store/cart")
+        self.assertEqual(self.client.session["cart"], {self.product.Pid: 1})
+
+    def test_get_cart_does_not_add_product(self):
+        response = self.client.get(f"/store/cart/{self.product.Pid}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session.get("cart"), {})
+
+    def test_valid_pantry_post_marks_item_used(self):
+        order = Orders.objects.create(
+            Oid="SORD02",
+            Odate=date(2026, 11, 8),
+            Oaddress=self.customer.Caddress,
+            Ostatus="delivered",
+            Ocustomer=self.customer,
+        )
+        item = Item.objects.create(
+            Ireceived=order.Odate,
+            Istatus="delivered",
+            Iproduct=self.product,
+            Iorder=order,
+        )
+
+        response = self.client.post(
+            f"/store/pantry/{item.pk}",
+            {"action": "used"},
+        )
+
+        self.assertRedirects(response, "/store/pantry")
+        item.refresh_from_db()
+        self.assertEqual(item.Istatus, "used")
+
+    def test_get_pantry_does_not_change_item(self):
+        order = Orders.objects.create(
+            Oid="SORD03",
+            Odate=date(2026, 11, 8),
+            Oaddress=self.customer.Caddress,
+            Ostatus="delivered",
+            Ocustomer=self.customer,
+        )
+        item = Item.objects.create(
+            Ireceived=order.Odate,
+            Istatus="delivered",
+            Iproduct=self.product,
+            Iorder=order,
+        )
+
+        response = self.client.get(
+            f"/store/pantry/{item.pk}?action=used",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        item.refresh_from_db()
+        self.assertEqual(item.Istatus, "delivered")
+
+    def test_pantry_post_rejects_another_customers_item(self):
+        other_user = User.objects.create_user(
+            username="other_store_test",
+            password="password",
+        )
+        other_customer = Customer.objects.create(
+            Cid="COTHER",
+            Cname="Other Customer",
+            Caddress="Other Address",
+            Chouseholdsize=2,
+            Cmealsperweek=5,
+            Cuser=other_user,
+        )
+        order = Orders.objects.create(
+            Oid="SORD04",
+            Odate=date(2026, 11, 8),
+            Oaddress=other_customer.Caddress,
+            Ostatus="delivered",
+            Ocustomer=other_customer,
+        )
+        item = Item.objects.create(
+            Ireceived=order.Odate,
+            Istatus="delivered",
+            Iproduct=self.product,
+            Iorder=order,
+        )
+
+        response = self.client.post(
+            f"/store/pantry/{item.pk}",
+            {"action": "used"},
+        )
+
+        self.assertRedirects(response, "/store/pantry")
+        item.refresh_from_db()
+        self.assertEqual(item.Istatus, "delivered")
+
+    def test_invalid_pantry_rating_is_not_saved(self):
+        order = Orders.objects.create(
+            Oid="SORD01",
+            Odate=date(2026, 11, 8),
+            Oaddress=self.customer.Caddress,
+            Ostatus="delivered",
+            Ocustomer=self.customer,
+        )
+        item = Item.objects.create(
+            Ireceived=order.Odate,
+            Istatus="delivered",
+            Iproduct=self.product,
+            Iorder=order,
+        )
+
+        response = self.client.post(
+            f"/store/pantry/{item.pk}",
+            {"action": "rate", "rating": "6"},
+        )
+
+        self.assertRedirects(response, "/store/pantry")
+        item.refresh_from_db()
+        self.assertIsNone(item.Irating)
+        messages = list(response.wsgi_request._messages)
+        self.assertEqual(str(messages[0]), "Please choose a rating from 1 to 5.")
+
+
 class RestockFeatureTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="restock_test")

@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from django.db.models import Count, Q
+from django.db.models.deletion import RestrictedError
 from django.shortcuts import render, HttpResponse
 from datetime import timedelta
 from django.utils import timezone
@@ -73,27 +74,8 @@ class ProductView(View):
 
                 product = Product.objects.get(pk=pk)
 
-                if request.GET.get('action') == 'delete':
-
-                    try:
-
-                        product.delete()
-
-                        form = self.form_class()
-
-                        status_type = 'success'
-                        status_message = 'Product deleted successfully.'
-
-                    except Exception as e:
-
-                        form = self.form_class()
-                        status_type = 'error'
-                        status_message = f'Error deleting product: {str(e)}'
-
-                else: # update
-
-                    form = self.form_class(instance=product)
-                    action = 'update'
+                form = self.form_class(instance=product)
+                action = 'update'
 
             except Product.DoesNotExist:
 
@@ -133,6 +115,35 @@ class ProductView(View):
         status_type = None
         status_message = None
         save_succeeded = False
+
+        if action == 'delete':
+            form = self.form_class()
+            try:
+                Product.objects.get(pk=request.POST.get('Pid')).delete()
+                status_type = 'success'
+                status_message = 'Product deleted successfully.'
+            except Product.DoesNotExist:
+                status_type = 'error'
+                status_message = 'Product could not be found.'
+            except RestrictedError:
+                status_type = 'error'
+                status_message = 'This product cannot be deleted while related stock records exist.'
+            except Exception:
+                status_type = 'error'
+                status_message = 'The product could not be deleted.'
+
+            rendered_form = form.render('adminpanel/form_template.html')
+            products = Product.objects.annotate(
+                stock=Count('product_items', filter=Q(product_items__Istatus='available'))
+            )
+            context = {
+                'form': rendered_form,
+                'action': 'create',
+                'products': products,
+                'status_type': status_type,
+                'status_message': status_message,
+            }
+            return render(request, self.template_name, context)
 
 
 
@@ -261,27 +272,8 @@ class CustomerView(View):
 
                 customer = Customer.objects.get(pk=pk)
 
-                if request.GET.get('action') == 'delete':
-
-                    try:
-
-                        customer.delete()
-
-                        form = self.form_class()
-
-                        status_type = 'success'
-                        status_message = 'Customer deleted successfully.'
-
-                    except Exception as e:
-
-                        form = self.form_class()
-                        status_type = 'error'
-                        status_message = f'Error deleting customer: {str(e)}'
-
-                else: # update
-
-                    form = self.form_class(instance=customer)
-                    action = 'update'
+                form = self.form_class(instance=customer)
+                action = 'update'
 
             except Customer.DoesNotExist:
 
@@ -317,6 +309,33 @@ class CustomerView(View):
         status_type = None
         status_message = None
         save_succeeded = False
+
+        if action == 'delete':
+            form = self.form_class()
+            try:
+                Customer.objects.get(pk=request.POST.get('Cid')).delete()
+                status_type = 'success'
+                status_message = 'Customer deleted successfully.'
+            except Customer.DoesNotExist:
+                status_type = 'error'
+                status_message = 'Customer could not be found.'
+            except RestrictedError:
+                status_type = 'error'
+                status_message = 'This customer cannot be deleted while related orders exist.'
+            except Exception:
+                status_type = 'error'
+                status_message = 'The customer could not be deleted.'
+
+            rendered_form = form.render('adminpanel/form_template.html')
+            customers = Customer.objects.all()
+            context = {
+                'form': rendered_form,
+                'action': 'create',
+                'customers': customers,
+                'status_type': status_type,
+                'status_message': status_message,
+            }
+            return render(request, self.template_name, context)
 
 
 
@@ -436,27 +455,8 @@ class OrderView(View):
             
                 order = Orders.objects.get(pk=pk)
 
-                if request.GET.get('action') == 'delete':                
-                
-                    try:
-                    
-                        order.delete()
-                                        
-                        form = self.form_class()
-    
-                        status_type = 'success'
-                        status_message = 'Order deleted successfully.'                            
-    
-                    except Exception as e:
-    
-                        form = self.form_class()
-                        status_type = 'error'
-                        status_message = f'Error deleting order: {str(e)}'
-    
-                else: # update
-                    
-                    form = self.form_class(instance=order)
-                    action = 'update'
+                form = self.form_class(instance=order)
+                action = 'update'
             
             except Orders.DoesNotExist:
 
@@ -494,6 +494,33 @@ class OrderView(View):
         status_type = None
         status_message = None        
         save_succeeded = False
+
+        if action == 'delete':
+            form = self.form_class()
+            try:
+                Orders.objects.get(pk=request.POST.get('Oid')).delete()
+                status_type = 'success'
+                status_message = 'Order deleted successfully.'
+            except Orders.DoesNotExist:
+                status_type = 'error'
+                status_message = 'Order could not be found.'
+            except RestrictedError:
+                status_type = 'error'
+                status_message = 'This order cannot be deleted while related items or tickets exist.'
+            except Exception:
+                status_type = 'error'
+                status_message = 'The order could not be deleted.'
+
+            rendered_form = form.render('adminpanel/form_template.html')
+            orders = Orders.objects.annotate(items=Count('order_items'))
+            context = {
+                'form': rendered_form,
+                'action': 'create',
+                'orders': orders,
+                'status_type': status_type,
+                'status_message': status_message,
+            }
+            return render(request, self.template_name, context)
 
 
         
@@ -622,36 +649,6 @@ class ItemView(View):
         status_type = None
         status_message = None
 
-        if request.GET.get('action') == 'delete':
-
-            try:
-
-                batch = Item.objects.filter(
-                    Istatus='available',
-                    Iproduct_id=request.GET.get('product'),
-                    Ireceived=request.GET.get('received')
-                )
-
-                expiry = request.GET.get('expiry')
-
-                if expiry:
-
-                    batch = batch.filter(Iexpiry=expiry)
-
-                else:
-
-                    batch = batch.filter(Iexpiry__isnull=True)
-
-                count, _ = batch.delete()
-
-                status_type = 'success'
-                status_message = f'{count} item(s) removed from stock.'
-
-            except Exception as e:
-
-                status_type = 'error'
-                status_message = f'Error removing items: {str(e)}'
-
         return self.render_page(request, form, status_type, status_message)
 
 
@@ -661,6 +658,31 @@ class ItemView(View):
         form = self.form_class(request.POST)
         status_type = None
         status_message = None
+
+        if request.POST.get('action') == 'delete':
+            try:
+                batch = Item.objects.filter(
+                    Istatus='available',
+                    Iproduct_id=request.POST.get('product'),
+                    Ireceived=request.POST.get('received')
+                )
+                expiry = request.POST.get('expiry')
+                if expiry:
+                    batch = batch.filter(Iexpiry=expiry)
+                else:
+                    batch = batch.filter(Iexpiry__isnull=True)
+
+                count, _ = batch.delete()
+                status_type = 'success'
+                status_message = f'{count} item(s) removed from stock.'
+            except RestrictedError:
+                status_type = 'error'
+                status_message = 'This stock batch cannot be removed because it is related to another record.'
+            except Exception:
+                status_type = 'error'
+                status_message = 'The stock batch could not be removed.'
+
+            return self.render_page(request, self.form_class(initial={'Ireceived': timezone.localdate()}), status_type, status_message)
 
         if form.is_valid():
 

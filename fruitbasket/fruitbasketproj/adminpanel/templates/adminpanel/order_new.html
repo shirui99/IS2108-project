@@ -64,7 +64,13 @@
                     <td>{{ order.get_Ostatus_display }}</td>
                     <td>{{ order.items }}</td>
                     <td>
-                        <a href="/adminpanel/order_new/{{ order.Oid }}">Update</a> | <a href="/adminpanel/order_new/{{ order.Oid }}?action=delete" onclick="return confirm('Are you sure you want to delete this order?');">Delete</a>
+                        <a href="/adminpanel/order_new/{{ order.Oid }}">Update</a>
+                        <form action="/adminpanel/order_new/{{ order.Oid }}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="Oid" value="{{ order.Oid }}">
+                            <button type="submit">Delete</button>
+                        </form>
                     </td>
                 </tr>
 

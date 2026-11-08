@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.contrib import messages
 
 from adminpanel.models import Customer, Product, Orders, Item, SupportTicket
 from adminpanel.views import remove_expiring_stock
@@ -153,27 +154,21 @@ def logout(request):
 
 def cart(request, pk=None):
 
-    status_type = None
-    status_message = None
-
     if 'cart' not in request.session:
 
         request.session['cart'] = {}
 
     cart = request.session['cart']
 
-    if pk is not None:
-
-        if request.GET.get('action') == 'remove':
+    if request.method == 'POST' and pk is not None:
+        if request.POST.get('action') == 'remove':
 
             if pk in cart:
 
                 del cart[pk]
+                messages.success(request, 'Product removed from cart.')
 
-                status_type = 'success'
-                status_message = 'Product removed from cart.'
-
-        else: # add
+        else:
 
             if pk in cart:
 
@@ -183,10 +178,10 @@ def cart(request, pk=None):
 
                 cart[pk] = 1
 
-            status_type = 'success'
-            status_message = 'Product added to cart.'
+            messages.success(request, 'Product added to cart.')
 
         request.session['cart'] = cart
+        return redirect('/store/cart')
 
     cart_items = []
     total = 0
@@ -202,8 +197,6 @@ def cart(request, pk=None):
     context = {
         'cart_items': cart_items,
         'total': total,
-        'status_type': status_type,
-        'status_message': status_message,
     }
 
     return render(request, 'store/cart.html', context)
@@ -350,45 +343,48 @@ def orders(request, pk=None):
 
 def pantry(request, pk=None):
 
-    status_type = None
-    status_message = None
     today = timezone.localdate()
 
-    if pk is not None:
+    if request.method == 'POST' and pk is not None:
 
         # Only change an item that is in the logged in customer's pantry
         item = Item.objects.filter(pk=pk, Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered').first()
 
         if item is None:
 
-            status_type = 'error'
-            status_message = 'Item not found.'
+            messages.error(request, 'Item not found.')
 
-        elif request.GET.get('action') == 'used':
+        elif request.POST.get('action') == 'used':
 
             item.Istatus = 'used'
             item.Ifinished = today
             item.save()
 
-            status_type = 'success'
-            status_message = f'{item.Iproduct.Pname} marked as used up.'
+            messages.success(request, f'{item.Iproduct.Pname} marked as used up.')
 
-        elif request.GET.get('action') == 'expired':
+        elif request.POST.get('action') == 'expired':
 
             item.Istatus = 'expired'
             item.Ifinished = today
             item.save()
 
-            status_type = 'success'
-            status_message = f'{item.Iproduct.Pname} marked as thrown away.'
+            messages.success(request, f'{item.Iproduct.Pname} marked as thrown away.')
 
-        elif request.GET.get('action') == 'rate':
+        elif request.POST.get('action') == 'rate':
 
-            item.Irating = request.GET.get('rating')
-            item.save()
+            try:
+                rating = int(request.POST.get('rating'))
+            except (TypeError, ValueError):
+                rating = None
 
-            status_type = 'success'
-            status_message = f'Thank you for rating {item.Iproduct.Pname}.'
+            if rating not in range(1, 6):
+                messages.error(request, 'Please choose a rating from 1 to 5.')
+            else:
+                item.Irating = rating
+                item.save()
+                messages.success(request, f'Thank you for rating {item.Iproduct.Pname}.')
+
+        return redirect('/store/pantry')
 
     items = Item.objects.filter(Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered').order_by('Iexpiry')
 
@@ -414,8 +410,6 @@ def pantry(request, pk=None):
     context = {
         'pantry_items': pantry_items,
         'expiring_soon': expiring_soon,
-        'status_type': status_type,
-        'status_message': status_message,
     }
 
     return render(request, 'store/pantry.html', context)

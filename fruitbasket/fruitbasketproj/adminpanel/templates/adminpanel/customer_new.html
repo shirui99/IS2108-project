@@ -64,7 +64,13 @@
                     <td>{{ customer.Cmealsperweek }}</td>
                     <td>{{ customer.Cuser.username }}</td>
                     <td>
-                        <a href="/adminpanel/customer_new/{{ customer.Cid }}">Update</a> | <a href="/adminpanel/customer_new/{{ customer.Cid }}?action=delete" onclick="return confirm('Are you sure you want to delete this customer?');">Delete</a>
+                        <a href="/adminpanel/customer_new/{{ customer.Cid }}">Update</a>
+                        <form action="/adminpanel/customer_new/{{ customer.Cid }}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="Cid" value="{{ customer.Cid }}">
+                            <button type="submit">Delete</button>
+                        </form>
                     </td>
                 </tr>
 

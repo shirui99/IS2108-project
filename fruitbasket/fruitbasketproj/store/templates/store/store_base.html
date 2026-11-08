@@ -15,6 +15,13 @@
             </div>
 
             <div style="width: 80%; float: left; vertical-align: top;">
+                {% if messages %}
+                    {% for message in messages %}
+                        <h3 style="color: {% if message.tags == 'error' %}red{% else %}green{% endif %};">
+                            {{ message }}
+                        </h3>
+                    {% endfor %}
+                {% endif %}
                 {% block content %}
                 {% endblock %}
             </div>

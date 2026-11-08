@@ -70,7 +70,14 @@
                     </td>
                     <td>{{ batch.count }}</td>
                     <td>
-                        <a href="/adminpanel/item_new?action=delete&product={{ batch.Iproduct }}&received={{ batch.Ireceived|date:'Y-m-d' }}&expiry={{ batch.Iexpiry|date:'Y-m-d' }}" onclick="return confirm('Are you sure you want to remove this batch?');">Delete</a>
+                        <form action="/adminpanel/item_new" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="product" value="{{ batch.Iproduct }}">
+                            <input type="hidden" name="received" value="{{ batch.Ireceived|date:'Y-m-d' }}">
+                            <input type="hidden" name="expiry" value="{{ batch.Iexpiry|date:'Y-m-d' }}">
+                            <button type="submit">Delete</button>
+                        </form>
                     </td>
                 </tr>
 

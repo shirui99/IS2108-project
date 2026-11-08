@@ -23,7 +23,10 @@
                             <td>{{ suggestion.due_status }}</td>
                             <td>{{ suggestion.estimate_label }}</td>
                             <td>
-                                <a href="/store/cart/{{ suggestion.product_id }}">Add to Cart</a>
+                                <form action="/store/cart/{{ suggestion.product_id }}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit">Add to Cart</button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}
