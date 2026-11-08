@@ -86,6 +86,7 @@ class ProductView(View):
 
                     except Exception as e:
 
+                        form = self.form_class()
                         status_type = 'error'
                         status_message = f'Error deleting product: {str(e)}'
 
@@ -131,6 +132,7 @@ class ProductView(View):
         form = self.form_class(request.POST, request.FILES)
         status_type = None
         status_message = None
+        save_succeeded = False
 
 
 
@@ -163,6 +165,7 @@ class ProductView(View):
 
                     newProduct.save()
 
+                    save_succeeded = True
                     status_type = 'success'
                     status_message = 'Product created successfully.'
 
@@ -189,6 +192,7 @@ class ProductView(View):
 
                         product.save()
 
+                        save_succeeded = True
                         status_type = 'success'
                         status_message = 'Product updated successfully.'
 
@@ -214,7 +218,11 @@ class ProductView(View):
                 status_type = 'error'
                 status_message = f'Error updating product'
 
-        form = self.form_class()
+        if save_succeeded:
+            # Keep invalid bound data visible so staff can correct the submitted form.
+            form = self.form_class()
+            action = 'create'
+
         rendered_form = form.render('adminpanel/form_template.html')
 
         # Count each product's items that are still in the warehouse
@@ -222,8 +230,6 @@ class ProductView(View):
         products = Product.objects.annotate(
             stock=Count('product_items', filter=Q(product_items__Istatus='available'))
         )
-        action = 'create'
-
         context = {
             'form': rendered_form,
             'action': action,
@@ -268,6 +274,7 @@ class CustomerView(View):
 
                     except Exception as e:
 
+                        form = self.form_class()
                         status_type = 'error'
                         status_message = f'Error deleting customer: {str(e)}'
 
@@ -309,6 +316,7 @@ class CustomerView(View):
         form = self.form_class(request.POST)
         status_type = None
         status_message = None
+        save_succeeded = False
 
 
 
@@ -338,6 +346,7 @@ class CustomerView(View):
 
                     newCustomer.save()
 
+                    save_succeeded = True
                     status_type = 'success'
                     status_message = 'Customer created successfully.'
 
@@ -361,6 +370,7 @@ class CustomerView(View):
 
                         customer.save()
 
+                        save_succeeded = True
                         status_type = 'success'
                         status_message = 'Customer updated successfully.'
 
@@ -386,11 +396,14 @@ class CustomerView(View):
                 status_type = 'error'
                 status_message = f'Error updating customer'
 
-        form = self.form_class()
+        if save_succeeded:
+            # Keep invalid bound data visible so staff can correct the submitted form.
+            form = self.form_class()
+            action = 'create'
+
         rendered_form = form.render('adminpanel/form_template.html')
 
         customers = Customer.objects.all()
-        action = 'create'
 
         context = {
             'form': rendered_form,
@@ -436,6 +449,7 @@ class OrderView(View):
     
                     except Exception as e:
     
+                        form = self.form_class()
                         status_type = 'error'
                         status_message = f'Error deleting order: {str(e)}'
     
@@ -479,6 +493,7 @@ class OrderView(View):
         form = self.form_class(request.POST)
         status_type = None
         status_message = None        
+        save_succeeded = False
 
 
         
@@ -506,6 +521,7 @@ class OrderView(View):
                 try:                    
                     
                     newOrder.save()
+                    save_succeeded = True
                     status_type = 'success'
                     status_message = 'Order created successfully.'
     
@@ -528,6 +544,7 @@ class OrderView(View):
 
                         order.save()
 
+                        save_succeeded = True
                         status_type = 'success'
                         status_message = 'Order updated successfully.'
 
@@ -553,13 +570,16 @@ class OrderView(View):
                 status_type = 'error'
                 status_message = f'Error updating order'
 
-        form = self.form_class()
+        if save_succeeded:
+            # Keep invalid bound data visible so staff can correct the submitted form.
+            form = self.form_class()
+            action = 'create'
+
         rendered_form = form.render('adminpanel/form_template.html')
 
         # Count the items in each order
 
         orders = Orders.objects.annotate(items=Count('order_items'))
-        action = 'create'
 
         context = {
             'form': rendered_form, 
