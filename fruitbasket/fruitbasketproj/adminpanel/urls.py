@@ -13,4 +13,6 @@ urlpatterns = [
     path('order_new/<pk>', views.OrderView.as_view(), name='order_new'),
     path('login', views.login, name='adminpanel_login'),
     path('logout', views.logout, name='adminpanel_logout'),
+    path('support', views.SupportView.as_view(), name='support'),
+    path('support/<int:pk>', views.SupportView.as_view(), name='support'),
 ]

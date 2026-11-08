@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.views import View
 
-from .models import Product, Customer, Orders, Item
+from .models import Product, Customer, Orders, Item, SupportTicket
 from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm
 
 
@@ -704,6 +704,59 @@ class ItemView(View):
             'removed': removed,
             'written_off': written_off,
             'today': timezone.localdate(),
+            'status_type': status_type,
+            'status_message': status_message,
+        }
+
+        return render(request, self.template_name, context)
+
+class SupportView(View):
+
+    template_name = 'adminpanel/support.html' #support page for tickets
+
+
+
+    def get(self, request, *args, **kwargs):
+
+        return self.render_page(request, kwargs.get('pk'), None, None)
+
+
+
+    def post(self, request, *args, **kwargs):
+
+        pk = kwargs.get('pk')
+        response = request.POST.get('Tresponse', '').strip()
+
+        if not response:
+
+            return self.render_page(request, pk, 'error', 'Please enter a response.')
+
+        # Only answer a ticket that is still open, so a repeated submission changes nothing
+        updated = SupportTicket.objects.filter(pk=pk, Tstatus='open').update(
+            Tresponse=response,
+            Tstatus='answered',
+            Tresponder_id=request.session.get('staff_user_id'),
+            Tresponded=timezone.now()
+        )
+
+        if updated:
+
+            return self.render_page(request, pk, 'success', 'Response sent.')
+
+        return self.render_page(request, pk, 'error', 'This ticket has already been answered.')
+
+
+
+    def render_page(self, request, pk, status_type, status_message):
+
+        # Open tickets first, oldest first
+        tickets = SupportTicket.objects.select_related('Torder__Ocustomer').order_by('-Tstatus', 'Tsubmitted')
+
+        ticket = tickets.filter(pk=pk).first() if pk is not None else None
+
+        context = {
+            'tickets': tickets,
+            'ticket': ticket,
             'status_type': status_type,
             'status_message': status_message,
         }

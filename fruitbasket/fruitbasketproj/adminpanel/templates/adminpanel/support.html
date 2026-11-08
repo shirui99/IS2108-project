@@ -1,0 +1,89 @@
+{% extends 'adminpanel/adminpanel_base.html' %}
+
+{% block content %}
+
+    <p>
+        {% if status_type and status_message %}
+            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+                {{ status_message }}
+            </h3>
+        {% endif %}
+    </p>
+
+    {% if ticket %}
+
+    <p>
+        <h2>Ticket {{ ticket.pk }}: {{ ticket.Tsubject }}</h2>
+        <table border="1" width="100%">
+            <tbody>
+                <tr><th>Order</th><td>{{ ticket.Torder.Oid }}</td></tr>
+                <tr><th>Customer</th><td>{{ ticket.Torder.Ocustomer }}</td></tr>
+                <tr><th>Submitted</th><td>{{ ticket.Tsubmitted }}</td></tr>
+                <tr><th>Status</th><td>{{ ticket.get_Tstatus_display }}</td></tr>
+                <tr><th>Message</th><td>{{ ticket.Tmessage|linebreaksbr }}</td></tr>
+
+                {% if ticket.Tstatus != 'open' %}
+                <tr><th>Response</th><td>{{ ticket.Tresponse|linebreaksbr }}</td></tr>
+                <tr><th>Answered by</th><td>{{ ticket.Tresponder.username }}</td></tr>
+                <tr><th>Answered at</th><td>{{ ticket.Tresponded }}</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </p>
+
+    {% if ticket.Tstatus == 'open' %}
+    <form action="/adminpanel/support/{{ ticket.pk }}" method="post">
+        {% csrf_token %}
+        Response:<br>
+        <textarea name="Tresponse" rows="5" cols="60" required></textarea><br>
+        <input type="submit" value="Send Response">
+    </form>
+    {% endif %}
+
+    <hr />
+
+    {% endif %}
+
+    <p>
+        <h2>View All Tickets</h2>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Ticket</th>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Subject</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for t in tickets %}
+
+                <tr>
+                    <td>{{ t.pk }}</td>
+                    <td>{{ t.Torder.Oid }}</td>
+                    <td>{{ t.Torder.Ocustomer }}</td>
+                    <td>{{ t.Tsubject }}</td>
+                    <td>{{ t.Tsubmitted }}</td>
+                    <td>{{ t.get_Tstatus_display }}</td>
+                    <td><a href="/adminpanel/support/{{ t.pk }}">View</a></td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No tickets found.</td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </p>
+    <hr />
+    <p>
+        <a href="/adminpanel">Admin Panel Home</a>
+    </p>
+
+{% endblock %}
