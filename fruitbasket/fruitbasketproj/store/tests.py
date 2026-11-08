@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 from adminpanel.models import Customer, Item, Orders, Product
 
@@ -12,6 +12,24 @@ from .restock import (
     get_restock_suggestions,
     predict_restock,
 )
+from .middlewares import login_middleware
+
+
+class CustomerAuthenticationMiddlewareTests(TestCase):
+    def test_blocked_checkout_does_not_execute_protected_view(self):
+        request = RequestFactory().post('/store/checkout')
+        request.session = {}
+        view_executed = False
+
+        def protected_view(_request):
+            nonlocal view_executed
+            view_executed = True
+
+        response = login_middleware(protected_view)(request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/store/login')
+        self.assertFalse(view_executed)
 
 
 class RestockFeatureTests(TestCase):
