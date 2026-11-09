@@ -3,18 +3,25 @@
 {% block content %}
 
     <div class="fb-section">
-        <h2>All Products</h2>
+        <div class="fb-page-heading">
+            <div>
+                <p class="fb-eyebrow">The grocery shelf</p>
+                <h1>Shop groceries</h1>
+                <p>{% if request.session.Cid %}Find your household essentials and add them to your cart.{% else %}Take a look around. Log in to add items to your cart.{% endif %}</p>
+            </div>
+            <span class="fb-product-count">{{ products|length }} product{{ products|length|pluralize }}</span>
+        </div>
         <div class="fb-product-grid">
 
                 {% for product in products %}
                 
                 <article class="fb-product">
-                    <div class="fb-product-image">{% if product.Pimage %}<img src="{{ product.Pimage.url }}" alt="{{ product.Pname }}" loading="lazy">{% else %}<span>Image unavailable</span>{% endif %}</div>
+                    <div class="fb-product-image">{% if product.Pimage %}<img src="{{ product.Pimage.url }}" alt="{{ product.Pname }}" loading="lazy">{% else %}<span class="fb-image-placeholder"><strong>{{ product.get_Pcategory_display }}</strong><span>Product image unavailable</span></span>{% endif %}</div>
                     <h3>{{ product.Pname }}</h3>
                     <div class="fb-product-category">{{ product.get_Pcategory_display }}</div>
-                    <div>{{ product.Psize }}</div>
+                    <div class="fb-product-size">{{ product.Psize }}</div>
                     <div class="fb-price">${{ product.Pprice|floatformat:2 }}</div>
-                    <div>
+                    <div class="fb-product-rating">
                         {% if product.reviews > 0 %}
                             {{ product.rating|floatformat:1 }} / 5 ({{ product.reviews }} reviews)
                         {% else %}
@@ -24,7 +31,7 @@
                     <div>
                         <form action="/store/cart/{{ product.Pid }}" method="post">
                             {% csrf_token %}
-                            <button class="btn btn-primary btn-sm" type="submit">Add to Cart</button>
+                            <button class="btn btn-primary btn-sm" type="submit">{% if request.session.Cid %}Add to cart{% else %}Log in to add{% endif %}</button>
                         </form>
                     </div>
                 </article>

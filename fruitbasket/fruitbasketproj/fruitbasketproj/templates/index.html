@@ -2,8 +2,27 @@
 
 {% block content %}
 
-    <h2>About Fruit Basket</h2>
-    <p>This is a online grocery store built using Django.</p>
-    <p>You can manage groceries and customers via the Admin Panel, and customers can browse and purchase groceries in the Online Store.</p>
+    <section class="fb-welcome" aria-labelledby="welcome-title">
+        <div class="fb-welcome-copy">
+            <p class="fb-eyebrow">Welcome to Fruit Basket</p>
+            <h1 id="welcome-title">A little more order<br>in your everyday groceries.</h1>
+            <p class="fb-intro">Shop for your household, keep track of your pantry and see what needs restocking.</p>
+            <div class="fb-actions">
+                <a class="btn btn-primary" href="{% url 'store_index' %}">Browse groceries</a>
+                {% if not request.session.Cid %}
+                <a class="btn btn-secondary" href="{% url 'login' %}">Log in</a>
+                {% endif %}
+            </div>
+            <p class="fb-caption">Browse freely. Log in when you’re ready to add items to your cart.</p>
+        </div>
+        <aside class="fb-welcome-note" aria-label="Using Fruit Basket">
+            <p class="fb-eyebrow">From the shop to your shelf</p>
+            <ol class="fb-steps">
+                <li><strong>Find your essentials</strong><span>Browse products, sizes and prices.</span></li>
+                <li><strong>Keep your pantry in view</strong><span>Check what you have and what expires soon.</span></li>
+                <li><strong>Plan your next top-up</strong><span>See restock suggestions based on your purchases.</span></li>
+            </ol>
+        </aside>
+    </section>
 
 {% endblock %}

@@ -1,5 +1,5 @@
 <ul class="fb-nav">
     <li><a href="{% url 'index' %}"{% if request.resolver_match.url_name == 'index' %} aria-current="page"{% endif %}>Home</a></li>
-    <li><a href="{% url 'store_index' %}"{% if request.resolver_match.url_name == 'store_index' %} aria-current="page"{% endif %}>Online store · Customers</a></li>
-    <li><a href="{% url 'adminpanel_index' %}"{% if request.resolver_match.url_name == 'adminpanel_index' %} aria-current="page"{% endif %}>Administration · Staff</a></li>
+    <li><a href="{% url 'store_index' %}"{% if request.resolver_match.url_name == 'store_index' %} aria-current="page"{% endif %}>Shop</a></li>
+    <li class="fb-nav-end"><a href="{% url 'adminpanel_index' %}"{% if request.resolver_match.url_name == 'adminpanel_index' %} aria-current="page"{% endif %}>Staff sign in</a></li>
 </ul>
