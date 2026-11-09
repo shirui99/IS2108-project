@@ -21,11 +21,13 @@
 
             <div class="table-responsive"><table class="table fb-table align-middle">
                 <tbody>
-                    {% include 'adminpanel/form_template.html' %}
+                    {# The view already rendered the form rows, including bound values and errors. #}
+                    {{ form }}
 
                     <tr>
                         <td colspan="3" style="text-align: center;">
                             <input type="hidden" id="action" name="action" value="{{ action }}" />
+                            <input class="btn btn-secondary" type="reset" value="Clear">
                             <input class="btn btn-primary" type="submit" value="Create/Update">
                         </td>
                     </tr>

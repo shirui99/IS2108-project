@@ -51,7 +51,7 @@
 .fb-table th { background: #edf1eb; color: #3c4d40; font-size: .875rem; font-weight: 650; white-space: nowrap; }
 .fb-table :is(th, td) { padding: 12px 16px; }
 .fb-table td form { margin-block: 4px; }
-.fb-table :is(input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+.fb-table :is(input:not([type="hidden"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
     max-width: 100%; padding: 6px 10px; border: 1px solid #89998d; border-radius: 4px; background: #fff; color: #25312b;
 }
 .fb-table textarea { width: 100%; }
@@ -70,6 +70,3 @@
 .fb-badge-danger { background: #fae5e5; color: #8d292f; }
 .fb-empty { padding: 24px; border: 1px dashed #b4bfb3; color: #536151; }
 
-.fb-nav form { margin: 0; }
-.fb-nav button { display: block; padding: 12px 0; border: 0; border-bottom: 3px solid transparent; background: none; color: #48564c; font: inherit; font-size: .9375rem; }
-.fb-nav button:hover { color: #20543b; border-bottom-color: #9baea0; }
