@@ -8,13 +8,13 @@ from adminpanel.models import Customer, Item, Orders, Product, SupportTicket
 
 
 DEMO_CUSTOMER_ID = "CDEMO"
-DEMO_USERNAME = "restock_demo"
+DEMO_USERNAME = "alex.tan"
 DEMO_PRODUCTS = (
-    ("DEMO1", "Demo Apples", "fruit", "1 kg", 4.50, True),
-    ("DEMO2", "Demo Milk", "dairy", "1 L", 3.00, True),
-    ("DEMO3", "Inactive Demo Rice", "rice", "1 kg", 5.00, False),
-    ("DEMO4", "Expired Demo Bread", "bakery", "1 loaf", 2.50, True),
-    ("DEMO5", "No-history Demo Soap", "household", "1 pack", 4.00, True),
+    ("DEMO1", "Apples", "fruit", "1 kg", 4.50, True),
+    ("DEMO2", "Whole Milk", "dairy", "1 L", 3.00, True),
+    ("DEMO3", "Basmati Rice", "rice", "1 kg", 5.00, False),
+    ("DEMO4", "Wholemeal Bread", "bakery", "1 loaf", 2.50, True),
+    ("DEMO5", "Dishwashing Liquid", "household", "1 pack", 4.00, True),
 )
 DEMO_PRODUCT_IDS = tuple(product[0] for product in DEMO_PRODUCTS)
 DEMO_ORDER_IDS = ("DMO001", "DMO002")
@@ -45,8 +45,8 @@ class Command(BaseCommand):
         customer, _ = Customer.objects.update_or_create(
             Cid=DEMO_CUSTOMER_ID,
             defaults={
-                "Cname": "Restock Demo Customer",
-                "Caddress": "Demo Address",
+                "Cname": "Alex Tan",
+                "Caddress": "12 Grove Lane",
                 "Chouseholdsize": 3,
                 "Cmealsperweek": 14,
                 "Cuser": user,
