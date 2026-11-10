@@ -3,9 +3,7 @@
 {% block content %}
     <div class="fb-section-heading">
         <div>
-            <p class="fb-eyebrow">The start of something delicious</p>
-            <h1>Your basket of good things.</h1>
-            <p>Take a look before your groceries head home.</p>
+            <h1>Cart</h1>
         </div>
         <a class="fb-text-link" href="/store/">Continue shopping &rarr;</a>
     </div>
@@ -53,7 +51,6 @@
                 </table>
             </div>
             <aside class="fb-panel">
-                <p class="fb-eyebrow">A little basket check</p>
                 <h2>Order summary</h2>
                 <p class="fb-help">{{ cart_items|length }} product{{ cart_items|length|pluralize }} in your basket</p>
                 <div class="fb-total">
@@ -67,8 +64,8 @@
         </div>
     {% else %}
         <div class="fb-empty">
-            <h2>A little room for your favourites.</h2>
-            <p>Your cart is empty. Explore the shop to start your next basket.</p>
+            <h2>Your cart is empty</h2>
+            <p>Add products from the shop to get started.</p>
             <a class="fb-button" href="/store/">Shop groceries &rarr;</a>
         </div>
     {% endif %}

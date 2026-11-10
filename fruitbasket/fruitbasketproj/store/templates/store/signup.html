@@ -3,14 +3,9 @@
 {% block content %}
     <div class="fb-auth">
         <section class="fb-auth-intro">
-            <p class="fb-eyebrow">Welcome to a fresher routine</p>
-            <h1>A better home<br>for your groceries.</h1>
-            <p>Bring your shopping, pantry and restock suggestions together.</p>
-            <p class="fb-help">Your household size and meals per week help personalise restock estimates as your purchase history grows.</p>
+            <h1>Create an account</h1>
         </section>
         <section class="fb-auth-form">
-            <h2>Join FruitBasket</h2>
-            <p class="fb-help">Start your household's next chapter.</p>
             {% if message %}
                 <div class="fb-alert" role="status">{{ message }} <a href="/store/login">Log in</a>
                 </div>
@@ -41,6 +36,7 @@
                     <div class="fb-field">
                         <label for="household-size">Household size</label>
                         <input id="household-size" type="number" name="Chouseholdsize" value="{% if not message %}{{ request.POST.Chouseholdsize }}{% endif %}" min="1" required>
+                        <p class="fb-help">Used for restock estimates.</p>
                     </div>
                     <div class="fb-field">
                         <label for="meals-per-week">Meals per week</label>
@@ -49,7 +45,7 @@
                 </div>
                 <button type="submit">Create your account &rarr;</button>
             </form>
-            <p class="fb-auth-switch">Already part of the basket? <a href="/store/login">Log in</a>
+            <p class="fb-auth-switch">Already have an account? <a href="/store/login">Log in</a>
             </p>
         </section>
     </div>

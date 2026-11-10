@@ -3,9 +3,8 @@
 {% block content %}
     <div class="fb-section-heading">
         <div>
-            <p class="fb-eyebrow">A little care goes a long way</p>
-            <h1>Your pantry, in perspective.</h1>
-            <p>See what you have. Use what needs attention. Make every grocery count.</p>
+            <h1>My pantry</h1>
+            <p>Items are listed by expiry date.</p>
         </div>
         <a class="fb-button secondary" href="{% url 'restock' %}">Plan my restock &rarr;</a>
     </div>
@@ -28,7 +27,7 @@
     {% endif %}
     {% if expiring_soon > 0 %}
         <div class="fb-alert warning" role="status">
-            <strong>A little pantry check-in.</strong> {{ expiring_soon }} item{{ expiring_soon|pluralize }} expire{{ expiring_soon|pluralize:'s,' }} within 3 days or {{ expiring_soon|pluralize:'is,are' }} already past the expiry date. Check the dates below.</div>
+            {{ expiring_soon }} item{{ expiring_soon|pluralize }} expire{{ expiring_soon|pluralize:'s,' }} within 3 days or {{ expiring_soon|pluralize:'is,are' }} already past the expiry date. Check the dates below.</div>
     {% endif %}
     <div class="fb-pantry-grid">
         {% for p in pantry_items %}
@@ -91,10 +90,9 @@
             </article>
         {% empty %}
             <div class="fb-empty">
-                <p class="fb-eyebrow">Room for something good</p>
-                <h2>Your pantry starts with your next shop.</h2>
-                <p>Purchased groceries appear here so you can follow expiry dates and record what you use.</p>
-                <a class="fb-button" href="/store/">Find your everyday essentials &rarr;</a>
+                <h2>Your pantry is empty</h2>
+                <p>Purchased items will appear here.</p>
+                <a class="fb-button" href="/store/">Shop groceries &rarr;</a>
             </div>
         {% endfor %}
     </div>

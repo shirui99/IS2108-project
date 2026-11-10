@@ -102,3 +102,13 @@ Select commands relevant to the task; the static path is an example, not an assu
 - Demo: ≤15 minutes, both members, real storefront/staff stories; slides unnecessary. Both members must complete code review satisfactorily and explain application code.
 
 Source: IS2108 AY2627S1 Pair Project brief, pp. 1–7. Version pins, SSR/DRF choices, POST/PRG, concurrency recipes, cart keys, no-reset policy, CSS paths, Pipelines and fallback cutoffs are project/engineering rules, not universal verbatim course mandates. These instructions support, but cannot certify, compliance.
+
+## UI verification
+
+For changes affecting rendered pages, use Playwright to inspect the
+affected pages at desktop and mobile widths. Review screenshots and
+report what was checked.
+
+Use the project's Python virtual environment. If the app or browser
+cannot be launched, report the exact blocker rather than claiming
+visual verification was completed.

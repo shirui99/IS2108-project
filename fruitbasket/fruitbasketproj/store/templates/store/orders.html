@@ -3,9 +3,8 @@
 {% block content %}
     <div class="fb-section-heading">
         <div>
-            <p class="fb-eyebrow">From our shop to your home</p>
-            <h1>Your grocery journey.</h1>
-            <p>Revisit your orders and get help when you need it.</p>
+            <h1>My orders</h1>
+            <p>View order details and contact support.</p>
         </div>
         <a class="fb-text-link" href="/store/">Shop again &rarr;</a>
     </div>
@@ -41,7 +40,7 @@
                     <tr>
                         <td colspan="6">
                             <div class="fb-empty">
-                                <h2>Your first basket is waiting.</h2>
+                                <h2>No orders yet</h2>
                                 <p>You have not placed any orders yet.</p>
                                 <a class="fb-button" href="/store/">Explore groceries &rarr;</a>
                             </div>
@@ -55,7 +54,6 @@
         <section>
             <div class="fb-section-heading">
                 <div>
-                    <p class="fb-eyebrow">The details</p>
                     <h2>Order {{ order.Oid }}</h2>
                 </div>
                 <a class="fb-text-link" href="/store/pantry">Check my pantry &rarr;</a>
@@ -96,8 +94,7 @@
             <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">{{ status_message }}</div>
         {% endif %}
         <section class="fb-panel">
-            <p class="fb-eyebrow">We're here to help</p>
-            <h2>Something about your order?</h2>
+            <h2>Contact support</h2>
             <form method="post" action="/store/orders/{{ order.Oid }}" class="fb-form">
                 {% csrf_token %}
                 <div class="fb-field">

@@ -3,11 +3,7 @@
 {% block content %}
     <section class="fb-hero">
         <div>
-            <p class="fb-eyebrow">Your everyday, a little fresher</p>
-            <h1>Shop fresh.<br>Keep track.<br>
-                <em>Waste less.</em>
-            </h1>
-            <p>Every good meal starts somewhere. Fill your basket, follow your groceries into the pantry and make the most of what you buy.</p>
+            <h1>Shop groceries</h1>
             <div class="fb-actions">
                 <a class="fb-button" href="#groceries">Explore groceries <span aria-hidden="true">&darr;</span>
                 </a>
@@ -16,13 +12,10 @@
         </div>
         {% include 'grocery_art.html' %}
     </section>
-    {% include 'benefits.html' %}
     <section id="groceries">
         <div class="fb-section-heading">
             <div>
-                <p class="fb-eyebrow">The FruitBasket shop</p>
-                <h2>Make room for good food.</h2>
-                <p>Your everyday essentials, ready for your next meal.</p>
+                <h2>Products</h2>
             </div>
             <span class="fb-help">{{ products|length }} product{{ products|length|pluralize }} to explore</span>
         </div>
@@ -65,12 +58,5 @@
                 </div>
             {% endfor %}
         </div>
-    </section>
-    <section class="fb-pantry-banner">
-        <div>
-            <h2>Your groceries have a life after checkout.</h2>
-            <p>Track expiry dates, record what you use and plan your next restock.</p>
-        </div>
-        <a class="fb-button" href="/store/pantry">Explore my pantry &rarr;</a>
     </section>
 {% endblock %}

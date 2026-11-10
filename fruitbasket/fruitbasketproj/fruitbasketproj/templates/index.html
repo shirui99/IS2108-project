@@ -1,56 +1,72 @@
 {% extends 'base.html' %}
-{% block title %}FruitBasket | A fresher way to fill your pantry{% endblock %}
+{% block title %}FruitBasket | Groceries and pantry tracking{% endblock %}
 {% block content %}
     <section class="fb-hero">
         <div>
-            <p class="fb-eyebrow">A fresh approach to everyday groceries</p>
-            <h1>A full pantry.<br>A little <em>less waste.</em>
+            <h1>Shop groceries.<br><span class="fb-hero-accent">Track your pantry.</span>
             </h1>
-            <p>Meet your groceries' new home. Shop the essentials, keep track of perishables and know when it's time to restock.</p>
+            <p>Buy groceries, check expiry dates and get restock suggestions based on your purchase history.</p>
             <div class="fb-actions">
-                <a class="fb-button" href="/store/">Shop the groceries <span aria-hidden="true">&rarr;</span>
+                <a class="fb-button" href="/store/">Shop groceries <span aria-hidden="true">&rarr;</span>
                 </a>
                 <a class="fb-text-link" href="#how-it-works">How FruitBasket works</a>
             </div>
         </div>
         {% include 'grocery_art.html' %}
     </section>
-    {% include 'benefits.html' %}
     <section id="how-it-works">
         <div class="fb-section-heading">
             <div>
-                <p class="fb-eyebrow">More than a grocery basket</p>
-                <h2>Good food deserves a better routine.</h2>
-                <p>From your next shop to the last thing in the fridge.</p>
+                <h2>How FruitBasket works</h2>
             </div>
         </div>
-        <div class="fb-step-grid">
-            <article>
-                <span>01 / Shop</span>
-                <h3>Fill your basket with intention.</h3>
-                <p>Browse everyday groceries with clear prices, pack sizes and customer ratings where available.</p>
-                <a class="fb-text-link" href="/store/">Explore the shop &rarr;</a>
+        <div class="fb-home-steps">
+            <article class="fb-home-shop">
+                <div class="fb-home-step-copy">
+                    <h3><span>01 /</span> Shop</h3>
+                    <p>Find your everyday groceries. Compare prices, pack sizes and customer ratings before adding to your basket.</p>
+                    <a class="fb-text-link" href="/store/">Browse products &rarr;</a>
+                </div>
+                <div class="fb-home-shop-art" aria-hidden="true">
+                    {% include 'grocery_art.html' %}
+                </div>
             </article>
-            <article>
-                <span>02 / Track</span>
-                <h3>Give perishables a little attention.</h3>
-                <p>Your purchased items appear in your pantry. See expiry dates, use the soonest items first and record what you use or discard.</p>
-                <a class="fb-text-link" href="/store/pantry">Meet your pantry &rarr;</a>
+            <article class="fb-home-track">
+                <div class="fb-home-step-copy">
+                    <h3><span>02 /</span> Track</h3>
+                    <p>Your purchased items appear in your pantry. Check expiry dates and record what you use or throw away.</p>
+                    <a class="fb-text-link" href="/store/pantry">Open my pantry &rarr;</a>
+                </div>
+                <svg class="fb-home-step-art" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                    <rect x="27" y="30" width="66" height="70" rx="10" stroke="currentColor" stroke-width="3"/>
+                    <path d="M27 49h66M43 23v15m34-15v15" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    <path d="m44 73 11 11 22-23" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
             </article>
-            <article>
-                <span>03 / Restock</span>
-                <h3>Find your household's rhythm.</h3>
-                <p>Check personalised restock estimates based on your purchase history. Add suggested groceries straight to your cart.</p>
-                <a class="fb-text-link" href="{% url 'restock' %}">See restock suggestions &rarr;</a>
+            <article class="fb-home-restock">
+                <div class="fb-home-step-copy">
+                    <h3><span>03 /</span> Restock</h3>
+                    <p>See when you may need to buy again, based on your purchase history. Add suggested groceries to your cart.</p>
+                    <a class="fb-text-link" href="{% url 'restock' %}">See restock suggestions &rarr;</a>
+                </div>
+                <svg class="fb-home-step-art" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                    <path d="M91 46a35 35 0 1 0 2 24M91 24v22H69" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M46 56h28l-4 22H50l-4-22Zm6 0 8-13 8 13" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                </svg>
             </article>
         </div>
     </section>
-    <section class="fb-pantry-banner">
+    <section class="fb-pantry-banner fb-home-account">
         <div>
-            <h2>Less forgotten food. More everyday possibility.</h2>
-            <p>Bring shopping and pantry tracking together with FruitBasket.</p>
+            <h2>{% if request.session.Cid %}Check your pantry{% else %}Create your FruitBasket account{% endif %}</h2>
+            <p>{% if request.session.Cid %}Record what you have used before your next shop.{% else %}Save your delivery details and keep your orders in one place.{% endif %}</p>
         </div>
-        <a class="fb-button" href="{% if request.session.Cid %}/store/pantry{% else %}/store/signup{% endif %}">
-            {% if request.session.Cid %}Open my pantry{% else %}Create your account{% endif %} &rarr;</a>
+        <div class="fb-home-account-actions">
+            <a class="fb-button" href="{% if request.session.Cid %}/store/pantry{% else %}/store/signup{% endif %}">
+                {% if request.session.Cid %}Open my pantry{% else %}Create your account{% endif %} &rarr;</a>
+            {% if not request.session.Cid %}
+                <a class="fb-text-link" href="/store/login">Already have an account? Log in</a>
+            {% endif %}
+        </div>
     </section>
 {% endblock %}

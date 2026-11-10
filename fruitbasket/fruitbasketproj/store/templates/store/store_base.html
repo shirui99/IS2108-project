@@ -5,7 +5,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>
-            {% block title %}FruitBasket | Shop fresh. Waste less.{% endblock %}
+            {% block title %}FruitBasket{% endblock %}
         </title>
         <link rel="icon" type="image/svg+xml" href="{% static 'fruitbasket/favicon.svg' %}">
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
@@ -13,7 +13,6 @@
     </head>
     <body class="fb-app">
         <a class="fb-skip" href="#main-content">Skip to content</a>
-        <div class="fb-topline">Good groceries. A thoughtful pantry. Less food left behind.</div>
         <header class="fb-header">
             <div class="fb-shell fb-header-inner">
                 {% include 'store/store_header.html' %}

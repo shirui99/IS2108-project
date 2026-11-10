@@ -1,16 +1,12 @@
 {% extends 'store/store_base.html' %}
 {% block title %}Log in | FruitBasket{% endblock %}
 {% block content %}
-    <div class="fb-auth">
+    <div class="fb-auth fb-auth-login">
         <section class="fb-auth-intro">
-            <p class="fb-eyebrow">Your everyday, a little fresher</p>
-            <h1>Good to have<br>you back.</h1>
-            <p>Your basket, your pantry and your next good meal. All together in one place.</p>
-            <p class="fb-help">Shop thoughtfully. Keep track of perishables. Make the most of what you buy.</p>
+            <h1>Log in</h1>
+            <p>Access your pantry and orders.</p>
         </section>
         <section class="fb-auth-form">
-            <h2>Log in to FruitBasket</h2>
-            <p class="fb-help">Make yourself at home.</p>
             {% if success_message %}
                 <div class="fb-alert" role="status">{{ success_message }}</div>
             {% endif %}

@@ -3,8 +3,7 @@
 {% block content %}
     <div class="fb-section-heading">
         <div>
-            <p class="fb-eyebrow">One step closer to your pantry</p>
-            <h1>Bring your basket home.</h1>
+            <h1>Checkout</h1>
             <p>Review your groceries and confirm your delivery address.</p>
         </div>
         <a class="fb-text-link" href="/store/cart">&larr; Back to cart</a>
@@ -15,20 +14,17 @@
     {% if cart_items %}
         <div class="fb-two-column">
             <section class="fb-panel">
-                <p class="fb-eyebrow">Delivery details</p>
-                <h2>Where are we heading?</h2>
+                <h2>Delivery details</h2>
                 <form action="/store/checkout" method="post" class="fb-form">
                     {% csrf_token %}
                     <div class="fb-field">
                         <label for="delivery-address">Delivery address</label>
                         <input id="delivery-address" type="text" name="Oaddress" value="{{ address }}" required="required" autocomplete="street-address">
                     </div>
-                    <p class="fb-help">Please check your address and order summary before placing your order.</p>
                     <button type="submit">Place order &rarr;</button>
                 </form>
             </section>
             <aside class="fb-panel">
-                <p class="fb-eyebrow">Your basket</p>
                 <h2>Order summary</h2>
                 {% for item in cart_items %}
                     <div class="fb-summary-line">
@@ -48,8 +44,8 @@
     {% else %}
         <div class="fb-empty">
             {% if status_type == 'success' %}
-                <h2>A fresh chapter for your pantry.</h2>
-                <p>Find your order details or check the groceries in your pantry.</p>
+                <h2>Order placed</h2>
+                <p>View your order details or open your pantry.</p>
                 <div class="fb-actions" style="justify-content:center">
                     <a class="fb-button" href="/store/orders">View my orders</a>
                     <a class="fb-button secondary" href="/store/pantry">Open my pantry</a>
