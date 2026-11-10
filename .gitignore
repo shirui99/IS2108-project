@@ -1,3 +1,16 @@
 venv/
 __pycache__/
 *.pyc
+/package.json
+/docs/
+
+# Playwright
+/package-lock.json
+/playwright.config.ts
+/tests/
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

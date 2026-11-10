@@ -1,70 +1,75 @@
 {% extends 'store/store_base.html' %}
-
+{% block title %}Your cart | FruitBasket{% endblock %}
 {% block content %}
-
-    <p>
-        {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
-        {% endif %}
-    </p>
-
-    <p>
-        <h2>My Cart</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Size</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Subtotal</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                {% for item in cart_items %}
-                
-                <tr>
-                    <td>{{ item.product.Pname }}</td>
-                    <td>{{ item.product.Psize }}</td>
-                    <td>${{ item.product.Pprice|floatformat:2 }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>${{ item.subtotal|floatformat:2 }}</td>
-                    <td>
-                        <form action="/store/cart/{{ item.product.Pid }}" method="post">
-                            {% csrf_token %}
-                            <button type="submit">Add One More</button>
-                        </form>
-                        <form action="/store/cart/{{ item.product.Pid }}" method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="remove">
-                            <button type="submit" onclick="return confirm('Are you sure you want to remove this product?');">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-
-                {% empty %}
-                
-                <tr>
-                    <td colspan="6">Your cart is empty.</td>
-                </tr>
-                
-                {% endfor %}
-                
-                <tr>
-                    <td colspan="4" style="text-align: right;"><b>Total</b></td>
-                    <td colspan="2"><b>${{ total|floatformat:2 }}</b></td>
-                </tr>
-
-            </tbody>
-        </table>
-    </p>
-    <hr />
-    <p>
-                <a href="/store/">Continue Shopping</a> | <a href="/store/checkout">Checkout</a>
-    </p>
-
+    <div class="fb-section-heading">
+        <div>
+            <p class="fb-eyebrow">The start of something delicious</p>
+            <h1>Your basket of good things.</h1>
+            <p>Take a look before your groceries head home.</p>
+        </div>
+        <a class="fb-text-link" href="/store/">Continue shopping &rarr;</a>
+    </div>
+    {% if status_type and status_message %}
+        <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">{{ status_message }}</div>
+    {% endif %}
+    {% if cart_items %}
+        <div class="fb-two-column">
+            <div class="fb-table-wrap" role="region" aria-label="Cart items" tabindex="0">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Product</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Subtotal</th>
+                            <th scope="col">Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.Pname }}</strong>
+                                    <br>
+                                    <span class="fb-help">{{ item.product.Psize }}</span>
+                                </td>
+                                <td>${{ item.product.Pprice|floatformat:2 }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>${{ item.subtotal|floatformat:2 }}</td>
+                                <td>
+                                    <form action="/store/cart/{{ item.product.Pid }}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" aria-label="Add one more {{ item.product.Pname }}">+ Add one</button>
+                                    </form>
+                                    <form action="/store/cart/{{ item.product.Pid }}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="remove">
+                                        <button type="submit" class="secondary" onclick="return confirm('Are you sure you want to remove this product?');" aria-label="Remove {{ item.product.Pname }}">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <aside class="fb-panel">
+                <p class="fb-eyebrow">A little basket check</p>
+                <h2>Order summary</h2>
+                <p class="fb-help">{{ cart_items|length }} product{{ cart_items|length|pluralize }} in your basket</p>
+                <div class="fb-total">
+                    <span>Total</span>
+                    <span>${{ total|floatformat:2 }}</span>
+                </div>
+                <a class="fb-button" href="/store/checkout">Continue to checkout &rarr;</a>
+                <hr>
+                <p class="fb-help">Already have something at home? <a href="/store/pantry">Check your pantry</a> before you order.</p>
+            </aside>
+        </div>
+    {% else %}
+        <div class="fb-empty">
+            <h2>A little room for your favourites.</h2>
+            <p>Your cart is empty. Explore the shop to start your next basket.</p>
+            <a class="fb-button" href="/store/">Shop groceries &rarr;</a>
+        </div>
+    {% endif %}
 {% endblock %}

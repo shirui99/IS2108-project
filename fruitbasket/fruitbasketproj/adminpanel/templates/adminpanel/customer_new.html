@@ -6,84 +6,87 @@
 
     <p>
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+            <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">
                 {{ status_message }}
-            </h3>
+            </div>
         {% endif %}
     </p>
 
     <p>
-        <h2>
+        <h1 class="fb-staff-page-title">
             Create/Update Customer
             <!-- HTML5 -->
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16"> <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/> </svg>
-        </h2>
+        </h1>
         
         <form action="/adminpanel/customer_new" method="post">
             {% csrf_token %}
 
-            <table border="1" width="100%">
-                <tbody>
-                    {{ form }}
+            <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+                <table>
+                    <tbody>
+                        {{ form }}
 
-                    <tr>
-                        <td colspan="3" style="text-align: center;">
-                            <input type="hidden" id="action" name="action" value="{{ action }}" />
-                            <input type="reset" value="Clear">
-                            <input type="submit" value="Create/Update">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        <tr>
+                            <td colspan="3" style="text-align: center;">
+                                <input type="hidden" id="action" name="action" value="{{ action }}" />
+                                <input type="submit" value="Create/Update">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </form>
     </p>
     <hr />
     <p>
         <h2>View All Customers</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th>Cid</th>
-                    <th>Cname</th>
-                    <th>Caddress</th>
-                    <th>Chouseholdsize</th>
-                    <th>Cmealsperweek</th>
-                    <th>Cuser</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cid</th>
+                        <th>Cname</th>
+                        <th>Caddress</th>
+                        <th>Chouseholdsize</th>
+                        <th>Cmealsperweek</th>
+                        <th>Cuser</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
 
-                {% for customer in customers %}
+                    {% for customer in customers %}
                 
-                <tr>
-                    <td>{{ customer.Cid }}</td>
-                    <td>{{ customer.Cname }}</td>
-                    <td>{{ customer.Caddress }}</td>
-                    <td>{{ customer.Chouseholdsize }}</td>
-                    <td>{{ customer.Cmealsperweek }}</td>
-                    <td>{{ customer.Cuser.username }}</td>
-                    <td>
-                        <a href="/adminpanel/customer_new/{{ customer.Cid }}">Update</a>
-                        <form action="/adminpanel/customer_new/{{ customer.Cid }}" method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="Cid" value="{{ customer.Cid }}">
-                            <button type="submit">Delete</button>
-                        </form>
-                    </td>
-                </tr>
+                    <tr>
+                        <td>{{ customer.Cid }}</td>
+                        <td>{{ customer.Cname }}</td>
+                        <td>{{ customer.Caddress }}</td>
+                        <td>{{ customer.Chouseholdsize }}</td>
+                        <td>{{ customer.Cmealsperweek }}</td>
+                        <td>{{ customer.Cuser.username }}</td>
+                        <td>
+                            <a href="/adminpanel/customer_new/{{ customer.Cid }}">Update</a>
+                            <form action="/adminpanel/customer_new/{{ customer.Cid }}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="Cid" value="{{ customer.Cid }}">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
 
-                {% empty %}
+                    {% empty %}
                 
-                <tr>
-                    <td colspan="7">No customer record available.</td>
-                </tr>
+                    <tr>
+                        <td colspan="7">No customer record available.</td>
+                    </tr>
                 
-                {% endfor %}
+                    {% endfor %}
                 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </p>
     <hr />
     <p>

@@ -1,5 +1,7 @@
-<h2>Main Menu</h2>
-<ul>
-    <li><a href="./adminpanel">Admin Panel</a></li>
-    <li><a href="./store">Online Store</a></li>
+<p class="fb-nav-label">Choose an area</p>
+<ul class="fb-nav-list">
+    <li class="fb-nav-heading">Customer area</li>
+    <li><a class="{% if request.path|slice:':7' == '/store/' %}is-active{% endif %}" href="/store/">Online Store</a></li>
+    <li class="fb-nav-heading">Staff area</li>
+    <li><a class="{% if request.path|slice:':12' == '/adminpanel/' %}is-active{% endif %}" href="/adminpanel/">Admin Panel</a></li>
 </ul>

@@ -1,28 +1,56 @@
-<html>
-    <head>
-        <title>Sign Up - Fruit Basket</title>
-    </head>
-    <body>
-        <h1>Sign Up</h1>
-
-        {% if message %}
-            <p><b>{{ message }}</b></p>
-        {% endif %}
-        
-        <form method="post">
-            
-            {% csrf_token %}
-            Username: <input type="text" name="username"><br>
-            Password: <input type="password" name="password"><br>
-            Email: <input type="email" name="email"><br>
-            Name: <input type="text" name="Cname"><br>
-            Address: <input type="text" name="Caddress"><br>
-            Household Size: <input type="number" name="Chouseholdsize"><br>
-            Meals Per Week: <input type="number" name="Cmealsperweek"><br>
-
-            <input type="reset" value="Reset">
-            <input type="submit" value="Create User">
-        </form>
-
-    </body>
-</html>
+{% extends 'store/store_base.html' %}
+{% block title %}Create an account | FruitBasket{% endblock %}
+{% block content %}
+    <div class="fb-auth">
+        <section class="fb-auth-intro">
+            <p class="fb-eyebrow">Welcome to a fresher routine</p>
+            <h1>A better home<br>for your groceries.</h1>
+            <p>Bring your shopping, pantry and restock suggestions together.</p>
+            <p class="fb-help">Your household size and meals per week help personalise restock estimates as your purchase history grows.</p>
+        </section>
+        <section class="fb-auth-form">
+            <h2>Join FruitBasket</h2>
+            <p class="fb-help">Start your household's next chapter.</p>
+            {% if message %}
+                <div class="fb-alert" role="status">{{ message }} <a href="/store/login">Log in</a>
+                </div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="fb-form-grid">
+                    <div class="fb-field">
+                        <label for="username">Username</label>
+                        <input id="username" type="text" name="username" value="{% if not message %}{{ request.POST.username }}{% endif %}" autocomplete="username" required>
+                    </div>
+                    <div class="fb-field">
+                        <label for="password">Password</label>
+                        <input id="password" type="password" name="password" autocomplete="new-password" required>
+                    </div>
+                    <div class="fb-field full">
+                        <label for="email">Email address</label>
+                        <input id="email" type="email" name="email" value="{% if not message %}{{ request.POST.email }}{% endif %}" autocomplete="email" required>
+                    </div>
+                    <div class="fb-field full">
+                        <label for="customer-name">Your name</label>
+                        <input id="customer-name" type="text" name="Cname" value="{% if not message %}{{ request.POST.Cname }}{% endif %}" autocomplete="name" required>
+                    </div>
+                    <div class="fb-field full">
+                        <label for="customer-address">Delivery address</label>
+                        <input id="customer-address" type="text" name="Caddress" value="{% if not message %}{{ request.POST.Caddress }}{% endif %}" autocomplete="street-address" required>
+                    </div>
+                    <div class="fb-field">
+                        <label for="household-size">Household size</label>
+                        <input id="household-size" type="number" name="Chouseholdsize" value="{% if not message %}{{ request.POST.Chouseholdsize }}{% endif %}" min="1" required>
+                    </div>
+                    <div class="fb-field">
+                        <label for="meals-per-week">Meals per week</label>
+                        <input id="meals-per-week" type="number" name="Cmealsperweek" value="{% if not message %}{{ request.POST.Cmealsperweek }}{% endif %}" min="0" required>
+                    </div>
+                </div>
+                <button type="submit">Create your account &rarr;</button>
+            </form>
+            <p class="fb-auth-switch">Already part of the basket? <a href="/store/login">Log in</a>
+            </p>
+        </section>
+    </div>
+{% endblock %}

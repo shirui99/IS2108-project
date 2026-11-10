@@ -1,117 +1,152 @@
 {% extends 'store/store_base.html' %}
-
+{% block title %}My orders | FruitBasket{% endblock %}
 {% block content %}
-
-    <p>
-        <h2>My Orders</h2>
-        <table border="1" width="100%">
+    <div class="fb-section-heading">
+        <div>
+            <p class="fb-eyebrow">From our shop to your home</p>
+            <h1>Your grocery journey.</h1>
+            <p>Revisit your orders and get help when you need it.</p>
+        </div>
+        <a class="fb-text-link" href="/store/">Shop again &rarr;</a>
+    </div>
+    <div class="fb-table-wrap" role="region" aria-label="Order history" tabindex="0">
+        <table>
             <thead>
                 <tr>
-                    <th>Oid</th>
-                    <th>Odate</th>
-                    <th>Oaddress</th>
-                    <th>Ostatus</th>
-                    <th>Items</th>
-                    <th>Action</th>
+                    <th scope="col">Order</th>
+                    <th scope="col">Placed on</th>
+                    <th scope="col">Delivery address</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Items</th>
+                    <th scope="col">Details</th>
                 </tr>
             </thead>
             <tbody>
-
                 {% for o in orders %}
-                
-                <tr>
-                    <td>{{ o.Oid }}</td>
-                    <td>{{ o.Odate }}</td>
-                    <td>{{ o.Oaddress }}</td>
-                    <td>{{ o.get_Ostatus_display }}</td>
-                    <td>{{ o.items }}</td>
-                    <td>
-                        <a href="/store/orders/{{ o.Oid }}">View</a>
-                    </td>
-                </tr>
-
+                    <tr>
+                        <td>
+                            <strong>{{ o.Oid }}</strong>
+                        </td>
+                        <td>{{ o.Odate|date:'j M Y' }}</td>
+                        <td>{{ o.Oaddress }}</td>
+                        <td>
+                            <span class="fb-status">{{ o.get_Ostatus_display }}</span>
+                        </td>
+                        <td>{{ o.items }}</td>
+                        <td>
+                            <a href="/store/orders/{{ o.Oid }}" aria-label="View order {{ o.Oid }}">View order &rarr;</a>
+                        </td>
+                    </tr>
                 {% empty %}
-                
-                <tr>
-                    <td colspan="6">You have not placed any orders yet.</td>
-                </tr>
-                
+                    <tr>
+                        <td colspan="6">
+                            <div class="fb-empty">
+                                <h2>Your first basket is waiting.</h2>
+                                <p>You have not placed any orders yet.</p>
+                                <a class="fb-button" href="/store/">Explore groceries &rarr;</a>
+                            </div>
+                        </td>
+                    </tr>
                 {% endfor %}
-                
             </tbody>
         </table>
-    </p>
-
+    </div>
     {% if order %}
-
-    <hr />
-    <p>
-        <h2>Order {{ order.Oid }}</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th>Pname</th>
-                    <th>Psize</th>
-                    <th>Pprice</th>
-                    <th>Iexpiry</th>
-                    <th>Istatus</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                {% for item in order_items %}
-                
-                <tr>
-                    <td>{{ item.Iproduct.Pname }}</td>
-                    <td>{{ item.Iproduct.Psize }}</td>
-                    <td>${{ item.Iproduct.Pprice|floatformat:2 }}</td>
-                    <td>{% if item.Iexpiry %}{{ item.Iexpiry }}{% else %}No expiry{% endif %}</td>
-                    <td>{{ item.get_Istatus_display }}</td>
-                </tr>
-                
-                {% endfor %}
-                
-            </tbody>
-        </table>
-    </p>
-
-    <p>
+        <section>
+            <div class="fb-section-heading">
+                <div>
+                    <p class="fb-eyebrow">The details</p>
+                    <h2>Order {{ order.Oid }}</h2>
+                </div>
+                <a class="fb-text-link" href="/store/pantry">Check my pantry &rarr;</a>
+            </div>
+            <div class="fb-table-wrap" role="region" aria-label="Items in order {{ order.Oid }}" tabindex="0">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Product</th>
+                            <th scope="col">Size</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Expiry date</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                            <tr>
+                                <td>{{ item.Iproduct.Pname }}</td>
+                                <td>{{ item.Iproduct.Psize }}</td>
+                                <td>${{ item.Iproduct.Pprice|floatformat:2 }}</td>
+                                <td>
+                                    {% if item.Iexpiry %}
+                                        {{ item.Iexpiry|date:'j M Y' }}{% else %}No expiry recorded{% endif %}
+                                </td>
+                                <td>{{ item.get_Istatus_display }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5">No items recorded for this order.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
+            <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">{{ status_message }}</div>
         {% endif %}
-    </p>
-
-    <h3>Need help with this order?</h3>
-    <form method="post" action="/store/orders/{{ order.Oid }}">
-        {% csrf_token %}
-        Subject: <input type="text" name="Tsubject" maxlength="200" required><br>
-        Message:<br><textarea name="Tmessage" rows="4" cols="50" required></textarea><br>
-        <input type="submit" value="Submit Issue">
-    </form>
-
-    <h3>Support Tickets</h3>
-    <table border="1" width="100%">
-        <thead>
-            <tr><th>Submitted</th><th>Subject</th><th>Message</th><th>Status</th><th>Response</th></tr>
-        </thead>
-        <tbody>
-            {% for ticket in tickets %}
-            <tr>
-                <td>{{ ticket.Tsubmitted }}</td>
-                <td>{{ ticket.Tsubject }}</td>
-                <td>{{ ticket.Tmessage|linebreaksbr }}</td>
-                <td>{{ ticket.get_Tstatus_display }}</td>
-                <td>{% if ticket.Tresponse %}{{ ticket.Tresponse|linebreaksbr }}{% else %}Awaiting response{% endif %}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5">No issues reported for this order.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-
+        <section class="fb-panel">
+            <p class="fb-eyebrow">We're here to help</p>
+            <h2>Something about your order?</h2>
+            <form method="post" action="/store/orders/{{ order.Oid }}" class="fb-form">
+                {% csrf_token %}
+                <div class="fb-field">
+                    <label for="support-subject">Subject</label>
+                    <input id="support-subject" type="text" name="Tsubject" value="{% if status_type == 'error' %}{{ request.POST.Tsubject }}{% endif %}" maxlength="200" required>
+                </div>
+                <div class="fb-field">
+                    <label for="support-message">Message</label>
+                    <textarea id="support-message" name="Tmessage" rows="4" cols="50" required>
+{% if status_type == 'error' %}
+{{ request.POST.Tmessage }}{% endif %}
+</textarea>
+                </div>
+                <input type="submit" value="Submit Issue">
+            </form>
+        </section>
+        <h2>Support tickets</h2>
+        <div class="fb-table-wrap" role="region" aria-label="Order support tickets" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Submitted</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Message</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Response</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                        <tr>
+                            <td>{{ ticket.Tsubmitted }}</td>
+                            <td>{{ ticket.Tsubject }}</td>
+                            <td>{{ ticket.Tmessage|linebreaksbr }}</td>
+                            <td>
+                                <span class="fb-status">{{ ticket.get_Tstatus_display }}</span>
+                            </td>
+                            <td>
+                                {% if ticket.Tresponse %}
+                                    {{ ticket.Tresponse|linebreaksbr }}{% else %}Awaiting response{% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">No issues reported for this order.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
-
 {% endblock %}

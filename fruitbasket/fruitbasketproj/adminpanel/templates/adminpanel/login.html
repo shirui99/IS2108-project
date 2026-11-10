@@ -1,28 +1,37 @@
-<html>
-    <head>
-        <title>Staff Log In - Fruit Basket</title>
-    </head>
-    <body>
-        <h1>Staff Log In</h1>
-
-        {% if success_message %}
-            <p style="color: green;"><b>{{ success_message }}</b></p>
-            <p><a href="/adminpanel/">Go to Admin Panel</a></p>
-        {% endif %}
-
-        {% if error_message %}
-            <p style="color: red;"><b>{{ error_message }}</b></p>
-        {% endif %}
-        
-        <form method="post">
-            
-            {% csrf_token %}
-            Username: <input type="text" name="username"><br>
-            Password: <input type="password" name="password"><br>        
-
-            <input type="reset" value="Reset">
-            <input type="submit" value="Login">
-        </form>
-
-    </body>
-</html>
+{% extends 'store/store_base.html' %}
+{% block title %}Staff log in | FruitBasket{% endblock %}
+{% block content %}
+    <div class="fb-auth">
+        <section class="fb-auth-intro">
+            <p class="fb-eyebrow">Your everyday, a little fresher</p>
+            <h1>A little care.<br>Behind the scenes.</h1>
+            <p>The people behind every basket. Sign in to manage the FruitBasket store.</p>
+            <p class="fb-help">Staff access to products, inventory, customers, orders and support.</p>
+        </section>
+        <section class="fb-auth-form">
+            <h2>Staff log in</h2>
+            <p class="fb-help">Use your staff account to continue.</p>
+            {% if success_message %}
+                <div class="fb-alert" role="status">{{ success_message }} <a href="/adminpanel/">Open staff panel</a>
+                </div>
+            {% endif %}
+            {% if error_message %}
+                <div class="fb-alert error" role="alert">{{ error_message }}</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="fb-field">
+                    <label for="username">Username</label>
+                    <input id="username" type="text" name="username" value="{{ request.POST.username }}" autocomplete="username" required>
+                </div>
+                <div class="fb-field">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" autocomplete="current-password" required>
+                </div>
+                <button type="submit">Log in &rarr;</button>
+            </form>
+            <p class="fb-auth-switch">Shopping with us? <a href="/store/login">Customer log in</a>
+            </p>
+        </section>
+    </div>
+{% endblock %}

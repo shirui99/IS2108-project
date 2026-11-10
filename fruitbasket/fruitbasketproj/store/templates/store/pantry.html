@@ -1,88 +1,101 @@
 {% extends 'store/store_base.html' %}
-
+{% block title %}My pantry | FruitBasket{% endblock %}
 {% block content %}
-
-    <p>
-        {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
-        {% endif %}
-    </p>
-
-    {% if expiring_soon > 0 %}
-        <h3 style="color: red;">Reminder: {{ expiring_soon }} item(s) in your pantry expire within 3 days!</h3>
+    <div class="fb-section-heading">
+        <div>
+            <p class="fb-eyebrow">A little care goes a long way</p>
+            <h1>Your pantry, in perspective.</h1>
+            <p>See what you have. Use what needs attention. Make every grocery count.</p>
+        </div>
+        <a class="fb-button secondary" href="{% url 'restock' %}">Plan my restock &rarr;</a>
+    </div>
+    <div class="fb-stats">
+        <div class="fb-stat">
+            <strong>{{ pantry_items|length }}</strong>
+            <span>Items in your pantry</span>
+        </div>
+        <div class="fb-stat attention">
+            <strong>{{ expiring_soon }}</strong>
+            <span>Due within 3 days or overdue</span>
+        </div>
+        <div class="fb-stat">
+            <strong>Expiry first</strong>
+            <span>Your items, ordered by expiry date</span>
+        </div>
+    </div>
+    {% if status_type and status_message %}
+        <div role="status" class="fb-alert {% if status_type != 'success' %}error{% endif %}">{{ status_message }}</div>
     {% endif %}
-
-    <p>
-        <h2>My Pantry</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Size</th>
-                    <th>Purchased</th>
-                    <th>Expiry Date</th>
-                    <th>Days Left</th>
-                    <th>Rating</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                {% for p in pantry_items %}
-                
-                <tr>
-                    <td>{{ p.item.Iproduct.Pname }}</td>
-                    <td>{{ p.item.Iproduct.Psize }}</td>
-                    <td>{{ p.item.Iorder.Odate }}</td>
-                    <td>{% if p.item.Iexpiry %}{{ p.item.Iexpiry }}{% else %}No expiry{% endif %}</td>
-                    <td {% if p.days_left is not None and p.days_left <= 3 %}style="color: red; font-weight: bold;"{% endif %}>
-                        {% if p.days_left is None %}-{% elif p.days_left < 0 %}EXPIRED{% else %}{{ p.days_left }}{% endif %}
-                    </td>
-                    <td>
-                        {% if p.item.Irating %}
-                            {{ p.item.Irating }} / 5
-                        {% else %}
-                            <form action="/store/pantry/{{ p.item.pk }}" method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="rate">
-                                <label for="rating-{{ p.item.pk }}">Rating</label>
-                                <select id="rating-{{ p.item.pk }}" name="rating">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                </select>
-                                <button type="submit">Submit</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <form action="/store/pantry/{{ p.item.pk }}" method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="used">
-                            <button type="submit">Used Up</button>
-                        </form>
-                        <form action="/store/pantry/{{ p.item.pk }}" method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="expired">
-                            <button type="submit" onclick="return confirm('Are you sure you want to throw this item away?');">Thrown Away</button>
-                        </form>
-                    </td>
-                </tr>
-
-                {% empty %}
-                
-                <tr>
-                    <td colspan="7">Your pantry is empty.</td>
-                </tr>
-                
-                {% endfor %}
-                
-            </tbody>
-        </table>
-    </p>
-
+    {% if expiring_soon > 0 %}
+        <div class="fb-alert warning" role="status">
+            <strong>A little pantry check-in.</strong> {{ expiring_soon }} item{{ expiring_soon|pluralize }} expire{{ expiring_soon|pluralize:'s,' }} within 3 days or {{ expiring_soon|pluralize:'is,are' }} already past the expiry date. Check the dates below.</div>
+    {% endif %}
+    <div class="fb-pantry-grid">
+        {% for p in pantry_items %}
+            <article class="fb-pantry-card">
+                <div class="fb-pantry-card-top">
+                    <div>
+                        <h2>{{ p.item.Iproduct.Pname }}</h2>
+                        <p>{{ p.item.Iproduct.Psize }}</p>
+                    </div>
+                    {% if p.days_left is None %}
+                        <span class="fb-status">No expiry recorded</span>
+                    {% elif p.days_left < 0 %}
+                        <span class="fb-status urgent">Past expiry</span>
+                    {% elif p.days_left == 0 %}
+                        <span class="fb-status urgent">Expires today</span>
+                    {% elif p.days_left <= 3 %}
+                        <span class="fb-status soon">{{ p.days_left }} day{{ p.days_left|pluralize }} left</span>
+                    {% else %}
+                        <span class="fb-status">{{ p.days_left }} days left</span>
+                    {% endif %}
+                </div>
+                <div class="fb-pantry-dates">
+                    <div>Purchased<strong>{{ p.item.Iorder.Odate|date:'j M Y' }}</strong>
+                    </div>
+                    <div>Expiry date<strong>
+                            {% if p.item.Iexpiry %}
+                                {{ p.item.Iexpiry|date:'j M Y' }}{% else %}Not recorded{% endif %}
+                        </strong>
+                    </div>
+                </div>
+                <div class="fb-inline-actions">
+                    <form action="/store/pantry/{{ p.item.pk }}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="used">
+                        <button type="submit" aria-label="Mark {{ p.item.Iproduct.Pname }} as used up">Used up</button>
+                    </form>
+                    <form action="/store/pantry/{{ p.item.pk }}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="expired">
+                        <button type="submit" class="secondary" onclick="return confirm('Are you sure you want to throw this item away?');" aria-label="Mark {{ p.item.Iproduct.Pname }} as thrown away">Thrown away</button>
+                    </form>
+                </div>
+                {% if p.item.Irating %}
+                    <p>Your rating: {{ p.item.Irating }} / 5</p>
+                {% else %}
+                    <form class="fb-rating-form" action="/store/pantry/{{ p.item.pk }}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="rate">
+                        <label for="rating-{{ p.item.pk }}">Rate this product</label>
+                        <select id="rating-{{ p.item.pk }}" name="rating">
+                            <option value="1">1 / 5</option>
+                            <option value="2">2 / 5</option>
+                            <option value="3">3 / 5</option>
+                            <option value="4">4 / 5</option>
+                            <option value="5">5 / 5</option>
+                        </select>
+                        <button type="submit" class="secondary">Save rating</button>
+                    </form>
+                {% endif %}
+            </article>
+        {% empty %}
+            <div class="fb-empty">
+                <p class="fb-eyebrow">Room for something good</p>
+                <h2>Your pantry starts with your next shop.</h2>
+                <p>Purchased groceries appear here so you can follow expiry dates and record what you use.</p>
+                <a class="fb-button" href="/store/">Find your everyday essentials &rarr;</a>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}

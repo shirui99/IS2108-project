@@ -1,8 +1,30 @@
 {% extends 'adminpanel/adminpanel_base.html' %}
-
 {% block content %}
-
-    <h2>Staff Home</h2>
-    <p>Use the menu to manage products, warehouse stock, customers and orders.</p>
-
+    <div class="fb-section-heading">
+        <div>
+            <p class="fb-eyebrow">Behind every good basket</p>
+            <h1>Welcome to your workspace.</h1>
+            <p>Keep the shop running and the groceries moving.</p>
+        </div>
+    </div>
+    <div class="fb-step-grid">
+        <article>
+            <span>01 / Stock</span>
+            <h3>Care for the catalogue.</h3>
+            <p>Manage products, pack sizes, images and prices.</p>
+            <a href="/adminpanel/product_new">Manage products &rarr;</a>
+        </article>
+        <article>
+            <span>02 / Inventory</span>
+            <h3>Keep freshness in view.</h3>
+            <p>Manage warehouse items and their expiry dates.</p>
+            <a href="/adminpanel/item_new">Manage stock &rarr;</a>
+        </article>
+        <article>
+            <span>03 / Customers</span>
+            <h3>Look after each order.</h3>
+            <p>Review orders and follow up on customer support.</p>
+            <a href="/adminpanel/order_new">Manage orders &rarr;</a>
+        </article>
+    </div>
 {% endblock %}

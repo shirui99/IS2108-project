@@ -1,56 +1,76 @@
 {% extends 'store/store_base.html' %}
-
+{% block title %}Shop groceries | FruitBasket{% endblock %}
 {% block content %}
-
-    <p>
-        <h2>All Products</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th scope="col" style="width: 80px;">Image</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Size</th>
-                    <th scope="col">Price</th>
-                    <th scope="col">Rating</th>
-                    <th scope="col" class="text-end">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                {% for product in products %}
-                
-                <tr>
-                    <td>{% if product.Pimage %}<img src="{{ product.Pimage.url }}" width="80">{% else %}No image{% endif %}</td>
-                    <td>{{ product.Pname }}</td>
-                    <td>{{ product.get_Pcategory_display }}</td>
-                    <td>{{ product.Psize }}</td>
-                    <td>${{ product.Pprice|floatformat:2 }}</td>
-                    <td>
-                        {% if product.reviews > 0 %}
-                            {{ product.rating|floatformat:1 }} / 5 ({{ product.reviews }} reviews)
+    <section class="fb-hero">
+        <div>
+            <p class="fb-eyebrow">Your everyday, a little fresher</p>
+            <h1>Shop fresh.<br>Keep track.<br>
+                <em>Waste less.</em>
+            </h1>
+            <p>Every good meal starts somewhere. Fill your basket, follow your groceries into the pantry and make the most of what you buy.</p>
+            <div class="fb-actions">
+                <a class="fb-button" href="#groceries">Explore groceries <span aria-hidden="true">&darr;</span>
+                </a>
+                <a class="fb-text-link" href="/store/pantry">Visit my pantry &rarr;</a>
+            </div>
+        </div>
+        {% include 'grocery_art.html' %}
+    </section>
+    {% include 'benefits.html' %}
+    <section id="groceries">
+        <div class="fb-section-heading">
+            <div>
+                <p class="fb-eyebrow">The FruitBasket shop</p>
+                <h2>Make room for good food.</h2>
+                <p>Your everyday essentials, ready for your next meal.</p>
+            </div>
+            <span class="fb-help">{{ products|length }} product{{ products|length|pluralize }} to explore</span>
+        </div>
+        <div class="fb-product-grid">
+            {% for product in products %}
+                <article class="fb-product">
+                    <div class="fb-product-image">
+                        {% if product.Pimage %}
+                            <img src="{{ product.Pimage.url }}" alt="{{ product.Pname }}" loading="lazy">
                         {% else %}
-                            No reviews yet
+                            <div class="fb-placeholder">
+                                <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                                    <path d="M12 25h40l-6 28H18l-6-28Z" stroke="currentColor" stroke-width="2"/>
+                                    <path d="m20 25 9-15m15 15L35 10M25 32l2 14m12-14-2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M32 17c-5-10 10-12 10-12s0 12-10 12Z" fill="currentColor"/>
+                                </svg>Photo coming soon</div>
                         {% endif %}
-                    </td>
-                    <td>
-                        <form action="/store/cart/{{ product.Pid }}" method="post">
-                            {% csrf_token %}
-                            <button type="submit">Add to Cart</button>
-                        </form>
-                    </td>
-                </tr>
-
-                {% empty %}
-                
-                <tr>
-                    <td colspan="6">No product record available.</td>
-                </tr>
-                
-                {% endfor %}
-                
-            </tbody>
-        </table>
-    </p>
-
+                    </div>
+                    <div class="fb-product-info">
+                        <p class="fb-eyebrow">{{ product.get_Pcategory_display }}</p>
+                        <h3>{{ product.Pname }}</h3>
+                        <p class="fb-product-size">{{ product.Psize }}</p>
+                        <p class="fb-rating">
+                            {% if product.reviews > 0 %}
+                                <span aria-hidden="true">&#9733;</span> {{ product.rating|floatformat:1 }} / 5 &middot; {{ product.reviews }} review{{ product.reviews|pluralize }}{% else %}No reviews yet{% endif %}
+                        </p>
+                        <div class="fb-product-bottom">
+                            <span class="fb-price">${{ product.Pprice|floatformat:2 }}</span>
+                            <form action="/store/cart/{{ product.Pid }}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" aria-label="Add {{ product.Pname }} to cart">+ Add to cart</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="fb-empty">
+                    <h3>A fresh start is on its way.</h3>
+                    <p>There are no products to browse right now. Please check back later.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    <section class="fb-pantry-banner">
+        <div>
+            <h2>Your groceries have a life after checkout.</h2>
+            <p>Track expiry dates, record what you use and plan your next restock.</p>
+        </div>
+        <a class="fb-button" href="/store/pantry">Explore my pantry &rarr;</a>
+    </section>
 {% endblock %}

@@ -1,0 +1,20 @@
+# Virtual environment (Contains thousands of external packages)
+venv/
+.venv/
+env/
+ENV/
+
+# Database & local state
+*.sqlite3
+*.db
+*.log
+
+# Python cache & build files
+__pycache__/
+*.pyc
+*.pyo
+
+# Static & media bundles
+staticfiles/
+static/bootstrap/
+media/

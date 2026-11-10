@@ -1,12 +1,13 @@
 {% extends 'adminpanel/adminpanel_base.html' %}
 
 {% block content %}
+<h1 class="fb-staff-page-title">Customer support</h1>
 
     <p>
         {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
+            <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">
                 {{ status_message }}
-            </h3>
+            </div>
         {% endif %}
     </p>
 
@@ -14,28 +15,30 @@
 
     <p>
         <h2>Ticket {{ ticket.pk }}: {{ ticket.Tsubject }}</h2>
-        <table border="1" width="100%">
-            <tbody>
-                <tr><th>Order</th><td>{{ ticket.Torder.Oid }}</td></tr>
-                <tr><th>Customer</th><td>{{ ticket.Torder.Ocustomer }}</td></tr>
-                <tr><th>Submitted</th><td>{{ ticket.Tsubmitted }}</td></tr>
-                <tr><th>Status</th><td>{{ ticket.get_Tstatus_display }}</td></tr>
-                <tr><th>Message</th><td>{{ ticket.Tmessage|linebreaksbr }}</td></tr>
+        <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+            <table>
+                <tbody>
+                    <tr><th>Order</th><td>{{ ticket.Torder.Oid }}</td></tr>
+                    <tr><th>Customer</th><td>{{ ticket.Torder.Ocustomer }}</td></tr>
+                    <tr><th>Submitted</th><td>{{ ticket.Tsubmitted }}</td></tr>
+                    <tr><th>Status</th><td>{{ ticket.get_Tstatus_display }}</td></tr>
+                    <tr><th>Message</th><td>{{ ticket.Tmessage|linebreaksbr }}</td></tr>
 
-                {% if ticket.Tstatus != 'open' %}
-                <tr><th>Response</th><td>{{ ticket.Tresponse|linebreaksbr }}</td></tr>
-                <tr><th>Answered by</th><td>{{ ticket.Tresponder.username }}</td></tr>
-                <tr><th>Answered at</th><td>{{ ticket.Tresponded }}</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
+                    {% if ticket.Tstatus != 'open' %}
+                    <tr><th>Response</th><td>{{ ticket.Tresponse|linebreaksbr }}</td></tr>
+                    <tr><th>Answered by</th><td>{{ ticket.Tresponder.username }}</td></tr>
+                    <tr><th>Answered at</th><td>{{ ticket.Tresponded }}</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </p>
 
     {% if ticket.Tstatus == 'open' %}
     <form action="/adminpanel/support/{{ ticket.pk }}" method="post">
         {% csrf_token %}
-        Response:<br>
-        <textarea name="Tresponse" rows="5" cols="60" required></textarea><br>
+        <label for="support-response">Response</label><br>
+        <textarea id="support-response" name="Tresponse" rows="5" cols="60" required>{{ request.POST.Tresponse }}</textarea><br>
         <input type="submit" value="Send Response">
     </form>
     {% endif %}
@@ -46,40 +49,42 @@
 
     <p>
         <h2>View All Tickets</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th>Ticket</th>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Subject</th>
-                    <th>Submitted</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Subject</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
 
-                {% for t in tickets %}
+                    {% for t in tickets %}
 
-                <tr>
-                    <td>{{ t.pk }}</td>
-                    <td>{{ t.Torder.Oid }}</td>
-                    <td>{{ t.Torder.Ocustomer }}</td>
-                    <td>{{ t.Tsubject }}</td>
-                    <td>{{ t.Tsubmitted }}</td>
-                    <td>{{ t.get_Tstatus_display }}</td>
-                    <td><a href="/adminpanel/support/{{ t.pk }}">View</a></td>
-                </tr>
+                    <tr>
+                        <td>{{ t.pk }}</td>
+                        <td>{{ t.Torder.Oid }}</td>
+                        <td>{{ t.Torder.Ocustomer }}</td>
+                        <td>{{ t.Tsubject }}</td>
+                        <td>{{ t.Tsubmitted }}</td>
+                        <td>{{ t.get_Tstatus_display }}</td>
+                        <td><a href="/adminpanel/support/{{ t.pk }}">View</a></td>
+                    </tr>
 
-                {% empty %}
-                <tr>
-                    <td colspan="7" style="text-align: center;">No tickets found.</td>
-                </tr>
-                {% endfor %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No tickets found.</td>
+                    </tr>
+                    {% endfor %}
 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </p>
     <hr />
     <p>

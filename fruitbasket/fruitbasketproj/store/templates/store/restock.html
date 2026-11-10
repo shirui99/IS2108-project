@@ -1,40 +1,46 @@
 {% extends 'store/store_base.html' %}
-
+{% block title %}Restock suggestions | FruitBasket{% endblock %}
 {% block content %}
-
-    <p>
-        <h2>Restock Suggestions</h2>
-        {% if suggestions %}
-            <table border="1" width="100%">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Estimated Next Purchase</th>
-                        <th>Status</th>
-                        <th>Estimate</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for suggestion in suggestions %}
-                        <tr>
-                            <td>{{ suggestion.product_name }}</td>
-                            <td>{{ suggestion.restock_date }}</td>
-                            <td>{{ suggestion.due_status }}</td>
-                            <td>{{ suggestion.estimate_label }}</td>
-                            <td>
-                                <form action="/store/cart/{{ suggestion.product_id }}" method="post">
-                                    {% csrf_token %}
-                                    <button type="submit">Add to Cart</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
+    <div class="fb-section-heading">
+        <div>
+            <p class="fb-eyebrow">Your household has a rhythm</p>
+            <h1>A thoughtful next shop.</h1>
+            <p>Personalised restock suggestions based on your purchase history.</p>
+        </div>
+        <a class="fb-text-link" href="/store/pantry">Check my pantry &rarr;</a>
+    </div>
+    <div class="fb-alert">
+        <strong>A helpful estimate, with you in control.</strong> ML estimates use the trained restock model; initial estimates are used when there is not enough history or the model cannot provide a valid prediction. Check your pantry before adding more.</div>
+    {% if suggestions %}
+        <div class="fb-pantry-grid">
+            {% for suggestion in suggestions %}
+                <article class="fb-pantry-card">
+                    <div class="fb-pantry-card-top">
+                        <div>
+                            <p class="fb-eyebrow">Time for a pantry check</p>
+                            <h2>{{ suggestion.product_name }}</h2>
+                        </div>
+                        <span class="fb-status {% if suggestion.due_status == 'Overdue' %}urgent{% else %}soon{% endif %}">{{ suggestion.due_status }}</span>
+                    </div>
+                    <div class="fb-pantry-dates">
+                        <div>Estimated next purchase<strong>{{ suggestion.restock_date }}</strong>
+                        </div>
+                        <div>Suggestion source<strong>{{ suggestion.estimate_label }}</strong>
+                        </div>
+                    </div>
+                    <form action="/store/cart/{{ suggestion.product_id }}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" aria-label="Add {{ suggestion.product_name }} to cart">+ Add to cart</button>
+                    </form>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="fb-empty">
+            <p class="fb-eyebrow">A moment to take stock</p>
+            <h2>No restocks to suggest right now.</h2>
             <p>{{ empty_message }}</p>
-        {% endif %}
-    </p>
-
+            <a class="fb-button" href="/store/">Explore groceries &rarr;</a>
+        </div>
+    {% endif %}
 {% endblock %}

@@ -1,0 +1,12 @@
+{% if messages %}
+    <div class="fb-alert-stack" aria-live="polite">
+        {% for message in messages %}
+            <div class="alert {% if 'success' in message.tags %}alert-success{% elif 'warning' in message.tags %}alert-warning{% elif 'error' in message.tags %}alert-danger{% else %}alert-secondary{% endif %}" role="alert">
+                <strong>
+                    {% if 'success' in message.tags %}Success{% elif 'warning' in message.tags %}Warning{% elif 'error' in message.tags %}Error{% else %}Notice{% endif %}:
+                </strong>
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

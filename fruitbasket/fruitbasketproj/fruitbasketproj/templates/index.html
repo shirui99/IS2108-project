@@ -1,9 +1,56 @@
 {% extends 'base.html' %}
-
+{% block title %}FruitBasket | A fresher way to fill your pantry{% endblock %}
 {% block content %}
-
-    <h2>About Fruit Basket</h2>
-    <p>This is a online grocery store built using Django.</p>
-    <p>You can manage groceries and customers via the Admin Panel, and customers can browse and purchase groceries in the Online Store.</p>
-
+    <section class="fb-hero">
+        <div>
+            <p class="fb-eyebrow">A fresh approach to everyday groceries</p>
+            <h1>A full pantry.<br>A little <em>less waste.</em>
+            </h1>
+            <p>Meet your groceries' new home. Shop the essentials, keep track of perishables and know when it's time to restock.</p>
+            <div class="fb-actions">
+                <a class="fb-button" href="/store/">Shop the groceries <span aria-hidden="true">&rarr;</span>
+                </a>
+                <a class="fb-text-link" href="#how-it-works">How FruitBasket works</a>
+            </div>
+        </div>
+        {% include 'grocery_art.html' %}
+    </section>
+    {% include 'benefits.html' %}
+    <section id="how-it-works">
+        <div class="fb-section-heading">
+            <div>
+                <p class="fb-eyebrow">More than a grocery basket</p>
+                <h2>Good food deserves a better routine.</h2>
+                <p>From your next shop to the last thing in the fridge.</p>
+            </div>
+        </div>
+        <div class="fb-step-grid">
+            <article>
+                <span>01 / Shop</span>
+                <h3>Fill your basket with intention.</h3>
+                <p>Browse everyday groceries with clear prices, pack sizes and customer ratings where available.</p>
+                <a class="fb-text-link" href="/store/">Explore the shop &rarr;</a>
+            </article>
+            <article>
+                <span>02 / Track</span>
+                <h3>Give perishables a little attention.</h3>
+                <p>Your purchased items appear in your pantry. See expiry dates, use the soonest items first and record what you use or discard.</p>
+                <a class="fb-text-link" href="/store/pantry">Meet your pantry &rarr;</a>
+            </article>
+            <article>
+                <span>03 / Restock</span>
+                <h3>Find your household's rhythm.</h3>
+                <p>Check personalised restock estimates based on your purchase history. Add suggested groceries straight to your cart.</p>
+                <a class="fb-text-link" href="{% url 'restock' %}">See restock suggestions &rarr;</a>
+            </article>
+        </div>
+    </section>
+    <section class="fb-pantry-banner">
+        <div>
+            <h2>Less forgotten food. More everyday possibility.</h2>
+            <p>Bring shopping and pantry tracking together with FruitBasket.</p>
+        </div>
+        <a class="fb-button" href="{% if request.session.Cid %}/store/pantry{% else %}/store/signup{% endif %}">
+            {% if request.session.Cid %}Open my pantry{% else %}Create your account{% endif %} &rarr;</a>
+    </section>
 {% endblock %}

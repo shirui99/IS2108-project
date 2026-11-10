@@ -1,83 +1,64 @@
 {% extends 'store/store_base.html' %}
-
+{% block title %}Checkout | FruitBasket{% endblock %}
 {% block content %}
-
-    <p>
-        {% if status_type and status_message %}
-            <h3 style="color: {% if status_type == 'success' %}green{% else %}red{% endif %};">
-                {{ status_message }}
-            </h3>
-        {% endif %}
-    </p>
-
-    <p>
-        <h2>Checkout</h2>
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th>Pname</th>
-                    <th>Psize</th>
-                    <th>Pprice</th>
-                    <th>Quantity</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                {% for item in cart_items %}
-                
-                <tr>
-                    <td>{{ item.product.Pname }}</td>
-                    <td>{{ item.product.Psize }}</td>
-                    <td>${{ item.product.Pprice|floatformat:2 }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>${{ item.subtotal|floatformat:2 }}</td>
-                </tr>
-
-                {% empty %}
-                
-                <tr>
-                    <td colspan="5">Your cart is empty.</td>
-                </tr>
-                
-                {% endfor %}
-                
-                <tr>
-                    <td colspan="4" style="text-align: right;"><b>Total</b></td>
-                    <td><b>${{ total|floatformat:2 }}</b></td>
-                </tr>
-
-            </tbody>
-        </table>
-    </p>
-
-    {% if cart_items %}
-
-    <p>
-        <form action="/store/checkout" method="post">
-            {% csrf_token %}
-
-            <table border="1" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="20%"><b>Delivery address</b></td>
-                        <td><input type="text" name="Oaddress" value="{{ address }}" required="required" style="width: 400px"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="text-align: center;">
-                            <input type="submit" value="Place Order">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </form>
-    </p>
-
+    <div class="fb-section-heading">
+        <div>
+            <p class="fb-eyebrow">One step closer to your pantry</p>
+            <h1>Bring your basket home.</h1>
+            <p>Review your groceries and confirm your delivery address.</p>
+        </div>
+        <a class="fb-text-link" href="/store/cart">&larr; Back to cart</a>
+    </div>
+    {% if status_type and status_message %}
+        <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">{{ status_message }}</div>
     {% endif %}
-
-    <hr />
-    <p>
-        <a href="/store/cart">Back to Cart</a> | <a href="/store/orders">My Orders</a>
-    </p>
-
+    {% if cart_items %}
+        <div class="fb-two-column">
+            <section class="fb-panel">
+                <p class="fb-eyebrow">Delivery details</p>
+                <h2>Where are we heading?</h2>
+                <form action="/store/checkout" method="post" class="fb-form">
+                    {% csrf_token %}
+                    <div class="fb-field">
+                        <label for="delivery-address">Delivery address</label>
+                        <input id="delivery-address" type="text" name="Oaddress" value="{{ address }}" required="required" autocomplete="street-address">
+                    </div>
+                    <p class="fb-help">Please check your address and order summary before placing your order.</p>
+                    <button type="submit">Place order &rarr;</button>
+                </form>
+            </section>
+            <aside class="fb-panel">
+                <p class="fb-eyebrow">Your basket</p>
+                <h2>Order summary</h2>
+                {% for item in cart_items %}
+                    <div class="fb-summary-line">
+                        <div>
+                            <strong>{{ item.product.Pname }}</strong>
+                            <p class="fb-help">{{ item.product.Psize }} &middot; ${{ item.product.Pprice|floatformat:2 }} &times; {{ item.quantity }}</p>
+                        </div>
+                        <strong>${{ item.subtotal|floatformat:2 }}</strong>
+                    </div>
+                {% endfor %}
+                <div class="fb-total">
+                    <span>Total</span>
+                    <span>${{ total|floatformat:2 }}</span>
+                </div>
+            </aside>
+        </div>
+    {% else %}
+        <div class="fb-empty">
+            {% if status_type == 'success' %}
+                <h2>A fresh chapter for your pantry.</h2>
+                <p>Find your order details or check the groceries in your pantry.</p>
+                <div class="fb-actions" style="justify-content:center">
+                    <a class="fb-button" href="/store/orders">View my orders</a>
+                    <a class="fb-button secondary" href="/store/pantry">Open my pantry</a>
+                </div>
+            {% else %}
+                <h2>Your cart is empty.</h2>
+                <p>Add your groceries before heading to checkout.</p>
+                <a class="fb-button" href="/store/">Back to the shop &rarr;</a>
+            {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}

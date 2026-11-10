@@ -1,15 +1,33 @@
-<h2>Main Menu</h2>
-<ul>
-    <li><a href="/store/">Shop</a></li>
+<ul class="fb-nav-list">
+    <li>
+        <a class="{% if request.path == '/store/' %}is-active{% endif %}" {% if request.path == '/store/' %}aria-current="page"{% endif %} href="/store/">Shop</a>
+    </li>
     {% if request.session.Cid %}
-        <li><a href="/store/pantry">My Pantry</a></li>
-        <li><a href="/store/cart">Cart</a></li>
-        <li><a href="/store/orders">My Orders</a></li>
-        <li><a href="{% url 'restock' %}">Restock Suggestions</a></li>
-        <li><a href="/store/logout">Log Out</a></li>
+        <li>
+            <a class="{% if '/store/pantry' in request.path %}is-active{% endif %}" {% if '/store/pantry' in request.path %}aria-current="page"{% endif %} href="/store/pantry">My pantry</a>
+        </li>
+        <li>
+            <a class="{% if '/store/restock' in request.path %}is-active{% endif %}" {% if '/store/restock' in request.path %}aria-current="page"{% endif %} href="{% url 'restock' %}">Restock</a>
+        </li>
+        <li>
+            <a class="{% if '/store/orders' in request.path %}is-active{% endif %}" {% if '/store/orders' in request.path %}aria-current="page"{% endif %} href="/store/orders">My orders</a>
+        </li>
+        <li>
+            <form action="/store/logout" method="post">
+                {% csrf_token %}
+                <button class="fb-nav-logout" type="submit">Log out</button>
+            </form>
+        </li>
     {% else %}
-        <li><a href="/store/login">Log In</a></li>
-        <li><a href="/store/signup">Sign Up</a></li>
+        <li>
+            <a class="{% if request.path == '/store/login' %}is-active{% endif %}" href="/store/login">Log in</a>
+        </li>
+        <li>
+            <a class="{% if request.path == '/store/signup' %}is-active{% endif %}" href="/store/signup">Join FruitBasket</a>
+        </li>
     {% endif %}
-    <li><a href="/">Back to Fruit Basket</a></li>
+    <li>
+        <a class="nav-cart {% if '/store/cart' in request.path or '/store/checkout' in request.path %}is-active{% endif %}" href="/store/cart">Cart <span class="fb-count" aria-label="{{ request.session.cart|length }} product types">{{ request.session.cart|length }}</span>
+        </a>
+    </li>
 </ul>
