@@ -1,5 +1,6 @@
 {% extends 'store/store_base.html' %}
 {% block title %}Your cart | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
 {% block content %}
     <div class="fb-section-heading">
         <div>
@@ -12,7 +13,8 @@
     {% endif %}
     {% if cart_items %}
         <div class="fb-two-column">
-            <div class="fb-table-wrap" role="region" aria-label="Cart items" tabindex="0">
+            <div class="fb-table-wrap fb-records-table" role="region" aria-label="Cart items" tabindex="0">
+                <p class="fb-table-hint">Scroll to see all columns.</p>
                 <table>
                     <thead>
                         <tr>
@@ -50,7 +52,7 @@
                     </tbody>
                 </table>
             </div>
-            <aside class="fb-panel">
+            <aside class="fb-panel fb-order-summary">
                 <h2>Order summary</h2>
                 <p class="fb-help">{{ cart_items|length }} product{{ cart_items|length|pluralize }} in your basket</p>
                 <div class="fb-total">

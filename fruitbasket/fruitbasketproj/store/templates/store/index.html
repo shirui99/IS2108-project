@@ -1,9 +1,11 @@
 {% extends 'store/store_base.html' %}
 {% block title %}Shop groceries | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page fb-shop-page{% endblock %}
 {% block content %}
     <section class="fb-hero">
         <div>
             <h1>Shop groceries</h1>
+            <p>Browse the catalogue and add groceries to your cart.</p>
             <div class="fb-actions">
                 <a class="fb-button" href="#groceries">Explore groceries <span aria-hidden="true">&darr;</span>
                 </a>
@@ -21,7 +23,7 @@
         </div>
         <div class="fb-product-grid">
             {% for product in products %}
-                <article class="fb-product">
+                <article class="fb-product fb-product-{{ product.Pcategory }}">
                     <div class="fb-product-image">
                         {% if product.Pimage %}
                             <img src="{{ product.Pimage.url }}" alt="{{ product.Pname }}" loading="lazy">
@@ -31,7 +33,7 @@
                                     <path d="M12 25h40l-6 28H18l-6-28Z" stroke="currentColor" stroke-width="2"/>
                                     <path d="m20 25 9-15m15 15L35 10M25 32l2 14m12-14-2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                     <path d="M32 17c-5-10 10-12 10-12s0 12-10 12Z" fill="currentColor"/>
-                                </svg>Photo coming soon</div>
+                                </svg>No product photo</div>
                         {% endif %}
                     </div>
                     <div class="fb-product-info">
@@ -53,7 +55,7 @@
                 </article>
             {% empty %}
                 <div class="fb-empty">
-                    <h3>A fresh start is on its way.</h3>
+                    <h3>No products available</h3>
                     <p>There are no products to browse right now. Please check back later.</p>
                 </div>
             {% endfor %}

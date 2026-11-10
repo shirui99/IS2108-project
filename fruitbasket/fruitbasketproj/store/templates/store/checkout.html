@@ -1,5 +1,6 @@
 {% extends 'store/store_base.html' %}
 {% block title %}Checkout | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
 {% block content %}
     <div class="fb-section-heading">
         <div>
@@ -24,7 +25,7 @@
                     <button type="submit">Place order &rarr;</button>
                 </form>
             </section>
-            <aside class="fb-panel">
+            <aside class="fb-panel fb-order-summary">
                 <h2>Order summary</h2>
                 {% for item in cart_items %}
                     <div class="fb-summary-line">

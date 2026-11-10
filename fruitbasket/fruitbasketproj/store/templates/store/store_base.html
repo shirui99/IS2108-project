@@ -11,7 +11,7 @@
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
         <link rel="stylesheet" href="{% static 'css/fruitbasket.css' %}">
     </head>
-    <body class="fb-app">
+    <body class="fb-app {% block page_class %}{% endblock %}">
         <a class="fb-skip" href="#main-content">Skip to content</a>
         <header class="fb-header">
             <div class="fb-shell fb-header-inner">
