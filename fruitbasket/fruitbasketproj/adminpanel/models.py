@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.core.validators import MinValueValidator
 
 # Create your models here.
 
@@ -21,7 +22,10 @@ class Product(models.Model):
     Pcategory = models.CharField(max_length=20, choices=CATEGORY)
     Psize = models.CharField(max_length=30)
     Pprice = models.FloatField()
-    Plowstock = models.IntegerField()
+    Plowstock = models.IntegerField(validators=[MinValueValidator(0)])
+    Ptargetstock = models.PositiveIntegerField(null=True, blank=True, verbose_name='Target stock level')
+    Pbulkquantity = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(2)], verbose_name='Bulk quantity threshold')
+    Pbulkprice = models.FloatField(null=True, blank=True, verbose_name='Bulk unit price')
     Pactive = models.BooleanField(default=True)
     Pimage = models.ImageField(upload_to='products/', blank=True, null=True)
     Pexpirydays = models.PositiveIntegerField(default=0)
@@ -39,7 +43,9 @@ class Product(models.Model):
             models.CheckConstraint(
                 check=models.Q(Plowstock__gte=0),
                 name='Plowstock_not_negative'
-            )
+            ),
+            models.CheckConstraint(condition=models.Q(Ptargetstock__isnull=True) | models.Q(Ptargetstock__gte=models.F('Plowstock')), name='product_target_at_least_low'),
+            models.CheckConstraint(condition=(models.Q(Pbulkquantity__isnull=True, Pbulkprice__isnull=True) | models.Q(Pbulkquantity__isnull=False, Pbulkprice__isnull=False, Pbulkquantity__gte=2, Pbulkprice__gt=0, Pbulkprice__lte=models.F('Pprice'))), name='product_bulk_settings_valid')
         ]
 
     def __str__(self):
@@ -110,6 +116,7 @@ class Item(models.Model):
         ('expired', 'Expired/Discarded')
     ]
 
+    Ipurchasedprice = models.FloatField(null=True, blank=True, verbose_name='Recorded purchase price')
     Ireceived = models.DateField()
     Iexpiry = models.DateField(blank=True, null=True)
     Istatus = models.CharField(max_length=10, choices=STATUS, default='available')

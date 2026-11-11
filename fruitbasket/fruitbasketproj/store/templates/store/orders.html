@@ -77,7 +77,7 @@
                             <tr>
                                 <td>{{ item.Iproduct.Pname }}</td>
                                 <td>{{ item.Iproduct.Psize }}</td>
-                                <td>${{ item.Iproduct.Pprice|floatformat:2 }}</td>
+                                <td>{% if item.Ipurchasedprice is not None %}${{ item.Ipurchasedprice|floatformat:2 }}{% else %}Not recorded{% endif %}</td>
                                 <td>
                                     {% if item.Iexpiry %}
                                         {{ item.Iexpiry|date:'j M Y' }}{% else %}No expiry recorded{% endif %}

@@ -15,10 +15,11 @@
 
     <div class="fb-staff-section">
         <h1 class="fb-staff-page-title">Products</h1>
-        <p class="fb-page-help">Create a product or choose Update from the catalogue below.</p>
+        <p class="fb-page-help">Create a product or choose Update from the catalogue below. Use a separate SKU for each pack size. Target stock and bulk settings are optional.</p>
         
-        <form class="fb-staff-editor" action="/adminpanel/product_new" method="post" enctype="multipart/form-data">
+        <form class="fb-staff-editor" action="{% if action == 'update' %}/adminpanel/product_new/{{ product_id }}{% else %}/adminpanel/product_new{% endif %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
+            {% if action == 'update' %}<input type="hidden" name="Pid" value="{{ product_id }}">{% endif %}
 
             <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
                 <table>

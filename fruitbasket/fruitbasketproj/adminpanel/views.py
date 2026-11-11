@@ -1,8 +1,9 @@
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.views.decorators.http import require_POST
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.db.models.deletion import RestrictedError
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
 from datetime import timedelta
 from django.utils import timezone
 from django.views import View
@@ -78,6 +79,7 @@ class ProductView(View):
                 product = Product.objects.get(pk=pk)
 
                 form = self.form_class(instance=product)
+                form.fields['Pid'].disabled = True
                 action = 'update'
 
             except Product.DoesNotExist:
@@ -100,6 +102,7 @@ class ProductView(View):
         )
 
         context = {
+            'product_id': form.instance.pk or '',
             'form': rendered_form,
             'action': action,
             'products': products,
@@ -117,7 +120,6 @@ class ProductView(View):
         form = self.form_class(request.POST, request.FILES)
         status_type = None
         status_message = None
-        save_succeeded = False
 
         if action == 'delete':
             form = self.form_class()
@@ -140,6 +142,7 @@ class ProductView(View):
                 stock=Count('product_items', filter=Q(product_items__Istatus='available'))
             )
             context = {
+                'product_id': form.instance.pk or '',
                 'form': rendered_form,
                 'action': 'create',
                 'products': products,
@@ -150,92 +153,31 @@ class ProductView(View):
 
 
 
+        if action not in ('create', 'update'):
+            return HttpResponse('Invalid product action.', status=400)
         if action == 'update':
-
-            product = Product.objects.get(pk=request.POST.get('Pid'))
+            product = get_object_or_404(Product, pk=kwargs.get('pk') or request.POST.get('Pid'))
+            if kwargs.get('pk') and request.POST.get('Pid') != product.Pid:
+                return HttpResponse('Product ID cannot be changed.', status=400)
             form = self.form_class(request.POST, request.FILES, instance=product)
-
+            form.fields['Pid'].disabled = True
         else:
-
             form = self.form_class(request.POST, request.FILES)
 
         if form.is_valid():
-
-            if action == 'create':
-
-                newProduct = Product(
-                    Pid=form.cleaned_data['Pid'],
-                    Pname=form.cleaned_data['Pname'],
-                    Pcategory=form.cleaned_data['Pcategory'],
-                    Psize=form.cleaned_data['Psize'],
-                    Pprice=form.cleaned_data['Pprice'],
-                    Plowstock=form.cleaned_data['Plowstock'],
-                    Pactive=form.cleaned_data['Pactive'],
-                    Pimage=form.cleaned_data['Pimage'] or None,
-                    Pexpirydays=form.cleaned_data['Pexpirydays']
-                )
-
-                try:
-
-                    newProduct.save()
-
-                    save_succeeded = True
-                    status_type = 'success'
-                    status_message = 'Product created successfully.'
-
-                except Exception as e:
-
-                    status_type = 'error'
-                    status_message = f'Error creating product: {str(e)}'
-
-            elif action == 'update':
-
-                try:
-
-                    product = Product.objects.get(pk=form.cleaned_data['Pid'])
-                    product.Pname = form.cleaned_data['Pname']
-                    product.Pcategory = form.cleaned_data['Pcategory']
-                    product.Psize = form.cleaned_data['Psize']
-                    product.Pprice = form.cleaned_data['Pprice']
-                    product.Plowstock = form.cleaned_data['Plowstock']
-                    product.Pactive = form.cleaned_data['Pactive']
-                    product.Pimage=form.cleaned_data['Pimage'] or None
-                    product.Pexpirydays=form.cleaned_data['Pexpirydays']
-
-                    try:
-
-                        product.save()
-
-                        save_succeeded = True
-                        status_type = 'success'
-                        status_message = 'Product updated successfully.'
-
-                    except Exception as e:
-
-                        status_type = 'error'
-                        status_message = f'Error updating product: {str(e)}'
-
-                except Product.DoesNotExist:
-
-                    status_type = 'error'
-                    status_message = 'Product not found.'
-
-        else:
-
-            if action == 'create':
-
-                status_type = 'error'
-                status_message = f'Error creating product'
-
+            try:
+                with transaction.atomic():
+                    if action == 'create':
+                        # A concurrent create must never overwrite the same SKU.
+                        form.save(commit=False).save(force_insert=True)
+                    else:
+                        form.save()
+            except IntegrityError:
+                form.add_error(None, 'The product could not be saved. Check that its SKU is unique and try again.')
             else:
-
-                status_type = 'error'
-                status_message = f'Error updating product'
-
-        if save_succeeded:
-            # Keep invalid bound data visible so staff can correct the submitted form.
-            form = self.form_class()
-            action = 'create'
+                return redirect('/adminpanel/product_new')
+        status_type = 'error'
+        status_message = 'Please correct the product details below.'
 
         rendered_form = form.render('adminpanel/form_template.html')
 
@@ -245,6 +187,7 @@ class ProductView(View):
             stock=Count('product_items', filter=Q(product_items__Istatus='available'))
         )
         context = {
+            'product_id': form.instance.pk or '',
             'form': rendered_form,
             'action': action,
             'products': products,

@@ -293,6 +293,8 @@ def checkout(request):
 
         newOrder.save()
 
+        purchase_prices = {row['product'].Pid: row['product'].Pprice for row in cart_items}
+
         # Give the customer the items that expire soonest
 
         for Pid in cart:
@@ -303,6 +305,7 @@ def checkout(request):
 
                 item.Iorder = newOrder
                 item.Istatus = 'delivered'
+                item.Ipurchasedprice = purchase_prices[Pid]
                 item.save()
 
         request.session['cart'] = {}
