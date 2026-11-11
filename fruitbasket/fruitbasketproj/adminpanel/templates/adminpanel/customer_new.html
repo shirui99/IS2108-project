@@ -1,25 +1,23 @@
 {% extends 'adminpanel/adminpanel_base.html' %}
 
 {% load static %}
+{% block title %}Customers | FruitBasket staff{% endblock %}
 
 {% block content %}
 
-    <p>
+    <div class="fb-staff-section">
         {% if status_type and status_message %}
             <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">
                 {{ status_message }}
             </div>
         {% endif %}
-    </p>
+    </div>
 
-    <p>
-        <h1 class="fb-staff-page-title">
-            Create/Update Customer
-            <!-- HTML5 -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16"> <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/> </svg>
-        </h1>
+    <div class="fb-staff-section">
+        <h1 class="fb-staff-page-title">Customers</h1>
+        <p class="fb-page-help">Create a customer record or update an existing one below.</p>
         
-        <form action="/adminpanel/customer_new" method="post">
+        <form class="fb-staff-editor" action="/adminpanel/customer_new" method="post">
             {% csrf_token %}
 
             <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
@@ -37,20 +35,21 @@
                 </table>
             </div>
         </form>
-    </p>
+    </div>
     <hr />
-    <p>
-        <h2>View All Customers</h2>
-        <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+    <div class="fb-staff-section">
+        <h2 class="fb-records-heading">All customers</h2>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Staff data table" tabindex="0">
+            <p class="fb-table-hint">Scroll to see all columns.</p>
             <table>
                 <thead>
                     <tr>
-                        <th>Cid</th>
-                        <th>Cname</th>
-                        <th>Caddress</th>
-                        <th>Chouseholdsize</th>
-                        <th>Cmealsperweek</th>
-                        <th>Cuser</th>
+                        <th scope="col">Customer ID</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">Household size</th>
+                        <th scope="col">Meals per week</th>
+                        <th scope="col">Username</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -71,7 +70,7 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="Cid" value="{{ customer.Cid }}">
-                                <button type="submit">Delete</button>
+                                <button class="fb-danger" type="submit">Delete</button>
                             </form>
                         </td>
                     </tr>
@@ -87,10 +86,10 @@
                 </tbody>
             </table>
         </div>
-    </p>
+    </div>
     <hr />
-    <p>
-        <a href="/adminpanel">Admin Panel Home</a>
-    </p>
+    <div class="fb-staff-section">
+        <a href="/adminpanel">Staff workspace</a>
+    </div>
 
 {% endblock %}

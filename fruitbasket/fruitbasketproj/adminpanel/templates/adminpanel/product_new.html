@@ -1,25 +1,23 @@
 {% extends 'adminpanel/adminpanel_base.html' %}
 
 {% load static %}
+{% block title %}Products | FruitBasket staff{% endblock %}
 
 {% block content %}
 
-    <p>
+    <div class="fb-staff-section">
         {% if status_type and status_message %}
             <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">
                 {{ status_message }}
             </div>
         {% endif %}
-    </p>
+    </div>
 
-    <p>
-        <h1 class="fb-staff-page-title">
-            Create/Update Product
-            <!-- HTML5 -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-product" viewBox="0 0 16 16"> <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/> </svg>
-        </h1>
+    <div class="fb-staff-section">
+        <h1 class="fb-staff-page-title">Products</h1>
+        <p class="fb-page-help">Create a product or choose Update from the catalogue below.</p>
         
-        <form action="/adminpanel/product_new" method="post" enctype="multipart/form-data">
+        <form class="fb-staff-editor" action="/adminpanel/product_new" method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
             <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
@@ -37,24 +35,25 @@
                 </table>
             </div>
         </form>
-    </p>
+    </div>
     <hr />
-    <p>
-        <h2>View All Products</h2>
-        <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+    <div class="fb-staff-section">
+        <h2 class="fb-records-heading">All products</h2>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Staff data table" tabindex="0">
+            <p class="fb-table-hint">Scroll to see all columns.</p>
             <table>
                 <thead>
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Product Name</th>
+                        <th scope="col">Product name</th>
                         <th scope="col">Category</th>
                         <th scope="col">Size</th>
                         <th scope="col">Price</th>
-                        <th scope="col">In Stock</th>
-                        <th scope="col">Low Stock Alert</th>
+                        <th scope="col">In stock</th>
+                        <th scope="col">Low stock threshold</th>
                         <th scope="col">Status</th>
                         <th scope="col">Image</th>
-                        <th scope="col">Shelf Life</th>
+                        <th scope="col">Shelf life (days)</th>
                         <th scope="col" class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -68,12 +67,12 @@
                         <td>{{ product.get_Pcategory_display }}</td>
                         <td>{{ product.Psize }}</td>
                         <td>${{ product.Pprice }}</td>
-                        <td {% if product.stock <= product.Plowstock %}style="color: red; font-weight: bold;"{% endif %}>
+                        <td {% if product.stock <= product.Plowstock %}style="color: #8a3529; font-weight: bold;"{% endif %}>
                             {{ product.stock }}{% if product.stock <= product.Plowstock %} (LOW){% endif %}
                         </td>
                         <td>{{ product.Plowstock }}</td>
                         <td>{% if product.Pactive %}Yes{% else %}No{% endif %}</td>
-                        <td>{% if product.Pimage %}<img src="{{ product.Pimage.url }}" width="80">{% else %}No image{% endif %}</td>
+                        <td>{% if product.Pimage %}<img src="{{ product.Pimage.url }}" width="80" alt="{{ product.Pname }}">{% else %}No image{% endif %}</td>
                         <td>{{ product.Pexpirydays }}</td>
                         <td>
                         <a href="/adminpanel/product_new/{{ product.Pid }}">Update</a>
@@ -81,7 +80,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="Pid" value="{{ product.Pid }}">
-                            <button type="submit">Delete</button>
+                            <button class="fb-danger" type="submit">Delete</button>
                         </form>
                     </td>
                     </tr>
@@ -97,10 +96,10 @@
                 </tbody>
             </table>
         </div>
-    </p>
+    </div>
     <hr>
-    <p>
-        <a href="/adminpanel">Admin Panel Home</a>
-    </p>
+    <div class="fb-staff-section">
+        <a href="/adminpanel">Staff workspace</a>
+    </div>
 
 {% endblock %}
