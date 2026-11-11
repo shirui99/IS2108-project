@@ -1,30 +1,33 @@
 {% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Staff workspace | FruitBasket{% endblock %}
 {% block content %}
-    <div class="fb-section-heading">
-        <div>
-            <p class="fb-eyebrow">Behind every good basket</p>
-            <h1>Welcome to your workspace.</h1>
-            <p>Keep the shop running and the groceries moving.</p>
-        </div>
-    </div>
-    <div class="fb-step-grid">
+    <section class="fb-workspace-intro">
+        <h1>Staff workspace</h1>
+        <p>Manage the catalogue, warehouse stock and customer orders.</p>
+    </section>
+    <div class="fb-workspace-tasks">
         <article>
-            <span>01 / Stock</span>
-            <h3>Care for the catalogue.</h3>
-            <p>Manage products, pack sizes, images and prices.</p>
-            <a href="/adminpanel/product_new">Manage products &rarr;</a>
+            <h2>Products</h2>
+            <p>Update prices, pack sizes, images and availability.</p>
+            <a class="fb-text-link" href="/adminpanel/product_new">Manage products &rarr;</a>
         </article>
         <article>
-            <span>02 / Inventory</span>
-            <h3>Keep freshness in view.</h3>
-            <p>Manage warehouse items and their expiry dates.</p>
-            <a href="/adminpanel/item_new">Manage stock &rarr;</a>
+            <h2>Warehouse stock</h2>
+            <p>Receive stock and review batch expiry dates.</p>
+            <a class="fb-text-link" href="/adminpanel/item_new">Manage stock &rarr;</a>
         </article>
         <article>
-            <span>03 / Customers</span>
-            <h3>Look after each order.</h3>
-            <p>Review orders and follow up on customer support.</p>
-            <a href="/adminpanel/order_new">Manage orders &rarr;</a>
+            <h2>Orders</h2>
+            <p>Review delivery details and update order status.</p>
+            <a class="fb-text-link" href="/adminpanel/order_new">Manage orders &rarr;</a>
+        </article>
+        <article>
+            <h2>Customers &amp; support</h2>
+            <p>Review customer records and respond to order enquiries.</p>
+            <div class="fb-inline-actions">
+                <a class="fb-text-link" href="/adminpanel/customer_new">Customers &rarr;</a>
+                <a class="fb-text-link" href="/adminpanel/support">Support tickets &rarr;</a>
+            </div>
         </article>
     </div>
 {% endblock %}
