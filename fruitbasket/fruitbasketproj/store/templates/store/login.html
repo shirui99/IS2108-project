@@ -11,6 +11,9 @@
             </div>
         </section>
         <section class="fb-auth-form">
+            {% if request.GET.cart_login == '1' %}
+                <div class="fb-alert warning" role="status">Please log in to add products to your cart. After logging in, return to the shop and add the product again.</div>
+            {% endif %}
             {% if success_message %}
                 <div class="fb-alert" role="status">{{ success_message }}</div>
             {% endif %}

@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 
 from adminpanel.models import Customer, Product, Orders, Item, SupportTicket
@@ -21,7 +22,28 @@ def index(request):
         reviews=Count('product_items__Irating')
     )
 
-    return render(request, 'store/index.html', {'products': products})
+    category = request.GET.get('category', '')
+    if category not in dict(Product.CATEGORY):
+        category = ''
+    if category:
+        products = products.filter(Pcategory=category)
+
+    sort = request.GET.get('sort', 'name')
+    sort_options = {
+        'name': ('Pname', 'Pid'),
+        'price_asc': ('Pprice', 'Pname', 'Pid'),
+        'price_desc': ('-Pprice', 'Pname', 'Pid'),
+    }
+    if sort not in sort_options:
+        sort = 'name'
+    products = products.order_by(*sort_options[sort])
+
+    return render(request, 'store/index.html', {
+        'products': products,
+        'categories': Product.CATEGORY,
+        'selected_category': category,
+        'selected_sort': sort,
+    })
 
 
 def restock(request):
@@ -136,6 +158,7 @@ def login(request):
                     Cuser=user
                 )
 
+            request.session.flush()
             request.session['Cid'] = customer.Cid
 
             # Redirect directly to the store shop or restock suggestions
@@ -146,6 +169,7 @@ def login(request):
 
 
 
+@require_POST
 def logout(request):
 
     request.session.flush()

@@ -1,4 +1,5 @@
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.views.decorators.http import require_POST
 from django.db.models import Count, Q
 from django.db.models.deletion import RestrictedError
 from django.shortcuts import render, HttpResponse
@@ -32,9 +33,10 @@ def login(request):
 
         user = authenticate(username=username, password=password)
 
-        if user is not None and user.is_staff:
+        if user is not None and user.is_active and user.is_staff:
 
-            request.session['isStaff'] = True
+            request.session.flush()
+            auth_login(request, user)
             request.session['staff_user_id'] = user.pk #for ticket answering
 
             return render(request, 'adminpanel/login.html', {'success_message': 'Authentication successful!'})
@@ -45,9 +47,10 @@ def login(request):
 
 
 
+@require_POST
 def logout(request):
 
-    request.session.flush()
+    auth_logout(request)
 
     return HttpResponse('You have logged out.')
 
@@ -777,7 +780,7 @@ class SupportView(View):
         updated = SupportTicket.objects.filter(pk=pk, Tstatus='open').update(
             Tresponse=response,
             Tstatus='answered',
-            Tresponder_id=request.session.get('staff_user_id'),
+            Tresponder_id=request.user.pk,
             Tresponded=timezone.now()
         )
 

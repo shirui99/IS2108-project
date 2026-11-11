@@ -19,8 +19,31 @@
             <div>
                 <h2>Products</h2>
             </div>
-            <span class="fb-help">{{ products|length }} product{{ products|length|pluralize }} to explore</span>
+            <span class="fb-help">{{ products|length }} product{{ products|length|pluralize }} found</span>
         </div>
+        <form class="fb-shop-filters" method="get" action="{% url 'store_index' %}#groceries">
+            <div class="fb-field">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">All categories</option>
+                    {% for value, label in categories %}
+                        <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="fb-field">
+                <label for="sort">Sort by</label>
+                <select id="sort" name="sort">
+                    <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>Name</option>
+                    <option value="price_asc" {% if selected_sort == 'price_asc' %}selected{% endif %}>Price: low to high</option>
+                    <option value="price_desc" {% if selected_sort == 'price_desc' %}selected{% endif %}>Price: high to low</option>
+                </select>
+            </div>
+            <div class="fb-shop-filter-actions">
+                <button type="submit">Apply</button>
+                <a class="fb-button secondary" href="{% url 'store_index' %}#groceries">Clear filters</a>
+            </div>
+        </form>
         <div class="fb-product-grid">
             {% for product in products %}
                 <article class="fb-product fb-product-{{ product.Pcategory }}">
@@ -55,8 +78,8 @@
                 </article>
             {% empty %}
                 <div class="fb-empty">
-                    <h3>No products available</h3>
-                    <p>There are no products to browse right now. Please check back later.</p>
+                    <h3>No products found</h3>
+                    <p>Try another category or clear your filters to see all products.</p>
                 </div>
             {% endfor %}
         </div>

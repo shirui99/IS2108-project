@@ -32,6 +32,38 @@ class CustomerAuthenticationMiddlewareTests(TestCase):
         self.assertFalse(view_executed)
 
 
+class CatalogueAndCartLoginTests(TestCase):
+    def setUp(self):
+        for product_id, name, category, price, active in [
+            ('P001', 'Apple', 'fruit', 3, True),
+            ('P002', 'Banana', 'fruit', 1, True),
+            ('P003', 'Milk', 'dairy', 2, True),
+            ('P004', 'Hidden', 'fruit', 4, False),
+        ]:
+            Product.objects.create(Pid=product_id, Pname=name, Pcategory=category,
+                                   Psize='1 pack', Pprice=price, Plowstock=1,
+                                   Pactive=active)
+
+    def test_category_and_price_sort_apply_together(self):
+        response = self.client.get('/store/', {'category': 'fruit', 'sort': 'price_asc'})
+        self.assertEqual([p.Pname for p in response.context['products']], ['Banana', 'Apple'])
+        self.assertContains(response, 'value="fruit" selected')
+        self.assertContains(response, 'value="price_asc" selected')
+
+    def test_invalid_filters_fall_back_to_all_categories_and_name(self):
+        response = self.client.get('/store/', {'category': 'unknown', 'sort': 'unknown'})
+        self.assertEqual([p.Pname for p in response.context['products']], ['Apple', 'Banana', 'Milk'])
+
+    def test_guest_add_prompts_for_login_without_adding(self):
+        response = self.client.post('/store/cart/P001', follow=True)
+        self.assertRedirects(response, '/store/login?cart_login=1')
+        self.assertContains(response, 'Please log in to add products to your cart.')
+        self.assertNotIn('cart', self.client.session)
+        response = self.client.post('/store/login?cart_login=1', {'username': 'bad', 'password': 'bad'})
+        self.assertContains(response, 'Please log in to add products to your cart.')
+        self.assertContains(response, 'Invalid username or password.')
+
+
 class StoreMutationTests(TestCase):
     def setUp(self):
         user = User.objects.create_user(username="store_test", password="password")

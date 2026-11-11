@@ -2048,3 +2048,40 @@ img {
         grid-template-columns:1fr
     }
 }
+
+/* Shop catalogue controls */
+.fb-shop-filters {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    gap:12px;
+    margin-bottom:24px
+}
+
+.fb-shop-filters .fb-field {
+    flex:0 1 240px;
+    min-width:0;
+    margin:0
+}
+
+.fb-shop-filters select {
+    width:100%;
+    height:44px
+}
+
+.fb-shop-filter-actions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px
+}
+
+.fb-shop-filter-actions button,
+.fb-shop-filter-actions .fb-button {
+    min-height:44px
+}
+
+@media (max-width:600px) {
+    .fb-shop-filters .fb-field {
+        flex:1 1 100%
+    }
+}
