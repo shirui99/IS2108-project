@@ -1,21 +1,23 @@
 {% extends 'adminpanel/adminpanel_base.html' %}
 
+{% block title %}Customer support | FruitBasket staff{% endblock %}
 {% block content %}
-<h1 class="fb-staff-page-title">Customer support</h1>
+    <h1 class="fb-staff-page-title">Customer support</h1>
+    <p class="fb-page-help">Review order enquiries and respond to open tickets.</p>
 
-    <p>
+    <div class="fb-staff-section">
         {% if status_type and status_message %}
             <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">
                 {{ status_message }}
             </div>
         {% endif %}
-    </p>
+    </div>
 
     {% if ticket %}
 
-    <p>
+    <div class="fb-staff-section">
         <h2>Ticket {{ ticket.pk }}: {{ ticket.Tsubject }}</h2>
-        <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+        <div class="fb-table-wrap fb-support-details" role="region" aria-label="Staff data table" tabindex="0">
             <table>
                 <tbody>
                     <tr><th>Order</th><td>{{ ticket.Torder.Oid }}</td></tr>
@@ -32,10 +34,10 @@
                 </tbody>
             </table>
         </div>
-    </p>
+    </div>
 
     {% if ticket.Tstatus == 'open' %}
-    <form action="/adminpanel/support/{{ ticket.pk }}" method="post">
+    <form class="fb-panel fb-form" action="/adminpanel/support/{{ ticket.pk }}" method="post">
         {% csrf_token %}
         <label for="support-response">Response</label><br>
         <textarea id="support-response" name="Tresponse" rows="5" cols="60" required>{{ request.POST.Tresponse }}</textarea><br>
@@ -47,9 +49,10 @@
 
     {% endif %}
 
-    <p>
-        <h2>View All Tickets</h2>
-        <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
+    <div class="fb-staff-section">
+        <h2 class="fb-records-heading">All tickets</h2>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Staff data table" tabindex="0">
+            <p class="fb-table-hint">Scroll to see all columns.</p>
             <table>
                 <thead>
                     <tr>
@@ -85,10 +88,10 @@
                 </tbody>
             </table>
         </div>
-    </p>
+    </div>
     <hr />
-    <p>
-        <a href="/adminpanel">Admin Panel Home</a>
-    </p>
+    <div class="fb-staff-section">
+        <a href="/adminpanel">Staff workspace</a>
+    </div>
 
 {% endblock %}

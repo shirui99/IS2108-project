@@ -1,9 +1,14 @@
 {% extends 'store/store_base.html' %}
 {% block title %}Create an account | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
 {% block content %}
-    <div class="fb-auth">
+    <div class="fb-auth fb-auth-signup">
         <section class="fb-auth-intro">
             <h1>Create an account</h1>
+            <p>Enter your account and delivery details to get started.</p>
+            <div class="fb-auth-art" aria-hidden="true">
+                {% include 'grocery_art.html' %}
+            </div>
         </section>
         <section class="fb-auth-form">
             {% if message %}
