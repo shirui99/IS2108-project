@@ -290,6 +290,8 @@ def checkout(request):
                     product = Product.objects.filter(pk=Pid).first()
                     if type(quantity) is not int or quantity <= 0:
                         raise StockShortage('Invalid cart quantity. Please remove the product and add it again.')
+                    if product is not None and not product.Pactive:
+                        raise StockShortage(f'{product.Pname} is no longer available. Please remove it from your cart. No order was placed.')
                     eligible = Item.objects.filter(sellable_stock_filter(), Iproduct_id=Pid)
                     available = eligible.count()
                     if available < quantity or product is None:

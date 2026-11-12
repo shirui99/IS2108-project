@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_GET
 from django.db import IntegrityError, transaction
@@ -127,6 +128,17 @@ class ProductView(View):
         form = self.form_class(request.POST, request.FILES)
         status_type = None
         status_message = None
+
+        if action == 'deactivate':
+            pk = kwargs.get('pk') or request.POST.get('Pid')
+            if kwargs.get('pk') and request.POST.get('Pid') != pk:
+                return HttpResponse('Product ID does not match.', status=400)
+            product = get_object_or_404(Product, pk=pk)
+            if Product.objects.filter(pk=product.pk, Pactive=True).update(Pactive=False):
+                messages.success(request, f'{product.Pname} was deactivated.')
+            else:
+                messages.info(request, f'{product.Pname} is already inactive.')
+            return redirect('product_new')
 
         if action == 'delete':
             form = self.form_class()

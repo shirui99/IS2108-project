@@ -2107,3 +2107,36 @@ img {
     overflow-wrap:normal;
     word-break:normal
 }
+
+.fb-product-actions {
+    min-width:240px;
+    white-space:nowrap
+}
+.fb-staff .fb-content .fb-product-records table {
+    min-width:1250px
+}
+.fb-product-records .fb-table-hint {
+    display:block;
+    margin:0;
+    padding:12px;
+    font-size:13px
+}
+.fb-cart-items td:first-child {
+    white-space:normal;
+    min-width:220px
+}
+.fb-cart-items td:nth-child(2),
+.fb-cart-items td:nth-child(4) {
+    min-width:80px;
+    white-space:nowrap
+}
+.fb-cart-unavailable {
+    display:block;
+    color:#8a3529;
+    font-size:13px;
+    white-space:normal
+}
+.fb-order-summary .fb-summary-line > strong {
+    white-space:nowrap;
+    flex-shrink:0
+}
