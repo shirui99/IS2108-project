@@ -2085,3 +2085,25 @@ img {
         flex:1 1 100%
     }
 }
+
+/* Keep advice figures readable beside long product names. */
+.fb-staff .fb-content .fb-stock-advice table {
+    table-layout:fixed;
+    min-width:900px
+}
+.fb-staff .fb-content .fb-stock-advice-dates table {
+    min-width:700px
+}
+.fb-stock-advice th:first-child {
+    width:220px
+}
+.fb-stock-advice td:first-child,
+.fb-stock-advice th,
+.fb-stock-advice .fb-status {
+    white-space:normal
+}
+.fb-stock-advice td,
+.fb-stock-advice th {
+    overflow-wrap:normal;
+    word-break:normal
+}

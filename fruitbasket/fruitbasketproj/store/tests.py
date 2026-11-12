@@ -84,6 +84,7 @@ class StoreMutationTests(TestCase):
             Plowstock=1,
             Pactive=True,
         )
+        Item.objects.create(Iproduct=self.product, Ireceived=date.today())
         session = self.client.session
         session["Cid"] = self.customer.Cid
         session.save()

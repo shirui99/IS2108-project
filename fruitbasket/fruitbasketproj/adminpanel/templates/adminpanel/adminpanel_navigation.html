@@ -3,6 +3,7 @@
     <li><a class="{% if request.path == '/adminpanel/' %}is-active{% endif %}" href="/adminpanel/">Home</a></li>
     <li><a class="{% if '/adminpanel/product_new' in request.path %}is-active{% endif %}" href="/adminpanel/product_new">Products</a></li>
     <li><a class="{% if '/adminpanel/item_new' in request.path %}is-active{% endif %}" href="/adminpanel/item_new">Warehouse stock</a></li>
+    <li><a class="{% if request.path == '/adminpanel/stock_advice' %}is-active{% endif %}" href="{% url 'stock_advice' %}">Stock advice</a></li>
     <li><a class="{% if '/adminpanel/customer_new' in request.path %}is-active{% endif %}" href="/adminpanel/customer_new">Customers</a></li>
     <li><a class="{% if '/adminpanel/order_new' in request.path %}is-active{% endif %}" href="/adminpanel/order_new">Orders</a></li>
     <li><a class="{% if '/adminpanel/support' in request.path %}is-active{% endif %}" href="/adminpanel/support">Support</a></li>

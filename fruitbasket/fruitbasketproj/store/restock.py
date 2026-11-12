@@ -94,10 +94,8 @@ def get_restock_suggestions(customer_id, today=None, due_within_days=3):
     if household_size is None:
         return []
 
-    available_filter = Q(product_items__Istatus="available") & (
-        Q(product_items__Iexpiry__isnull=True)
-        | Q(product_items__Iexpiry__gt=today)
-    )
+    from adminpanel.inventory import sellable_stock_filter
+    available_filter = sellable_stock_filter(today, 'product_items__', '')
     products = (
         Product.objects.filter(Pactive=True, Pid__in=history)
         .annotate(available_stock=Count("product_items", filter=available_filter))

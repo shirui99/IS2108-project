@@ -8,18 +8,20 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 
 from adminpanel.models import Customer, Product, Orders, Item, SupportTicket
-from adminpanel.views import remove_expiring_stock
+from adminpanel.inventory import sellable_stock_filter
+from django.db import transaction
+from django.db.models import F
 from .restock import get_customer_purchase_history, get_restock_suggestions
 
 # Create your views here.
 
 def index(request):
 
-    remove_expiring_stock()
     # Find avg rating and number of ratings from all items
     products = Product.objects.filter(Pactive=True).annotate(
         rating=Avg('product_items__Irating'),
-        reviews=Count('product_items__Irating')
+        reviews=Count('product_items__Irating'),
+        sellable_stock=Count('product_items', filter=sellable_stock_filter(item_prefix='product_items__', product_prefix=''))
     )
 
     category = request.GET.get('category', '')
@@ -193,6 +195,10 @@ def cart(request, pk=None):
                 messages.success(request, 'Product removed from cart.')
 
         else:
+            available = Item.objects.filter(sellable_stock_filter(), Iproduct_id=pk).count()
+            if available <= cart.get(pk, 0):
+                messages.error(request, f'Only {available} sellable pack(s) available. Your cart was not changed.')
+                return redirect('/store/cart')
 
             if pk in cart:
 
@@ -212,8 +218,11 @@ def cart(request, pk=None):
 
     for Pid in cart:
 
-        product = Product.objects.get(pk=Pid)
-        subtotal = product.Pprice * cart[Pid]
+        product = Product.objects.filter(pk=Pid).first()
+        if product is None:
+            continue
+        quantity = cart[Pid] if type(cart[Pid]) is int and cart[Pid] > 0 else 0
+        subtotal = product.Pprice * quantity
         total += subtotal
 
         cart_items.append({'product': product, 'quantity': cart[Pid], 'subtotal': subtotal})
@@ -227,7 +236,6 @@ def cart(request, pk=None):
 
 def checkout(request):
 
-    remove_expiring_stock()
     
     cart = request.session.get('cart', {})
 
@@ -236,8 +244,11 @@ def checkout(request):
 
     for Pid in cart:
 
-        product = Product.objects.get(pk=Pid)
-        subtotal = product.Pprice * cart[Pid]
+        product = Product.objects.filter(pk=Pid).first()
+        if product is None:
+            continue
+        quantity = cart[Pid] if type(cart[Pid]) is int and cart[Pid] > 0 else 0
+        subtotal = product.Pprice * quantity
         total += subtotal
 
         cart_items.append({'product': product, 'quantity': cart[Pid], 'subtotal': subtotal})
@@ -269,44 +280,38 @@ def checkout(request):
 
             return render(request, 'store/checkout.html', context)
 
-        # Check that there is enough stock in the warehouse for every product
+        class StockShortage(Exception):
+            pass
 
-        for Pid in cart:
+        try:
+            with transaction.atomic():
+                allocations = []
+                for Pid, quantity in cart.items():
+                    product = Product.objects.filter(pk=Pid).first()
+                    if type(quantity) is not int or quantity <= 0:
+                        raise StockShortage('Invalid cart quantity. Please remove the product and add it again.')
+                    eligible = Item.objects.filter(sellable_stock_filter(), Iproduct_id=Pid)
+                    available = eligible.count()
+                    if available < quantity or product is None:
+                        name = product.Pname if product else Pid
+                        raise StockShortage(f'Only {available} sellable pack(s) of {name} available; you requested {quantity}. No order was placed.')
+                    ids = list(eligible.order_by(F('Iexpiry').asc(nulls_last=True), 'pk').values_list('pk', flat=True)[:quantity])
+                    allocations.append((product, quantity, ids))
 
-            available = Item.objects.filter(Iproduct_id=Pid, Istatus='available').count()
-
-            if available < cart[Pid]:
-
-                product = Product.objects.get(pk=Pid)
-
-                context['status_type'] = 'error'
-                context['status_message'] = f'Sorry, only {available} x {product.Pname} left in stock.'
-
-                return render(request, 'store/checkout.html', context)
-
-        newOrder = Orders(
-            Oid="O" + generate_order_id(),
-            Odate=timezone.localdate(),
-            Oaddress=Oaddress,
-            Ocustomer=Customer.objects.get(pk=request.session['Cid'])
-        )
-
-        newOrder.save()
-
-        purchase_prices = {row['product'].Pid: row['product'].Pprice for row in cart_items}
-
-        # Give the customer the items that expire soonest
-
-        for Pid in cart:
-
-            items = Item.objects.filter(Iproduct_id=Pid, Istatus='available').order_by('Iexpiry')[:cart[Pid]]
-
-            for item in items:
-
-                item.Iorder = newOrder
-                item.Istatus = 'delivered'
-                item.Ipurchasedprice = purchase_prices[Pid]
-                item.save()
+                newOrder = Orders.objects.create(
+                    Oid='O' + generate_order_id(), Odate=timezone.localdate(),
+                    Oaddress=Oaddress, Ocustomer=Customer.objects.get(pk=request.session['Cid']),
+                )
+                for product, quantity, ids in allocations:
+                    claimed = Item.objects.filter(sellable_stock_filter(), pk__in=ids).update(
+                        Iorder=newOrder, Istatus='delivered', Ipurchasedprice=product.Pprice,
+                    )
+                    if claimed != quantity:
+                        raise StockShortage('Sellable stock changed during checkout. No order was placed. Please review your cart.')
+        except StockShortage as error:
+            context['status_type'] = 'error'
+            context['status_message'] = str(error)
+            return render(request, 'store/checkout.html', context)
 
         request.session['cart'] = {}
 

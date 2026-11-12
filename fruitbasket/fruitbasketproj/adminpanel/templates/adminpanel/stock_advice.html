@@ -1,0 +1,48 @@
+{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Stock advice | FruitBasket staff{% endblock %}
+{% block content %}
+    <section class="fb-staff-section">
+        <h1 class="fb-staff-page-title">Stock advice</h1>
+        <p class="fb-page-help">Review packs to replenish or check for promotion. Each product and pack size has its own stock count. Staff decide what action to take.</p>
+        <p>Suggested replenishment is the target minus sellable stock, with a minimum of zero. An unset target gives no suggestion. Inactive products are labelled for review before replenishing.</p>
+        <div class="fb-alert warning" role="note">Recorded available counts include every pack with warehouse status available. Sellable counts require an active product and a recorded date on or after today plus its shelf-life cutoff days, or no recorded date. Below-cutoff counts show dated available packs excluded by that rule. No stock status changes automatically. Stored dates have no recorded type; they are not confirmed use-by dates.</div>
+    </section>
+    <section class="fb-staff-section">
+        <h2 class="fb-records-heading">Stock and recent order quantities</h2>
+        <p>Packs in orders currently marked delivered, with order dates from {{ period_start|date:'j M Y' }} to {{ today|date:'j M Y' }} inclusive (30 calendar days). This includes packs later used or discarded.</p>
+        <p class="fb-help">No delivery date is recorded. Checkout item status alone does not confirm delivery, so this is an order-date count, not verified deliveries during this period. Placed and cancelled orders are excluded.</p>
+        <div class="fb-table-wrap fb-records-table fb-stock-advice" role="region" aria-label="Stock advice by product" tabindex="0">
+            <p class="fb-table-hint">Scroll to see all columns.</p>
+            <table>
+                <thead><tr><th scope="col">Product / pack</th><th scope="col">Available (recorded)</th><th scope="col">Sellable</th><th scope="col">Below cutoff</th><th scope="col">Low-stock threshold</th><th scope="col">Target</th><th scope="col">Suggested packs</th><th scope="col">Recent order packs</th><th scope="col">Recorded dates</th></tr></thead>
+                <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td>{{ product.Pid }} — {{ product.Pname }}<br>{{ product.Psize }}{% if not product.Pactive %}<br><span class="fb-status">Inactive</span>{% endif %}<br>{% if product.low_stock %}<span class="fb-status">Low stock</span> {% endif %}{% if product.near_date %}<span class="fb-status">Near date</span> {% endif %}{% if product.past_date %}<span class="fb-status">Past date — check stock</span> {% endif %}{% if not product.low_stock and not product.near_date and not product.past_date %}No low-stock or date alert{% endif %}</td>
+                            <td>{{ product.available }}</td><td>{{ product.sellable }}</td><td>{{ product.cutoff_excluded }}</td><td>{{ product.Plowstock }}</td>
+                            <td>{{ product.Ptargetstock|default_if_none:'Not configured' }}</td>
+                            <td>{{ product.replenish|default_if_none:'Set a target first' }}</td>
+                            <td>{{ product.recent_delivered }}</td><td>Near: {{ product.near_date }}<br>Past: {{ product.past_date }}<br>Undated: {{ product.undated }}</td>
+
+                        </tr>
+                    {% empty %}<tr><td colspan="9">No products configured. Create a product and record warehouse stock to review advice.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section class="fb-staff-section">
+        <h2 class="fb-records-heading">Near-date and past-date available stock</h2>
+        <p>Near date: {{ today|date:'j M Y' }} through {{ near_end|date:'j M Y' }} inclusive. Past recorded dates appear separately below. Only packs still recorded as available are listed.</p>
+        <div class="fb-table-wrap fb-records-table fb-stock-advice fb-stock-advice-dates" role="region" aria-label="Dated stock batches" tabindex="0">
+            <p class="fb-table-hint">Scroll to see all columns.</p>
+            <table>
+                <thead><tr><th scope="col">Product / pack</th><th scope="col">Received date</th><th scope="col">Recorded stock date</th><th scope="col">Packs</th><th scope="col">Review</th></tr></thead>
+                <tbody>
+                    {% for batch in dated_batches %}
+                        <tr><td>{{ batch.Iproduct_id }} — {{ batch.Iproduct__Pname }}<br>{{ batch.Iproduct__Psize }}{% if not batch.Iproduct__Pactive %}<br>Inactive{% endif %}</td><td>{{ batch.Ireceived|date:'j M Y' }}</td><td>{{ batch.Iexpiry|date:'j M Y' }}</td><td>{{ batch.quantity }}</td><td><span class="fb-status">{% if batch.Iexpiry < today %}Past date — check stock{% else %}Near date — review condition{% endif %}</span></td></tr>
+                    {% empty %}<tr><td colspan="5">No available stock has a recorded date within this window or in the past. Undated quantities appear in the product table.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

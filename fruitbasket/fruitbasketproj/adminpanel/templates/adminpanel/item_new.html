@@ -16,6 +16,7 @@
     <div class="fb-staff-section">
         <h1 class="fb-staff-page-title">Warehouse stock</h1>
         <p class="fb-page-help">Receive a batch of stock, then review the quantities and expiry dates below.</p>
+        <p><a href="{% url 'stock_advice' %}">Review stock advice</a></p>
         
         <form class="fb-staff-editor" action="/adminpanel/item_new" method="post">
             {% csrf_token %}

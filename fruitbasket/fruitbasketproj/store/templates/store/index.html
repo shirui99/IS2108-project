@@ -71,7 +71,7 @@
                             <span class="fb-price">${{ product.Pprice|floatformat:2 }}</span>
                             <form action="/store/cart/{{ product.Pid }}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" aria-label="Add {{ product.Pname }} to cart">+ Add to cart</button>
+                                <button type="submit" aria-label="Add {{ product.Pname }} to cart" {% if not product.sellable_stock %}disabled{% endif %}>{% if product.sellable_stock %}+ Add to cart{% else %}Unavailable{% endif %}</button>
                             </form>
                         </div>
                     </div>

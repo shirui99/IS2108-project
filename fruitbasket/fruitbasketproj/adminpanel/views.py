@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.db.models.deletion import RestrictedError
@@ -10,6 +11,7 @@ from django.views import View
 
 from .models import Product, Customer, Orders, Item, SupportTicket
 from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm
+from .stock_advice import get_stock_advice
 
 
 # Create your views here.
@@ -17,6 +19,11 @@ from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm
 def index(request):
 
     return render(request, 'adminpanel/index.html')
+
+
+@require_GET
+def stock_advice(request):
+    return render(request, 'adminpanel/stock_advice.html', get_stock_advice(timezone.localdate()))
 
 
 
@@ -564,24 +571,6 @@ class OrderView(View):
 
         return render(request, self.template_name, context)
 
-def remove_expiring_stock():
-
-    # For each product, warehouse items with fewer than Pexpirydays days left are written off as expired
-
-    today = timezone.localdate()
-    removed = 0
-
-    for product in Product.objects.all():
-
-        cutoff = today + timedelta(days=product.Pexpirydays)
-
-        removed += Item.objects.filter(Iproduct=product, Istatus='available', Iexpiry__lt=cutoff).update(
-            Istatus='expired',
-            Ifinished=today
-        )
-
-    return removed
-
 class ItemView(View):
 
     form_class = ItemBatchForm
@@ -674,9 +663,8 @@ class ItemView(View):
 
         rendered_form = form.render('adminpanel/form_template.html')
 
-        # Write off anything inside each products expiry window before showing the stock
-
-        removed = remove_expiring_stock()
+        # Write-offs require an explicit audited workflow (not implemented here).
+        removed = 0
 
         written_off = Item.objects.filter(Iorder__isnull=True, Istatus='expired').count()
 
