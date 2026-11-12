@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Product, Customer, Orders, Item, Category, CATEGORY_WHITESPACE
+from .models import Product, Customer, Orders, Item, Category, CATEGORY_WHITESPACE, InventoryBatch
 
 
 
@@ -30,9 +30,25 @@ class ProductForm(forms.ModelForm):
 class ItemBatchForm(forms.Form):
 
     Iproduct = forms.ModelChoiceField(queryset=Product.objects.filter(Pactive=True), label='Product')
-    Iquantity = forms.IntegerField(min_value=1, max_value=500, label='Quantity')
+    Breference = forms.CharField(max_length=100, label='Batch reference')
+    Iquantity = forms.IntegerField(min_value=1, max_value=500, label='Pack quantity')
     Ireceived = forms.DateField(label='Received date', widget=forms.DateInput(attrs={'type': 'date'}))
-    Iexpiry = forms.DateField(label='Expiry date', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    Bdatetype = forms.ChoiceField(choices=[('', 'Undated')] + InventoryBatch.DATE_TYPES, required=False, label='Printed date type')
+    Iexpiry = forms.DateField(label='Printed date', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+
+    def clean_Breference(self):
+        reference = self.cleaned_data['Breference'].strip()
+        if InventoryBatch.objects.filter(Breference=reference).exists():
+            raise forms.ValidationError('This batch reference has already been received.')
+        return reference
+
+    def clean(self):
+        data = super().clean()
+        if data.get('Bdatetype') and not data.get('Iexpiry') and 'Iexpiry' not in self.errors:
+            self.add_error('Iexpiry', 'Enter the printed date for the selected type.')
+        if data.get('Iexpiry') and not data.get('Bdatetype') and 'Bdatetype' not in self.errors:
+            self.add_error('Bdatetype', 'Select the printed date type, or leave the date blank for undated goods.')
+        return data
 
 class CustomerForm(forms.ModelForm):
 

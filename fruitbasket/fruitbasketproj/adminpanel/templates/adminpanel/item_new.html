@@ -15,7 +15,7 @@
 
     <div class="fb-staff-section">
         <h1 class="fb-staff-page-title">Warehouse stock</h1>
-        <p class="fb-page-help">Receive a batch of stock, then review the quantities and expiry dates below.</p>
+        <p class="fb-page-help">Receive a batch of stock, then review the received quantities and printed dates below.</p>
         <p><a href="{% url 'stock_advice' %}">Review stock advice</a></p>
         
         <form class="fb-staff-editor" action="/adminpanel/item_new" method="post">
@@ -47,7 +47,17 @@
     </div>
     <hr />
     <div class="fb-staff-section">
-        <h2 class="fb-records-heading">Stock batches</h2>
+        <h2 class="fb-records-heading">Received batches</h2>
+        <p>Received quantities are original pack counts; available counts reflect packs still in the warehouse. Date concerns do not change stock status.</p>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Received batches" tabindex="0">
+        <p class="fb-table-hint">Scroll to see all columns.</p>
+        <table><thead><tr><th scope="col">Reference</th><th scope="col">Product</th><th scope="col">Received</th><th scope="col">Printed date</th><th scope="col">Received packs</th><th scope="col">Available packs</th><th scope="col">Date concern</th></tr></thead><tbody>
+        {% for receipt in receipts %}
+        <tr><td>{{ receipt.Breference }}</td><td>{{ receipt.Bproduct }}</td><td>{{ receipt.Breceived }}</td><td>{% if receipt.Bdate %}{{ receipt.get_Bdatetype_display }}: {{ receipt.Bdate }}{% else %}Undated{% endif %}</td><td>{{ receipt.Bquantity }}</td><td>{{ receipt.available }}</td><td>{{ receipt.concern }}</td></tr>
+        {% empty %}<tr><td colspan="7">No batches have been received.</td></tr>{% endfor %}
+        </tbody></table></div>
+        <h2 class="fb-records-heading">Legacy warehouse stock</h2>
+        <p>Existing records have no batch reference or recorded date type.</p>
         <div class="fb-table-wrap fb-records-table" role="region" aria-label="Staff data table" tabindex="0">
             <p class="fb-table-hint">Scroll to see all columns.</p>
             <table>
@@ -55,7 +65,7 @@
                     <tr>
                         <th>Product</th>
                         <th>Received</th>
-                        <th>Expiry date</th>
+                        <th>Recorded date (type unknown)</th>
                         <th>Quantity</th>
                         <th>Action</th>
                     </tr>
@@ -68,7 +78,7 @@
                         <td>{{ batch.Iproduct }} - {{ batch.Iproduct__Pname }}</td>
                         <td>{{ batch.Ireceived }}</td>
                         <td {% if batch.Iexpiry and batch.Iexpiry < today %}style="color: #8a3529; font-weight: bold;"{% endif %}>
-                            {% if batch.Iexpiry %}{{ batch.Iexpiry }}{% if batch.Iexpiry < today %} (EXPIRED){% endif %}{% else %}No expiry{% endif %}
+                            {% if batch.Iexpiry %}{{ batch.Iexpiry }}{% if batch.Iexpiry < today %} (past recorded date){% endif %}{% else %}Undated{% endif %}
                         </td>
                         <td>{{ batch.count }}</td>
                         <td>

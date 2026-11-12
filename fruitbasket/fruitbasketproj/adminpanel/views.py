@@ -3,14 +3,14 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_GET
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 from django.db.models.deletion import RestrictedError
 from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
 from datetime import timedelta
 from django.utils import timezone
 from django.views import View
 
-from .models import Product, Customer, Orders, Item, SupportTicket, Category, category_code
+from .models import Product, Customer, Orders, Item, SupportTicket, Category, category_code, InventoryBatch
 from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm, CategoryForm
 from .stock_advice import get_stock_advice
 
@@ -584,119 +584,76 @@ class OrderView(View):
         return render(request, self.template_name, context)
 
 class ItemView(View):
-
     form_class = ItemBatchForm
     template_name = 'adminpanel/item_new.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_authenticated and request.user.is_active and request.user.is_staff):
+            return redirect('adminpanel_login')
+        return super().dispatch(request, *args, **kwargs)
 
+    def get(self, request):
+        return self.render_page(request, self.form_class(initial={'Ireceived': timezone.localdate()}))
 
-    def get(self, request, *args, **kwargs):
-
-        form = self.form_class(initial={'Ireceived': timezone.localdate()})
-        status_type = None
-        status_message = None
-
-        return self.render_page(request, form, status_type, status_message)
-
-
-
-    def post(self, request, *args, **kwargs):
-
-        form = self.form_class(request.POST)
-        status_type = None
-        status_message = None
-
+    def post(self, request):
         if request.POST.get('action') == 'delete':
+            # The legacy action applies only to legacy packs, never to recorded receipts.
+            batch = Item.objects.filter(Ibatch__isnull=True, Istatus='available',
+                Iproduct_id=request.POST.get('product'), Ireceived=request.POST.get('received'))
+            expiry = request.POST.get('expiry')
             try:
-                batch = Item.objects.filter(
-                    Istatus='available',
-                    Iproduct_id=request.POST.get('product'),
-                    Ireceived=request.POST.get('received')
-                )
-                expiry = request.POST.get('expiry')
-                if expiry:
-                    batch = batch.filter(Iexpiry=expiry)
-                else:
-                    batch = batch.filter(Iexpiry__isnull=True)
-
+                batch = batch.filter(Iexpiry=expiry) if expiry else batch.filter(Iexpiry__isnull=True)
                 count, _ = batch.delete()
-                status_type = 'success'
-                status_message = f'{count} item(s) removed from stock.'
-            except RestrictedError:
-                status_type = 'error'
-                status_message = 'This stock batch cannot be removed because it is related to another record.'
-            except Exception:
-                status_type = 'error'
-                status_message = 'The stock batch could not be removed.'
-
-            return self.render_page(request, self.form_class(initial={'Ireceived': timezone.localdate()}), status_type, status_message)
-
+            except (ValueError, RestrictedError):
+                messages.error(request, 'The legacy stock could not be removed.')
+            else:
+                messages.success(request, f'{count} item(s) removed from stock.')
+            return redirect('item_new')
+        if request.POST.get('action') not in (None, '', 'create'):
+            return HttpResponse('Invalid action.', status=400)
+        form = self.form_class(request.POST)
         if form.is_valid():
-
-            product = form.cleaned_data['Iproduct']
-            quantity = form.cleaned_data['Iquantity']
-
-            # Build one Item per physical unit, then save them all in one go
-
-            new_items = []
-
-            for i in range(quantity):
-
-                new_items.append(Item(
-                    Iproduct=product,
-                    Ireceived=form.cleaned_data['Ireceived'],
-                    Iexpiry=form.cleaned_data['Iexpiry']
-                ))
-
+            data = form.cleaned_data
             try:
+                with transaction.atomic():
+                    # Conditional write serializes the active check with deactivation on SQLite.
+                    if not Product.objects.filter(pk=data['Iproduct'].pk, Pactive=True).update(Pactive=F('Pactive')):
+                        form.add_error('Iproduct', 'Select an active product.')
+                        return self.render_page(request, form)
+                    batch = InventoryBatch.objects.create(Breference=data['Breference'], Bproduct=data['Iproduct'],
+                        Breceived=data['Ireceived'], Bquantity=data['Iquantity'], Bdatetype=data['Bdatetype'], Bdate=data['Iexpiry'])
+                    Item.objects.bulk_create([Item(Ibatch=batch, Iproduct=data['Iproduct'], Ireceived=data['Ireceived'],
+                        Iexpiry=data['Iexpiry']) for _ in range(data['Iquantity'])])
+            except IntegrityError:
+                if InventoryBatch.objects.filter(Breference=data['Breference']).exists():
+                    form.add_error('Breference', 'This batch reference has already been received.')
+                else:
+                    form.add_error(None, 'The batch could not be saved. Please try again.')
+            else:
+                messages.success(request, f"Received {data['Iquantity']} packs of {data['Iproduct'].Pname}.")
+                return redirect('item_new')
+        return self.render_page(request, form)
 
-                Item.objects.bulk_create(new_items)
-
-                status_type = 'success'
-                status_message = f'{quantity} x {product.Pname} added to stock.'
-
-                form = self.form_class(initial={'Ireceived': timezone.localdate()})
-
-            except Exception as e:
-
-                status_type = 'error'
-                status_message = f'Error adding items: {str(e)}'
-
-        else:
-
-            status_type = 'error'
-            status_message = 'Please correct the errors below.'
-
-        return self.render_page(request, form, status_type, status_message)
-
-
-
-    def render_page(self, request, form, status_type, status_message):
-
-        rendered_form = form.render('adminpanel/form_template.html')
-
-        # Write-offs require an explicit audited workflow (not implemented here).
-        removed = 0
-
-        written_off = Item.objects.filter(Iorder__isnull=True, Istatus='expired').count()
-
-        # Group warehouse items into batches: same product, received date and expiry date
-
-        batches = Item.objects.filter(Istatus='available').values(
-            'Iproduct', 'Iproduct__Pname', 'Ireceived', 'Iexpiry'
-        ).annotate(count=Count('id')).order_by('Iexpiry', 'Iproduct')
-
-        context = {
-            'form': rendered_form,
-            'batches': batches,
-            'removed': removed,
-            'written_off': written_off,
-            'today': timezone.localdate(),
-            'status_type': status_type,
-            'status_message': status_message,
-        }
-
-        return render(request, self.template_name, context)
+    def render_page(self, request, form):
+        today = timezone.localdate()
+        receipts = InventoryBatch.objects.select_related('Bproduct').annotate(
+            available=Count('items', filter=Q(items__Istatus='available'))).order_by('-Breceived', '-pk')
+        for receipt in receipts:
+            if receipt.Bdate is None:
+                receipt.concern = 'Undated'
+            elif receipt.Bdate < today:
+                receipt.concern = 'Past printed date - not sellable'
+            elif receipt.Bdate < today + timedelta(days=receipt.Bproduct.Pexpirydays):
+                receipt.concern = 'Within product shelf-life cutoff - not sellable'
+            elif receipt.Bdate <= today + timedelta(days=7):
+                receipt.concern = 'Near printed date - review stock'
+            else:
+                receipt.concern = 'Meets date cutoff'
+        legacy = Item.objects.filter(Ibatch__isnull=True, Istatus='available').values(
+            'Iproduct', 'Iproduct__Pname', 'Ireceived', 'Iexpiry').annotate(count=Count('id')).order_by('Iexpiry', 'Iproduct')
+        return render(request, self.template_name, {'form': form.render('adminpanel/form_template.html'),
+            'receipts': receipts, 'batches': legacy, 'today': today,
+            'written_off': Item.objects.filter(Iorder__isnull=True, Istatus='expired').count()})
 
 class SupportView(View):
 
