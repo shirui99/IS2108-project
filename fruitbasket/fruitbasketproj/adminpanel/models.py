@@ -132,6 +132,22 @@ class Orders(models.Model):
 
 
 
+class InventoryBatch(models.Model):
+    DATE_TYPES = [('use_by', 'Use by'), ('best_before', 'Best before'), ('expiry', 'Expiry')]
+    Breference = models.CharField(max_length=100, unique=True, verbose_name='Batch reference')
+    Bproduct = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='inventory_batches')
+    Breceived = models.DateField()
+    Bquantity = models.PositiveIntegerField()
+    Bdatetype = models.CharField(max_length=20, choices=DATE_TYPES, blank=True)
+    Bdate = models.DateField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=models.Q(Bquantity__gt=0), name='batch_quantity_positive'),
+            models.CheckConstraint(condition=(models.Q(Bdatetype='', Bdate__isnull=True) | models.Q(Bdatetype__in=['use_by', 'best_before', 'expiry'], Bdate__isnull=False)), name='batch_date_type_matches_date'),
+        ]
+
+
 class Item(models.Model):
 
     STATUS = [
@@ -142,6 +158,7 @@ class Item(models.Model):
     ]
 
     Ipurchasedprice = models.FloatField(null=True, blank=True, verbose_name='Recorded purchase price')
+    Ibatch = models.ForeignKey(InventoryBatch, null=True, blank=True, on_delete=models.PROTECT, related_name='items')
     Ireceived = models.DateField()
     Iexpiry = models.DateField(blank=True, null=True)
     Istatus = models.CharField(max_length=10, choices=STATUS, default='available')
