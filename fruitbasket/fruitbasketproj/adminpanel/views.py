@@ -402,6 +402,86 @@ class CustomerView(View):
 
         return render(request, self.template_name, context)
 
+def _staff_order_access(request):
+    return request.user.is_authenticated and request.user.is_active and request.user.is_staff
+
+
+def _order_origin(order):
+    group = getattr(order, 'group_purchase', None)
+    cycle = getattr(order, 'subscription_cycle', None)
+    if group and cycle:
+        return 'Multiple origins'
+    if group:
+        return 'Group'
+    if cycle:
+        return 'Subscription'
+    return 'Other / origin not recorded'
+
+
+@require_GET
+def order_inspection_list(request):
+    if not _staff_order_access(request):
+        return redirect('adminpanel_login')
+    status = request.GET.get('status', '')
+    origin = request.GET.get('origin', '')
+    errors = []
+    if status and status not in dict(Orders.STATUS):
+        errors.append('Invalid status filter. Choose a listed status.')
+        status = ''
+    if origin and origin not in ('group', 'subscription', 'other'):
+        errors.append('Invalid origin filter. Choose a listed origin.')
+        origin = ''
+    orders = Orders.objects.select_related('Ocustomer', 'group_purchase', 'subscription_cycle').order_by('-Odate', '-Oid')
+    if status:
+        orders = orders.filter(Ostatus=status)
+    if origin == 'group':
+        orders = orders.filter(group_purchase__isnull=False)
+    elif origin == 'subscription':
+        orders = orders.filter(subscription_cycle__isnull=False)
+    elif origin == 'other':
+        orders = orders.filter(group_purchase__isnull=True, subscription_cycle__isnull=True)
+    for order in orders:
+        order.origin_label = _order_origin(order)
+    return render(request, 'adminpanel/order_inspection_list.html', {'orders': orders, 'statuses': Orders.STATUS,
+        'selected_status': status, 'selected_origin': origin, 'filter_errors': errors})
+
+
+@require_GET
+def order_inspection_detail(request, pk):
+    if not _staff_order_access(request):
+        return redirect('adminpanel_login')
+    from decimal import Decimal
+    order = get_object_or_404(Orders.objects.select_related('Ocustomer', 'group_purchase', 'subscription_cycle__SCsubscription__Sproduct'), pk=pk)
+    rows = order.order_items.values('Iproduct_id', 'Iproduct__Pname', 'Iproduct__Psize', 'Ipurchasedprice',
+        'Ibatch_id', 'Ibatch__Breference').annotate(quantity=Count('id')).order_by('Iproduct_id', 'Ipurchasedprice', 'Ibatch_id')
+    grouped = {}
+    for row in rows:
+        key = (row['Iproduct_id'], row['Ipurchasedprice'])
+        if key not in grouped:
+            grouped[key] = {'product_id': row['Iproduct_id'], 'name': row['Iproduct__Pname'], 'size': row['Iproduct__Psize'],
+                'price': row['Ipurchasedprice'], 'quantity': 0, 'batches': []}
+        line = grouped[key]
+        line['quantity'] += row['quantity']
+        line['batches'].append({'reference': row['Ibatch__Breference'], 'quantity': row['quantity']})
+    for line in grouped.values():
+        line['amount'] = Decimal(str(line['price'])) * line['quantity'] if line['price'] is not None else None
+    group = getattr(order, 'group_purchase', None)
+    cycle = getattr(order, 'subscription_cycle', None)
+    members = []
+    if group:
+        contributions = list(group.group_lines.select_related('GLcustomer', 'GLproduct').order_by('GLcustomer__Cname', 'GLproduct__Pname'))
+        for member in group.group_members.select_related('GMcustomer').order_by('GMcustomer__Cname', 'pk'):
+            members.append({'customer': member.GMcustomer, 'lines': [line for line in contributions if line.GLcustomer_id == member.GMcustomer_id]})
+        member_ids = {member['customer'].pk for member in members}
+        unmatched = {}
+        for line in contributions:
+            if line.GLcustomer_id not in member_ids:
+                unmatched.setdefault(line.GLcustomer_id, {'customer': line.GLcustomer, 'lines': [], 'unmatched': True})['lines'].append(line)
+        members.extend(unmatched.values())
+    return render(request, 'adminpanel/order_inspection_detail.html', {'order': order, 'origin': _order_origin(order),
+        'lines': list(grouped.values()), 'group': group, 'members': members, 'cycle': cycle})
+
+
 class OrderView(View):
 
     form_class = OrderForm

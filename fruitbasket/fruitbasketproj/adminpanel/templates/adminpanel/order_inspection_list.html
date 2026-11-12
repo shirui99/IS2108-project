@@ -1,0 +1,14 @@
+{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Inspect orders | FruitBasket staff{% endblock %}
+{% block content %}<section class="fb-staff-section">
+<h1 class="fb-staff-page-title">Inspect orders</h1>
+<p>View orders and their recorded details.</p><p><a href="{% url 'order_new' %}">Create or update orders</a></p>
+{% if filter_errors %}<div class="fb-alert error" role="alert">{% for error in filter_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+<form method="get" class="fb-staff-editor">
+<div class="fb-field"><label for="status">Status</label><select id="status" name="status"><option value="">All statuses</option>{% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="fb-field"><label for="origin">Origin</label><select id="origin" name="origin"><option value="">All origins</option><option value="group" {% if selected_origin == 'group' %}selected{% endif %}>Group</option><option value="subscription" {% if selected_origin == 'subscription' %}selected{% endif %}>Subscription</option><option value="other" {% if selected_origin == 'other' %}selected{% endif %}>Other / origin not recorded</option></select></div>
+<button type="submit">Apply filters</button> <a href="{% url 'staff_order_list' %}">Clear filters</a></form>
+<div class="fb-table-wrap fb-records-table" role="region" aria-label="Orders" tabindex="0"><p class="fb-table-hint">Scroll to see all columns.</p><table>
+<thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Date</th><th scope="col">Status</th><th scope="col">Origin</th><th scope="col">Details</th></tr></thead><tbody>
+{% for order in orders %}<tr><td>{{ order.Oid }}</td><td>{{ order.Ocustomer.Cname }}</td><td>{{ order.Odate }}</td><td>{{ order.get_Ostatus_display }}</td><td>{{ order.origin_label }}</td><td><a href="{% url 'staff_order_detail' order.Oid %}">Inspect {{ order.Oid }}</a></td></tr>{% empty %}<tr><td colspan="6">No orders match these filters.</td></tr>{% endfor %}
+</tbody></table></div></section>{% endblock %}

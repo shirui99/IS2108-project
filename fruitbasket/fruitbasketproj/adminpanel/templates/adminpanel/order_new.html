@@ -15,7 +15,7 @@
 
     <div class="fb-staff-section">
         <h1 class="fb-staff-page-title">Orders</h1>
-        <p class="fb-page-help">Create an order or update its delivery details and status below.</p>
+        <p class="fb-page-help">Create an order or update its delivery details and status below.</p><p><a href="{% url 'staff_order_list' %}">Inspect orders</a></p>
         
         <form class="fb-staff-editor" action="/adminpanel/order_new" method="post">
             {% csrf_token %}
