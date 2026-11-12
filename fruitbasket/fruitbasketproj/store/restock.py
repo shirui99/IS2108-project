@@ -114,22 +114,22 @@ def get_restock_suggestions(customer_id, today=None, due_within_days=3):
         prediction = predict_restock(
             latest_purchase_at=latest["purchased_at"],
             household_size=household_size,
-            category=product.Pcategory,
+            category=product.Pcategory_id,
             purchased_quantity=latest["purchased_quantity"],
             previous_interval_days=previous_interval_days,
             history_count=len(events),
         )
         restock_date = prediction["restock_date"]
-        if not product.available_stock or not restock_date:
+        if not product.available_stock:
             continue
-        restock_date = pd.Timestamp(restock_date).date()
-        if restock_date > due_until:
+        restock_date = pd.Timestamp(restock_date).date() if restock_date else None
+        if restock_date and restock_date > due_until:
             continue
         suggestions.append(
             {
                 "product_id": product.Pid,
                 "product_name": product.Pname,
-                "category": product.Pcategory,
+                "category": product.Pcategory_id,
                 "available_stock": product.available_stock,
                 "purchased_quantity": latest["purchased_quantity"],
                 "latest_purchase_at": latest["purchased_at"],
@@ -137,7 +137,7 @@ def get_restock_suggestions(customer_id, today=None, due_within_days=3):
             }
         )
 
-    return sorted(suggestions, key=lambda suggestion: suggestion["restock_date"])
+    return sorted(suggestions, key=lambda suggestion: suggestion["restock_date"] or "9999-12-31")
 
 
 @lru_cache(maxsize=1)
@@ -310,6 +310,13 @@ def predict_restock(
                 latest_date,
                 reason=f"{reason}; no usable training-derived fallback",
             )
+
+    # Metadata defines supported categories; never send unseen codes to the encoder.
+    if category not in category_medians:
+        result = fallback("Category absent from training metadata; using overall training median")
+        if result['status'] == 'UNAVAILABLE':
+            result['reason'] = 'The overall training median is unavailable or invalid for this category.'
+        return result
 
     if history_count < 2 or previous_interval_days is None:
         return fallback("Insufficient purchase history for model inference")

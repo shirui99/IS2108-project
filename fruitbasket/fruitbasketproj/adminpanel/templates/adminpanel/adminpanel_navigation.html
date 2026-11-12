@@ -2,6 +2,7 @@
 <ul class="fb-nav-list">
     <li><a class="{% if request.path == '/adminpanel/' %}is-active{% endif %}" href="/adminpanel/">Home</a></li>
     <li><a class="{% if '/adminpanel/product_new' in request.path %}is-active{% endif %}" href="/adminpanel/product_new">Products</a></li>
+    <li><a class="{% if request.path == '/adminpanel/category_new' %}is-active{% endif %}" href="{% url 'category_new' %}">Categories</a></li>
     <li><a class="{% if '/adminpanel/item_new' in request.path %}is-active{% endif %}" href="/adminpanel/item_new">Warehouse stock</a></li>
     <li><a class="{% if request.path == '/adminpanel/stock_advice' %}is-active{% endif %}" href="{% url 'stock_advice' %}">Stock advice</a></li>
     <li><a class="{% if '/adminpanel/customer_new' in request.path %}is-active{% endif %}" href="/adminpanel/customer_new">Customers</a></li>

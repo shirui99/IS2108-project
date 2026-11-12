@@ -22,7 +22,7 @@ class StockAdviceTests(TestCase):
         self.client.force_login(self.staff)
 
     def product(self, pk='A001', **kwargs):
-        return Product.objects.create(Pid=pk, Pname=pk, Pcategory='fruit', Psize='1 pack', Pprice=2, Plowstock=2, Ptargetstock=5, **kwargs)
+        return Product.objects.create(Pid=pk, Pname=pk, Pcategory_id='fruit', Psize='1 pack', Pprice=2, Plowstock=2, Ptargetstock=5, **kwargs)
 
     def item(self, product, expiry=None, status='available', order=None):
         return Item.objects.create(Iproduct=product, Ireceived=self.today, Iexpiry=expiry, Istatus=status, Iorder=order)

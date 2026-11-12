@@ -67,7 +67,7 @@ class Command(BaseCommand):
         today = timezone.localdate()
         created_count = 0
         for index, (name, category, size, price, shelf_days) in enumerate(CATALOGUE, start=1):
-            product = Product.objects.filter(Pname__iexact=name, Pcategory=category, Pactive=True).first()
+            product = Product.objects.filter(Pname__iexact=name, Pcategory_id=category, Pactive=True).first()
             if product is None:
                 product_id = f"FB{index:03d}"
                 if Product.objects.filter(pk=product_id).exists():
@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 product = Product.objects.create(
                     Pid=product_id,
                     Pname=name,
-                    Pcategory=category,
+                    Pcategory_id=category,
                     Psize=size,
                     Pprice=price,
                     Plowstock=2,

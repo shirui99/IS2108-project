@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 
-from adminpanel.models import Customer, Product, Orders, Item, SupportTicket
+from adminpanel.models import Customer, Product, Orders, Item, SupportTicket, Category
 from adminpanel.inventory import sellable_stock_filter
 from django.db import transaction
 from django.db.models import F
@@ -18,14 +18,14 @@ from .restock import get_customer_purchase_history, get_restock_suggestions
 def index(request):
 
     # Find avg rating and number of ratings from all items
-    products = Product.objects.filter(Pactive=True).annotate(
+    products = Product.objects.filter(Pactive=True).select_related("Pcategory").annotate(
         rating=Avg('product_items__Irating'),
         reviews=Count('product_items__Irating'),
         sellable_stock=Count('product_items', filter=sellable_stock_filter(item_prefix='product_items__', product_prefix=''))
     )
 
     category = request.GET.get('category', '')
-    if category not in dict(Product.CATEGORY):
+    if category and not Category.objects.filter(pk=category).exists():
         category = ''
     if category:
         products = products.filter(Pcategory=category)
@@ -42,7 +42,7 @@ def index(request):
 
     return render(request, 'store/index.html', {
         'products': products,
-        'categories': Product.CATEGORY,
+        'categories': Category.objects.values_list('Ccode', 'Cname'),
         'selected_category': category,
         'selected_sort': sort,
     })
@@ -66,6 +66,10 @@ def restock(request):
     suggestions = get_restock_suggestions(customer_id)
     today = timezone.localdate()
     for suggestion in suggestions:
+        if suggestion['status'] == 'UNAVAILABLE':
+            suggestion['due_status'] = 'No estimate available'
+            suggestion['estimate_label'] = 'No estimate available'
+            continue
         suggestion['due_status'] = (
             'Overdue'
             if suggestion['restock_date'] < today.isoformat()

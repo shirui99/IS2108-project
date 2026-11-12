@@ -65,7 +65,7 @@
                     <tr>
                         <td>{{ product.Pid }}</td>
                         <td>{{ product.Pname }}</td>
-                        <td>{{ product.get_Pcategory_display }}</td>
+                        <td>{{ product.Pcategory.Cname }}</td>
                         <td>{{ product.Psize }}</td>
                         <td>${{ product.Pprice }}</td>
                         <td {% if product.stock <= product.Plowstock %}style="color: #8a3529; font-weight: bold;"{% endif %}>

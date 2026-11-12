@@ -1,0 +1,19 @@
+{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Create a category | FruitBasket staff{% endblock %}
+{% block content %}
+<section class="fb-staff-section">
+    <h1 class="fb-staff-page-title">Create a category</h1>
+    <p class="fb-page-help">New categories become available on product forms and shop filters.</p>
+    <form class="fb-staff-editor" method="post" action="{% url 'category_new' %}" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="fb-field">
+            {{ form.Cname.label_tag }}
+            {{ form.Cname }}
+            {{ form.Cname.errors }}
+        </div>
+        <button type="submit">Create category</button>
+    </form>
+    <p><a href="{% url 'product_new' %}">Back to products</a></p>
+</section>
+{% endblock %}

@@ -46,7 +46,7 @@
         </form>
         <div class="fb-product-grid">
             {% for product in products %}
-                <article class="fb-product fb-product-{{ product.Pcategory }}">
+                <article class="fb-product fb-product-{{ product.Pcategory_id }}">
                     <div class="fb-product-image">
                         {% if product.Pimage %}
                             <img src="{{ product.Pimage.url }}" alt="{{ product.Pname }}" loading="lazy">
@@ -60,7 +60,7 @@
                         {% endif %}
                     </div>
                     <div class="fb-product-info">
-                        <p class="fb-eyebrow">{{ product.get_Pcategory_display }}</p>
+                        <p class="fb-eyebrow">{{ product.Pcategory.Cname }}</p>
                         <h3>{{ product.Pname }}</h3>
                         <p class="fb-product-size">{{ product.Psize }}</p>
                         <p class="fb-rating">

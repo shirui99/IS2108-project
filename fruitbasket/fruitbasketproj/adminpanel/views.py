@@ -10,8 +10,8 @@ from datetime import timedelta
 from django.utils import timezone
 from django.views import View
 
-from .models import Product, Customer, Orders, Item, SupportTicket
-from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm
+from .models import Product, Customer, Orders, Item, SupportTicket, Category, category_code
+from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm, CategoryForm
 from .stock_advice import get_stock_advice
 
 
@@ -105,7 +105,7 @@ class ProductView(View):
 
         # Count each product's items that are still in the warehouse
 
-        products = Product.objects.annotate(
+        products = Product.objects.select_related("Pcategory").annotate(
             stock=Count('product_items', filter=Q(product_items__Istatus='available'))
         )
 
@@ -157,7 +157,7 @@ class ProductView(View):
                 status_message = 'The product could not be deleted.'
 
             rendered_form = form.render('adminpanel/form_template.html')
-            products = Product.objects.annotate(
+            products = Product.objects.select_related("Pcategory").annotate(
                 stock=Count('product_items', filter=Q(product_items__Istatus='available'))
             )
             context = {
@@ -202,7 +202,7 @@ class ProductView(View):
 
         # Count each product's items that are still in the warehouse
 
-        products = Product.objects.annotate(
+        products = Product.objects.select_related("Pcategory").annotate(
             stock=Count('product_items', filter=Q(product_items__Istatus='available'))
         )
         context = {
@@ -750,3 +750,41 @@ class SupportView(View):
         }
 
         return render(request, self.template_name, context)
+
+
+class CategoryView(View):
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_authenticated and request.user.is_active and request.user.is_staff):
+            return redirect('adminpanel_login')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        return self.render(request, CategoryForm())
+
+    def render(self, request, form):
+        return render(request, 'adminpanel/category_new.html', {'form': form})
+
+    def post(self, request):
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            for attempt in range(5):
+                code = category_code()
+                try:
+                    with transaction.atomic():
+                        Category.objects.create(Ccode=code, Cname=form.cleaned_data['Cname'])
+                except IntegrityError:
+                    # The database decides duplicates, including concurrent submissions.
+                    if Category.objects.filter(Cname=form.cleaned_data['Cname']).exists():
+                        form.add_error('Cname', 'A category with this name already exists.')
+                        break
+                    if not Category.objects.filter(pk=code).exists():
+                        form.add_error(None, 'The category could not be saved. Please try again.')
+                        break
+                else:
+                    messages.success(request, 'Category created. It is now available on product forms.')
+                    return redirect('category_new')
+            else:
+                form.add_error(None, 'A unique category code could not be generated. Please try again.')
+        return self.render(request, form)

@@ -19,7 +19,7 @@ FIELDNAMES = (
     "purchased_at",
 )
 
-# Category values match Product.CATEGORY; pack definitions guide quantity ranges.
+# Category values match the eight legacy Category.Ccode values; pack definitions guide quantity ranges.
 PRODUCTS = (
     ("P001", "dairy", "1 L carton", 9, 3),
     ("P002", "dairy", "12-egg carton", 12, 2),

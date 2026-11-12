@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Product, Customer, Orders, Item
+from .models import Product, Customer, Orders, Item, Category, CATEGORY_WHITESPACE
 
 
 
@@ -52,3 +52,13 @@ class OrderForm(forms.ModelForm):
             'Odate': forms.DateInput(attrs={'type': 'date'})
         }
 
+
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['Cname']
+        error_messages = {'Cname': {'unique': 'A category with this name already exists.'}}
+
+    def clean_Cname(self):
+        return self.cleaned_data['Cname'].strip(CATEGORY_WHITESPACE)
