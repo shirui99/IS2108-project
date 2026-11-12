@@ -147,7 +147,7 @@
                 </div>
                 <div class="fb-field">
                     <label for="support-message">Message</label>
-                    <textarea id="support-message" name="Tmessage" rows="4" cols="50" required>
+                    <textarea id="support-message" name="Tmessage" rows="4" cols="50" maxlength="2000" required>
 {% if status_type == 'error' %}
 {{ request.POST.Tmessage }}{% endif %}
 </textarea>

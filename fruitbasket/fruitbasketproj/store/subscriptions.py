@@ -24,7 +24,7 @@ def suggest_interval(customer, product):
     prediction = predict_restock(
         latest_purchase_at=latest['purchased_at'] if latest else today,
         household_size=customer.Chouseholdsize,
-        category=product.Pcategory,
+        category=product.Pcategory_id,
         purchased_quantity=latest['purchased_quantity'] if latest else 1,
         previous_interval_days=(latest['purchased_at'] - previous['purchased_at']).days if previous else None,
         history_count=len(events),

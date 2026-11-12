@@ -4,6 +4,21 @@ from django.shortcuts import redirect
 def login_middleware(get_response):
     
     def middleware(request):
+        # If staff deleted this customer while they were logged in, end the session
+        # instead of letting the pages that load the customer record fail.
+        if request.path.startswith((
+            '/store/checkout',
+            '/store/profile',
+            '/store/subscriptions',
+            '/store/groups',
+            '/store/list',
+            '/store/notify',
+        )) and request.session.get('Cid'):
+            from adminpanel.models import Customer
+            if not Customer.objects.filter(pk=request.session['Cid']).exists():
+                request.session.flush()
+                return redirect('/store/login')
+
         # Reject unauthenticated requests before a protected view can run.
         if request.path.startswith((
             '/store/cart',

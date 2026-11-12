@@ -15,9 +15,15 @@ class OrderNotPlaced(Exception):
 
 def generate_order_id():
 
-    order_count = Orders.objects.count()
+    # Start from the count, then move past any number already used.
+    # Counting alone repeats an ID once staff have deleted an order.
+    number = Orders.objects.count() + 1
 
-    return str(order_count + 1).zfill(5)
+    while Orders.objects.filter(Oid='O' + str(number).zfill(5)).exists():
+
+        number += 1
+
+    return str(number).zfill(5)
 
 
 def unit_price(product, quantity, use_bulk_price=False):
@@ -52,9 +58,16 @@ def place_order(customer, address, quantities, use_bulk_price=False, ceiling=Non
     # quantities is a dictionary of Pid -> number of packs.
     # Either the whole order is created, or nothing is changed.
 
+    address = (address or '').strip()
+
     if not address:
 
         raise OrderNotPlaced('A delivery address is required. No order was placed.')
+
+    # Orders.Oaddress holds at most 255 characters, and SQLite would not stop a longer one
+    if len(address) > 255:
+
+        raise OrderNotPlaced('The delivery address must be 255 characters or fewer. No order was placed.')
 
     if len(quantities) == 0:
 
@@ -72,6 +85,11 @@ def place_order(customer, address, quantities, use_bulk_price=False, ceiling=Non
             if type(quantity) is not int or quantity <= 0:
 
                 raise OrderNotPlaced('Invalid cart quantity. Please remove the product and add it again.')
+
+            # A product staff have deactivated can no longer be bought, even if it is still in a cart
+            if product is not None and not product.Pactive:
+
+                raise OrderNotPlaced(f'{product.Pname} is no longer available. Please remove it from your cart. No order was placed.')
 
             eligible = Item.objects.filter(sellable_stock_filter(), Iproduct_id=Pid)
             available = eligible.count()

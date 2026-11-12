@@ -24,9 +24,9 @@ class MoreCustomerStoryTests(TestCase):
             Cuser=User.objects.create_user(username='more_b', password='password')
         )
         self.milk = Product.objects.create(
-            Pid='TMILK', Pname='Test Milk', Pcategory='dairy', Psize='1L', Pprice=3.0, Plowstock=0, Pbulkquantity=4, Pbulkprice=2.5
+            Pid='TMILK', Pname='Test Milk', Pcategory_id='dairy', Psize='1L', Pprice=3.0, Plowstock=0, Pbulkquantity=4, Pbulkprice=2.5
         )
-        self.rice = Product.objects.create(Pid='TRICE', Pname='Test Rice', Pcategory='rice', Psize='5kg', Pprice=10.0, Plowstock=0)
+        self.rice = Product.objects.create(Pid='TRICE', Pname='Test Rice', Pcategory_id='rice', Psize='5kg', Pprice=10.0, Plowstock=0)
         for _ in range(6):
             Item.objects.create(Iproduct=self.milk, Ireceived=self.today, Iexpiry=self.today + timedelta(days=30))
         self.login(self.customer)

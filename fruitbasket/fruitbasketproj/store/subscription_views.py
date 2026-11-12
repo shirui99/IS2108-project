@@ -124,7 +124,7 @@ def subscription_action(request, pk):
 
         if not form.is_valid():
 
-            messages.error(request, 'Choose a next order date after today to resume.')
+            messages.error(request, 'Choose a next order date after today and within the next year to resume.')
 
         elif Subscription.objects.filter(pk=plan.pk, Sstatus='paused').update(Sstatus='active', Snextdate=form.cleaned_data['Snextdate']):
 

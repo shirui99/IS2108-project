@@ -20,7 +20,7 @@
                     {% csrf_token %}
                     <div class="fb-field">
                         <label for="delivery-address">Delivery address</label>
-                        <input id="delivery-address" type="text" name="Oaddress" value="{{ address }}" required="required" autocomplete="street-address">
+                        <input id="delivery-address" type="text" name="Oaddress" value="{{ address }}" maxlength="255" required="required" autocomplete="street-address">
                     </div>
                     <p class="fb-help">Payment is simulated for this project. No real payment is taken.</p>
                     <button type="submit">Pay and place order &rarr;</button>

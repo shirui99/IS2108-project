@@ -129,12 +129,17 @@ def group_detail(request, pk):
         if action == 'line':
 
             # SF21: a member sets their own quantity of one product. Zero removes the line.
-            product = Product.objects.filter(pk=request.POST.get('Pid'), Pactive=True).first()
-
             try:
                 quantity = int(request.POST.get('quantity'))
             except (TypeError, ValueError):
                 quantity = -1
+
+            # A withdrawn product can still be removed (quantity 0), but not added
+            product = Product.objects.filter(pk=request.POST.get('Pid')).first()
+
+            if product is not None and quantity > 0 and not product.Pactive:
+
+                product = None
 
             if group.Gstatus != 'open':
 
@@ -196,6 +201,22 @@ def group_detail(request, pk):
             else:
 
                 messages.error(request, 'This group purchase is not open.')
+
+        elif action == 'unlock':
+
+            # SF22: if checkout keeps failing (a product ran out or was withdrawn),
+            # the organiser reopens the basket so members can change their quantities
+            if not is_organiser:
+
+                messages.error(request, 'Only the organiser can reopen this group purchase.')
+
+            elif GroupPurchase.objects.filter(pk=group.pk, Gstatus='locked').update(Gstatus='open'):
+
+                messages.success(request, 'Group purchase reopened. Members can change their quantities again.')
+
+            else:
+
+                messages.error(request, 'Only a locked group purchase can be reopened.')
 
         elif action == 'checkout':
 

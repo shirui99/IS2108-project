@@ -15,12 +15,22 @@
                 <div class="fb-alert" role="status">{{ message }} <a href="/store/login">Log in</a>
                 </div>
             {% endif %}
+            {% if errors %}
+                <div class="fb-alert error" role="alert">
+                    <p>Your account was not created. Please fix the following:</p>
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
             <form method="post">
                 {% csrf_token %}
                 <div class="fb-form-grid">
                     <div class="fb-field">
                         <label for="username">Username</label>
-                        <input id="username" type="text" name="username" value="{% if not message %}{{ request.POST.username }}{% endif %}" autocomplete="username" required>
+                        <input id="username" type="text" name="username" value="{% if not message %}{{ request.POST.username }}{% endif %}" maxlength="150" autocomplete="username" required>
                     </div>
                     <div class="fb-field">
                         <label for="password">Password</label>
@@ -36,11 +46,11 @@
                     </div>
                     <div class="fb-field full">
                         <label for="customer-address">Delivery address</label>
-                        <input id="customer-address" type="text" name="Caddress" value="{% if not message %}{{ request.POST.Caddress }}{% endif %}" autocomplete="street-address" required>
+                        <input id="customer-address" type="text" name="Caddress" value="{% if not message %}{{ request.POST.Caddress }}{% endif %}" maxlength="255" autocomplete="street-address" required>
                     </div>
                     <div class="fb-field">
                         <label for="household-size">Household size</label>
-                        <input id="household-size" type="number" name="Chouseholdsize" value="{% if not message %}{{ request.POST.Chouseholdsize }}{% endif %}" min="1" required>
+                        <input id="household-size" type="number" name="Chouseholdsize" value="{% if not message %}{{ request.POST.Chouseholdsize }}{% endif %}" min="1" max="20" required>
                         <p class="fb-help">Used for restock estimates.</p>
                     </div>
                     <div class="fb-field">

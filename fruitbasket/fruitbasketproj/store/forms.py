@@ -1,8 +1,51 @@
+from datetime import timedelta
+
 from django import forms
+from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.utils import timezone
 
 from adminpanel.models import Subscription
+
+
+class SignupForm(forms.Form):
+
+    # SF01: checks every signup field before anything is saved
+
+    username = forms.CharField(max_length=150, validators=[UnicodeUsernameValidator()], label='Username')
+    password = forms.CharField(label='Password')
+    email = forms.EmailField(label='Email')
+    Cname = forms.CharField(max_length=255, label='Name')
+    Caddress = forms.CharField(max_length=255, label='Delivery address')
+    Chouseholdsize = forms.IntegerField(min_value=1, max_value=20, label='Household size')
+    Cmealsperweek = forms.IntegerField(min_value=0, max_value=100, label='Meals cooked at home per week')
+
+    def clean_username(self):
+
+        username = self.cleaned_data['username']
+
+        # "Alex" and "alex" would be too easy to confuse, so they count as the same name
+        if User.objects.filter(username__iexact=username).exists():
+
+            raise forms.ValidationError('That username is already taken.')
+
+        return username
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+
+        if password:
+
+            # Django's own rules, also checking the password is not too close to the username or email
+            try:
+                validate_password(password, User(username=cleaned_data.get('username', ''), email=cleaned_data.get('email', '')))
+            except forms.ValidationError as error:
+                self.add_error('password', error)
+
+        return cleaned_data
 
 
 class ProfileForm(forms.Form):
@@ -20,12 +63,33 @@ class ReviewForm(forms.Form):
     Rtext = forms.CharField(max_length=1000, required=False, widget=forms.Textarea(attrs={'rows': 3}), label='Review (optional)')
 
 
+# Longest a customer can schedule ahead, and the highest spending limit per order.
+# Without these, a date like 31 Dec 9999 crashes the date maths when the next order is worked out.
+MAX_DAYS_AHEAD = 365
+MAX_CEILING = 10000
+
+
+def check_future_date(Snextdate):
+
+    today = timezone.localdate()
+
+    if Snextdate <= today:
+
+        raise forms.ValidationError('Choose a date after today.')
+
+    if Snextdate > today + timedelta(days=MAX_DAYS_AHEAD):
+
+        raise forms.ValidationError(f'Choose a date within the next {MAX_DAYS_AHEAD} days.')
+
+    return Snextdate
+
+
 class SubscriptionForm(forms.Form):
 
     Squantity = forms.IntegerField(min_value=1, max_value=50, label='Packs per order')
     Sinterval = forms.TypedChoiceField(choices=Subscription.INTERVAL, coerce=int, label='Schedule')
     Snextdate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label='First order date')
-    Sceiling = forms.FloatField(min_value=0.01, label='Most I agree to pay per order ($)')
+    Sceiling = forms.FloatField(min_value=0.01, max_value=MAX_CEILING, label='Most I agree to pay per order ($)')
     consent = forms.BooleanField(
         required=True,
         label='I agree that FruitBasket may place this order for me on the schedule above until I pause or cancel it.',
@@ -34,13 +98,7 @@ class SubscriptionForm(forms.Form):
 
     def clean_Snextdate(self):
 
-        Snextdate = self.cleaned_data['Snextdate']
-
-        if Snextdate <= timezone.localdate():
-
-            raise forms.ValidationError('Choose a date after today.')
-
-        return Snextdate
+        return check_future_date(self.cleaned_data['Snextdate'])
 
 
 class ResumeForm(forms.Form):
@@ -49,14 +107,8 @@ class ResumeForm(forms.Form):
 
     def clean_Snextdate(self):
 
-        Snextdate = self.cleaned_data['Snextdate']
-
         # Missed dates are never caught up, so the plan restarts from a future date
-        if Snextdate <= timezone.localdate():
-
-            raise forms.ValidationError('Choose a date after today.')
-
-        return Snextdate
+        return check_future_date(self.cleaned_data['Snextdate'])
 
 
 class GroupForm(forms.Form):
@@ -69,7 +121,7 @@ class SubscriptionEditForm(forms.Form):
 
     Squantity = forms.IntegerField(min_value=1, max_value=50, label='Packs per order')
     Sinterval = forms.TypedChoiceField(choices=Subscription.INTERVAL, coerce=int, label='Schedule')
-    Sceiling = forms.FloatField(min_value=0.01, label='Most I agree to pay per order ($)')
+    Sceiling = forms.FloatField(min_value=0.01, max_value=MAX_CEILING, label='Most I agree to pay per order ($)')
     consent = forms.BooleanField(
         required=True,
         label='I agree that FruitBasket may place orders for me with these new settings until I pause or cancel the plan.',

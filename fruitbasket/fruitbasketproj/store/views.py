@@ -14,7 +14,7 @@ from django.db.models import F
 from adminpanel.models import Review, Subscription, SavedItem, StockNotice
 from .restock import get_customer_purchase_history, get_restock_suggestions
 from .ordering import OrderNotPlaced, generate_order_id, place_order
-from .forms import ProfileForm, ReviewForm
+from .forms import ProfileForm, ReviewForm, SignupForm
 
 # Create your views here.
 
@@ -118,8 +118,12 @@ def restock(request):
     )
 
 def generate_customer_id():
-    customer_count = Customer.objects.count()
-    return str(customer_count + 1).zfill(4)
+    # Start from the count, then move past any number already used.
+    # Counting alone repeats an ID once a customer has been deleted.
+    number = Customer.objects.count() + 1
+    while Customer.objects.filter(Cid='C' + str(number).zfill(4)).exists():
+        number += 1
+    return str(number).zfill(4)
 
 def signup(request):
 
@@ -130,26 +134,39 @@ def signup(request):
 
     elif request.method == 'POST':
 
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        email = request.POST.get('email')
-        Cname = request.POST.get('Cname')
-        Caddress = request.POST.get('Caddress')
-        Chouseholdsize = request.POST.get('Chouseholdsize')
-        Cmealsperweek = request.POST.get('Cmealsperweek')
+        # SF01: check every field first, so a bad value never leaves half an account behind
+        form = SignupForm(request.POST)
 
-        user = User.objects.create_user(username=username, password=password, email=email)
+        if not form.is_valid():
 
-        newCustomer = Customer(
-            Cid= "C" + generate_customer_id(),
-            Cname=Cname,
-            Caddress=Caddress,
-            Chouseholdsize=Chouseholdsize,
-            Cmealsperweek=Cmealsperweek,
-            Cuser=user
-        )
+            errors = [f'{form.fields[field].label}: {error}' if field != '__all__' else error
+                      for field, field_errors in form.errors.items() for error in field_errors]
 
-        newCustomer.save()
+            return render(request, 'store/signup.html', {'errors': errors})
+
+        username = form.cleaned_data['username']
+        password = form.cleaned_data['password']
+        email = form.cleaned_data['email']
+        Cname = form.cleaned_data['Cname']
+        Caddress = form.cleaned_data['Caddress']
+        Chouseholdsize = form.cleaned_data['Chouseholdsize']
+        Cmealsperweek = form.cleaned_data['Cmealsperweek']
+
+        # Both records are created together, or neither is
+        with transaction.atomic():
+
+            user = User.objects.create_user(username=username, password=password, email=email)
+
+            newCustomer = Customer(
+                Cid= "C" + generate_customer_id(),
+                Cname=Cname,
+                Caddress=Caddress,
+                Chouseholdsize=Chouseholdsize,
+                Cmealsperweek=Cmealsperweek,
+                Cuser=user
+            )
+
+            newCustomer.save()
 
         return render(request, 'store/signup.html', {'message': 'User created successfully!'})
 
@@ -444,7 +461,12 @@ def orders(request, pk=None):
                 subject = request.POST.get('Tsubject', '').strip()
                 message = request.POST.get('Tmessage', '').strip()
 
-                if subject and message:
+                if len(subject) > 200 or len(message) > 2000:
+
+                    status_type = 'error'
+                    status_message = 'The subject can be at most 200 characters and the message at most 2000.'
+
+                elif subject and message:
 
                     SupportTicket.objects.create(Torder=order, Tsubject=subject, Tmessage=message) #create the support ticket
 
@@ -492,7 +514,11 @@ def pantry(request, pk=None):
             # SF36: the ticket is attached to the order this item came from
             message = request.POST.get('Tmessage', '').strip()
 
-            if message:
+            if len(message) > 2000:
+
+                messages.error(request, 'Please keep the description to 2000 characters or fewer.')
+
+            elif message:
 
                 SupportTicket.objects.create(
                     Torder=item.Iorder, Tsubject=f'Problem with {item.Iproduct.Pname} (pantry item {item.pk})'[:200], Tmessage=message

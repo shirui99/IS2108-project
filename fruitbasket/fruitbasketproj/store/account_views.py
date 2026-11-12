@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from adminpanel.inventory import sellable_stock_filter
-from adminpanel.models import Customer, Product, SavedItem, StockNotice
+from adminpanel.models import Customer, Item, Product, SavedItem, StockNotice
 
 from .forms import PasswordForm
 
@@ -75,6 +75,10 @@ def saved_item(request, pk):
         SavedItem.objects.filter(SVcustomer_id=request.session['Cid'], SVproduct=product).delete()
         messages.success(request, f'{product.Pname} removed from your list.')
 
+    elif not product.Pactive:
+
+        messages.error(request, f'{product.Pname} is no longer sold, so it cannot be saved.')
+
     else:
 
         SavedItem.objects.get_or_create(
@@ -100,6 +104,14 @@ def stock_notice(request, pk):
 
         StockNotice.objects.filter(SNcustomer_id=request.session['Cid'], SNproduct=product).delete()
         messages.success(request, f'You will no longer be told about {product.Pname}.')
+
+    elif not product.Pactive:
+
+        messages.error(request, f'{product.Pname} is no longer sold, so it will not come back into stock.')
+
+    elif Item.objects.filter(sellable_stock_filter(), Iproduct=product).exists():
+
+        messages.error(request, f'{product.Pname} is already in stock. You can add it to your cart now.')
 
     else:
 

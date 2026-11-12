@@ -148,6 +148,11 @@
                 <input type="hidden" name="action" value="checkout">
                 <button type="submit">Pay and place group order &rarr;</button>
             </form>
+            <form method="post" action="/store/groups/{{ group.pk }}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="unlock">
+                <button type="submit" class="secondary">Reopen basket for changes</button>
+            </form>
         </section>
     {% endif %}
 {% endblock %}

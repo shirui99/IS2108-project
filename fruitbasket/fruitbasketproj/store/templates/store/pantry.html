@@ -82,7 +82,7 @@
                         <input type="hidden" name="action" value="report">
                         <div class="fb-field">
                             <label for="report-{{ p.item.pk }}">What is wrong?</label>
-                            <textarea id="report-{{ p.item.pk }}" name="Tmessage" rows="3" required></textarea>
+                            <textarea id="report-{{ p.item.pk }}" name="Tmessage" rows="3" maxlength="2000" required></textarea>
                         </div>
                         <button type="submit" class="secondary">Send to support</button>
                     </form>
