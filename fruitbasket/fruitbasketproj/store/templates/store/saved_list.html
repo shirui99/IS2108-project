@@ -1,0 +1,69 @@
+{% extends 'store/store_base.html' %}
+{% block title %}My list | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <div class="fb-section-heading">
+        <div>
+            <h1>My list</h1>
+            <p>Products you saved to buy later. Saving a product does not reserve stock.</p>
+        </div>
+        <a class="fb-text-link" href="/store/">Browse products &rarr;</a>
+    </div>
+    <div class="fb-table-wrap fb-records-table" role="region" aria-label="Saved products" tabindex="0">
+        <table>
+            <thead>
+                <tr><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Availability</th><th scope="col">Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for product in saved_products %}
+                    <tr>
+                        <td><a href="/store/product/{{ product.Pid }}"><strong>{{ product.Pname }}</strong></a><br><span class="fb-help">{{ product.Psize }}</span></td>
+                        <td>${{ product.Pprice|floatformat:2 }}</td>
+                        <td>{% if not product.Pactive %}No longer sold{% elif product.sellable_stock %}{{ product.sellable_stock }} available{% else %}Unavailable{% endif %}</td>
+                        <td>
+                            <form action="/store/cart/{{ product.Pid }}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" aria-label="Add {{ product.Pname }} to cart" {% if not product.sellable_stock %}disabled{% endif %}>+ Add to cart</button>
+                            </form>
+                            <form action="/store/list/{{ product.Pid }}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove">
+                                <button type="submit" class="secondary" aria-label="Remove {{ product.Pname }} from my list">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4">Your list is empty. Open a product page and choose Save to my list.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <section>
+        <h2>Back-in-stock requests</h2>
+        <p class="fb-help">When one of these can be bought again, a notice appears at the top of the shop page.</p>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Back-in-stock requests" tabindex="0">
+            <table>
+                <thead>
+                    <tr><th scope="col">Product</th><th scope="col">Status</th><th scope="col">Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for product in notice_products %}
+                        <tr>
+                            <td><a href="/store/product/{{ product.Pid }}"><strong>{{ product.Pname }}</strong></a></td>
+                            <td><span class="fb-status {% if product.sellable_stock and product.Pactive %}soon{% endif %}">{% if not product.Pactive %}No longer sold{% elif product.sellable_stock %}Back in stock{% else %}Still unavailable{% endif %}</span></td>
+                            <td>
+                                <form action="/store/notify/{{ product.Pid }}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove">
+                                    <button type="submit" class="secondary" aria-label="Stop telling me about {{ product.Pname }}">Stop telling me</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3">No requests. On an unavailable product's page, choose Tell me when it is back.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

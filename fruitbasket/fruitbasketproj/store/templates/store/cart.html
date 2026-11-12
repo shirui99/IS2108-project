@@ -34,7 +34,15 @@
                                     <span class="fb-help">{{ item.product.Psize }}</span>
                                 </td>
                                 <td>${{ item.product.Pprice|floatformat:2 }}</td>
-                                <td>{{ item.quantity }}</td>
+                                <td>
+                                    <form action="/store/cart/{{ item.product.Pid }}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="set">
+                                        <label class="visually-hidden" for="quantity-{{ item.product.Pid }}">Quantity of {{ item.product.Pname }}</label>
+                                        <input id="quantity-{{ item.product.Pid }}" type="number" name="quantity" value="{{ item.quantity }}" min="1" style="width:5em">
+                                        <button type="submit" class="secondary">Update</button>
+                                    </form>
+                                </td>
                                 <td>${{ item.subtotal|floatformat:2 }}</td>
                                 <td>
                                     <form action="/store/cart/{{ item.product.Pid }}" method="post">

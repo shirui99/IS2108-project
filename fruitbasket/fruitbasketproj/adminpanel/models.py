@@ -94,10 +94,16 @@ class Orders(models.Model):
         ('cancelled', 'Cancelled')
     ]
 
+    PAYMENT = [
+        ('paid', 'Paid (simulated)'),
+        ('refunded', 'Refunded (simulated)')
+    ]
+
     Oid = models.CharField(max_length=6, primary_key=True)
     Odate = models.DateField()
     Oaddress = models.CharField(max_length=255)
     Ostatus = models.CharField(max_length=10, choices=STATUS, default='placed')
+    Opayment = models.CharField(max_length=10, choices=PAYMENT, default='paid', verbose_name='Simulated payment')
 
     Ocustomer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='customer_orders')
 
@@ -179,3 +185,207 @@ class SupportTicket(models.Model):
     def __str__(self):
 
         return f'Ticket {self.pk} - {self.Torder.Oid} ({self.Tstatus})'
+
+
+
+class Review(models.Model):
+
+    Rrating = models.IntegerField()
+    Rtext = models.TextField(blank=True)
+    Rvisible = models.BooleanField(default=True)
+    Rdate = models.DateField()
+    Rcustomer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='customer_reviews')
+    Rproduct = models.ForeignKey(Product, on_delete=models.RESTRICT, related_name='product_reviews')
+    # The delivered item that proves this customer bought the product
+    Ritem = models.ForeignKey(Item, on_delete=models.RESTRICT, related_name='item_reviews')
+
+    # Add constraint to ensure one review per customer and product
+    # Add constraint to ensure that Rrating is between 1 and 5
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(fields=['Rcustomer', 'Rproduct'], name='one_review_per_customer_product'),
+            models.CheckConstraint(
+                condition=models.Q(Rrating__gte=1, Rrating__lte=5),
+                name='Rrating_between_one_and_five'
+            )
+        ]
+
+    def __str__(self):
+
+        return f'Review {self.pk} - {self.Rproduct.Pname} ({self.Rrating}/5)'
+
+
+
+class Subscription(models.Model):
+
+    STATUS = [
+        ('active', 'Active'),
+        ('paused', 'Paused'),
+        ('cancelled', 'Cancelled')
+    ]
+
+    INTERVAL = [
+        (7, 'Every 7 days'),
+        (14, 'Every 14 days'),
+        (30, 'Every 30 days')
+    ]
+
+    Squantity = models.PositiveIntegerField()
+    Sinterval = models.IntegerField(choices=INTERVAL)
+    Snextdate = models.DateField()
+    # The most the customer agreed to pay for one scheduled order
+    Sceiling = models.FloatField()
+    Sstatus = models.CharField(max_length=10, choices=STATUS, default='active')
+    Screated = models.DateField()
+    Scustomer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='customer_subscriptions')
+    Sproduct = models.ForeignKey(Product, on_delete=models.RESTRICT, related_name='product_subscriptions')
+
+    # Add constraint to ensure that Squantity is at least 1 and Sceiling is greater than 0
+
+    class Meta:
+
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(Squantity__gte=1, Sceiling__gt=0),
+                name='Squantity_and_Sceiling_positive'
+            )
+        ]
+
+    def __str__(self):
+
+        return f'Subscription {self.pk} - {self.Sproduct.Pname} for {self.Scustomer.Cname}'
+
+
+
+class SubscriptionCycle(models.Model):
+
+    RESULT = [
+        ('ordered', 'Order created'),
+        ('failed', 'No order created'),
+        ('skipped', 'Skipped by customer')
+    ]
+
+    SCdate = models.DateField()
+    SCresult = models.CharField(max_length=10, choices=RESULT)
+    SCnote = models.CharField(max_length=255, blank=True)
+    SCsubscription = models.ForeignKey(Subscription, on_delete=models.RESTRICT, related_name='subscription_cycles')
+    SCorder = models.OneToOneField(Orders, on_delete=models.RESTRICT, related_name='subscription_cycle', blank=True, null=True)
+
+    def __str__(self):
+
+        return f'Cycle {self.pk} - subscription {self.SCsubscription_id} on {self.SCdate}'
+
+
+
+class GroupPurchase(models.Model):
+
+    STATUS = [
+        ('open', 'Open'),
+        ('locked', 'Locked'),
+        ('ordered', 'Ordered')
+    ]
+
+    Gname = models.CharField(max_length=100)
+    # Random text in the invitation link, so only invited customers can find the group
+    Gcode = models.CharField(max_length=32, unique=True)
+    Gaddress = models.CharField(max_length=255)
+    Gstatus = models.CharField(max_length=10, choices=STATUS, default='open')
+    Gcreated = models.DateField()
+    Gorganiser = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='organised_groups')
+    Gorder = models.OneToOneField(Orders, on_delete=models.RESTRICT, related_name='group_purchase', blank=True, null=True)
+
+    # Add constraint to ensure that only an ordered group has an order
+
+    class Meta:
+
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(Gstatus='ordered', Gorder__isnull=False) | (~models.Q(Gstatus='ordered') & models.Q(Gorder__isnull=True)),
+                name='Gorder_matches_Gstatus'
+            )
+        ]
+
+    def __str__(self):
+
+        return f'Group {self.pk} - {self.Gname}'
+
+
+
+class GroupMember(models.Model):
+
+    GMgroup = models.ForeignKey(GroupPurchase, on_delete=models.CASCADE, related_name='group_members')
+    GMcustomer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='customer_groups')
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(fields=['GMgroup', 'GMcustomer'], name='one_membership_per_customer_group')
+        ]
+
+    def __str__(self):
+
+        return f'{self.GMcustomer.Cname} in {self.GMgroup.Gname}'
+
+
+
+class GroupLine(models.Model):
+
+    GLquantity = models.PositiveIntegerField()
+    GLgroup = models.ForeignKey(GroupPurchase, on_delete=models.CASCADE, related_name='group_lines')
+    GLcustomer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='customer_group_lines')
+    GLproduct = models.ForeignKey(Product, on_delete=models.RESTRICT, related_name='product_group_lines')
+
+    # Add constraint to ensure one line per member and product, with a quantity of at least 1
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(fields=['GLgroup', 'GLcustomer', 'GLproduct'], name='one_line_per_member_product'),
+            models.CheckConstraint(condition=models.Q(GLquantity__gte=1), name='GLquantity_at_least_one')
+        ]
+
+    def __str__(self):
+
+        return f'{self.GLquantity} x {self.GLproduct.Pname} for {self.GLcustomer.Cname}'
+
+
+
+class SavedItem(models.Model):
+
+    # A product on a customer's shopping list
+
+    SVadded = models.DateField()
+    SVcustomer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='customer_saved_items')
+    SVproduct = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_saved_items')
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(fields=['SVcustomer', 'SVproduct'], name='one_saved_item_per_customer_product')
+        ]
+
+    def __str__(self):
+
+        return f'{self.SVproduct.Pname} saved by {self.SVcustomer.Cname}'
+
+
+
+class StockNotice(models.Model):
+
+    # A customer asked to be told when an unavailable product can be bought again
+
+    SNcreated = models.DateField()
+    SNcustomer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='customer_notices')
+    SNproduct = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_notices')
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(fields=['SNcustomer', 'SNproduct'], name='one_notice_per_customer_product')
+        ]
+
+    def __str__(self):
+
+        return f'{self.SNcustomer.Cname} waiting for {self.SNproduct.Pname}'

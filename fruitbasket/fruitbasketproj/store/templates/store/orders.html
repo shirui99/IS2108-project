@@ -9,6 +9,20 @@
         </div>
         <a class="fb-text-link" href="/store/">Shop again &rarr;</a>
     </div>
+    <form class="fb-shop-filters" method="get" action="/store/orders">
+        <div class="fb-field">
+            <label for="status">Show orders with status</label>
+            <select id="status" name="status">
+                <option value="">All statuses</option>
+                {% for value, label in statuses %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="fb-shop-filter-actions">
+            <button type="submit">Apply</button>
+        </div>
+    </form>
     <div class="fb-table-wrap fb-records-table" role="region" aria-label="Order history" tabindex="0">
         <p class="fb-table-hint">Scroll to see all columns.</p>
         <table>
@@ -42,8 +56,8 @@
                     <tr>
                         <td colspan="6">
                             <div class="fb-empty">
-                                <h2>No orders yet</h2>
-                                <p>You have not placed any orders yet.</p>
+                                <h2>{% if status_filter %}No orders with this status{% else %}No orders yet{% endif %}</h2>
+                                <p>{% if status_filter %}Choose All statuses to see every order.{% else %}You have not placed any orders yet.{% endif %}</p>
                                 <a class="fb-button" href="/store/">Explore groceries &rarr;</a>
                             </div>
                         </td>
@@ -57,6 +71,11 @@
             <div class="fb-section-heading">
                 <div>
                     <h2>Order {{ order.Oid }}</h2>
+                    <p>
+                        Status: {{ order.get_Ostatus_display }} &middot; Payment: {{ order.get_Opayment_display }}
+                        {% if order.group_purchase %}&middot; Group order for {{ order.group_purchase.Gname }}{% endif %}
+                        {% if order.subscription_cycle %}&middot; Subscription order{% endif %}
+                    </p>
                 </div>
                 <a class="fb-text-link" href="/store/pantry">Check my pantry &rarr;</a>
             </div>
@@ -95,6 +114,28 @@
         </section>
         {% if status_type and status_message %}
             <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">{{ status_message }}</div>
+        {% endif %}
+        {% if order_items %}
+            <section class="fb-panel">
+                <h2>Buy these again</h2>
+                <p class="fb-help">Adds the same products and quantities to your cart, as far as stock allows. Prices are today's prices.</p>
+                <form method="post" action="/store/orders/{{ order.Oid }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reorder">
+                    <button type="submit">Add this order to my cart</button>
+                </form>
+            </section>
+        {% endif %}
+        {% if order.Ostatus == 'placed' %}
+            <section class="fb-panel">
+                <h2>Cancel this order</h2>
+                <p class="fb-help">You can cancel while the order is still Placed. The items go back into stock and the simulated payment is refunded. After that, contact support.</p>
+                <form method="post" action="/store/orders/{{ order.Oid }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="secondary" onclick="return confirm('Are you sure you want to cancel this order?');">Cancel order</button>
+                </form>
+            </section>
         {% endif %}
         <section class="fb-panel">
             <h2>Contact support</h2>

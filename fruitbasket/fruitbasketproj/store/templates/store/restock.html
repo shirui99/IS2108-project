@@ -30,6 +30,7 @@
                         {% csrf_token %}
                         <button type="submit" aria-label="Add {{ suggestion.product_name }} to cart">+ Add to cart</button>
                     </form>
+                    <p><a href="/store/subscriptions/new/{{ suggestion.product_id }}" aria-label="Subscribe to {{ suggestion.product_name }}">Buy this regularly? Set up a subscription &rarr;</a></p>
                 </article>
             {% endfor %}
         </div>

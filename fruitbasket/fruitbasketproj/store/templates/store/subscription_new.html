@@ -1,0 +1,28 @@
+{% extends 'store/store_base.html' %}
+{% block title %}Subscribe to {{ product.Pname }} | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <div class="fb-section-heading">
+        <div>
+            <h1>Subscribe to {{ product.Pname }}</h1>
+            <p>{{ product.Psize }} &middot; ${{ product.Pprice|floatformat:2 }} per pack today</p>
+        </div>
+        <a class="fb-text-link" href="/store/product/{{ product.Pid }}">&larr; Back to product</a>
+    </div>
+    <div class="fb-alert">
+        {% if suggested_interval %}
+            Suggested schedule: every {{ suggested_interval }} days ({{ estimate_label }}). ML estimates use the trained restock model and your purchase history; initial estimates are used when there is not enough history. You can change it below.
+        {% else %}
+            No schedule estimate is available for this product, so choose the schedule yourself.
+        {% endif %}
+    </div>
+    <section class="fb-panel">
+        <h2>Approve your plan</h2>
+        <p class="fb-help">On each scheduled date one order is placed to your profile address at the price on that day. Payment is simulated; there is no delivery fee in FruitBasket. If the total is above your limit, or there is not enough stock, no order is placed for that date.</p>
+        <form method="post" action="/store/subscriptions/new/{{ product.Pid }}" class="fb-form">
+            {% csrf_token %}
+            {% include 'store/form_fields.html' %}
+            <button type="submit">Approve subscription</button>
+        </form>
+    </section>
+{% endblock %}

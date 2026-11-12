@@ -1,0 +1,39 @@
+{% extends 'store/store_base.html' %}
+{% block title %}Group buys | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <div class="fb-section-heading">
+        <div>
+            <h1>Group buys</h1>
+            <p>Pool quantities with people you invite. One organiser pays, and everything is delivered to one address.</p>
+        </div>
+    </div>
+    <div class="fb-table-wrap fb-records-table" role="region" aria-label="My group purchases" tabindex="0">
+        <table>
+            <thead>
+                <tr><th scope="col">Group</th><th scope="col">Organiser</th><th scope="col">Created</th><th scope="col">Status</th><th scope="col">Details</th></tr>
+            </thead>
+            <tbody>
+                {% for m in memberships %}
+                    <tr>
+                        <td><strong>{{ m.GMgroup.Gname }}</strong></td>
+                        <td>{% if m.GMgroup.Gorganiser_id == customer.Cid %}You{% else %}{{ m.GMgroup.Gorganiser.Cname }}{% endif %}</td>
+                        <td>{{ m.GMgroup.Gcreated|date:'j M Y' }}</td>
+                        <td><span class="fb-status">{{ m.GMgroup.get_Gstatus_display }}</span></td>
+                        <td><a href="/store/groups/{{ m.GMgroup.pk }}" aria-label="Open {{ m.GMgroup.Gname }}">Open &rarr;</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">You are not in any group purchase yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <section class="fb-panel">
+        <h2>Start a group purchase</h2>
+        <form method="post" action="/store/groups" class="fb-form">
+            {% csrf_token %}
+            {% include 'store/form_fields.html' %}
+            <button type="submit">Create group purchase</button>
+        </form>
+    </section>
+{% endblock %}

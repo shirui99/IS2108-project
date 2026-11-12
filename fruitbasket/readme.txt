@@ -24,3 +24,8 @@ python manage.py seed_catalog
 This adds missing products and sample warehouse stock. Existing products and
 order relationships are retained. The old sample customer username
 restock_demo is renamed to alex.tan; its password remains unchanged.
+
+Subscriptions: orders for due subscriptions are created by running this from the folder containing manage.py
+(run it once a day, or by hand for a demo):
+
+python manage.py process_subscriptions

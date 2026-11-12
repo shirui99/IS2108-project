@@ -1,0 +1,24 @@
+{% extends 'store/store_base.html' %}
+{% block title %}My profile | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <div class="fb-section-heading">
+        <div>
+            <h1>My profile</h1>
+            <p>Your address is used for new orders. Household size is used for restock suggestions.</p>
+        </div>
+    </div>
+    <section class="fb-panel">
+        <h2>Household and contact details</h2>
+        <p class="fb-help">Username: {{ customer.Cuser.username }}. Changes apply to future orders; earlier orders keep their delivery address.</p>
+        <form method="post" action="/store/profile" class="fb-form">
+            {% csrf_token %}
+            {% include 'store/form_fields.html' %}
+            <button type="submit">Save profile</button>
+        </form>
+    </section>
+    <section class="fb-panel">
+        <h2>Password</h2>
+        <p><a href="/store/profile/password">Change my password &rarr;</a></p>
+    </section>
+{% endblock %}

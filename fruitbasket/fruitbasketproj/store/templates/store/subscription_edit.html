@@ -1,0 +1,20 @@
+{% extends 'store/store_base.html' %}
+{% block title %}Change {{ plan.Sproduct.Pname }} subscription | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <div class="fb-section-heading">
+        <div>
+            <h1>Change {{ plan.Sproduct.Pname }} subscription</h1>
+            <p>{{ plan.Sproduct.Psize }} &middot; ${{ plan.Sproduct.Pprice|floatformat:2 }} per pack today{% if plan.Sstatus == 'active' %} &middot; next order {{ plan.Snextdate|date:'j M Y' }}{% endif %}</p>
+        </div>
+        <a class="fb-text-link" href="/store/subscriptions">&larr; Back to my subscriptions</a>
+    </div>
+    <section class="fb-panel">
+        <p class="fb-help">The next order date does not move. A new schedule applies after that order. Orders already placed are not changed.</p>
+        <form method="post" action="/store/subscriptions/{{ plan.pk }}/edit" class="fb-form">
+            {% csrf_token %}
+            {% include 'store/form_fields.html' %}
+            <button type="submit">Save changes</button>
+        </form>
+    </section>
+{% endblock %}

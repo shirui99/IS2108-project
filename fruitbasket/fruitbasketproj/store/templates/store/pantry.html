@@ -18,9 +18,9 @@
             <strong>{{ expiring_soon }}</strong>
             <span>Due within 3 days or overdue</span>
         </div>
-        <div class="fb-stat">
-            <strong>Expiry first</strong>
-            <span>Your items, ordered by expiry date</span>
+        <div class="fb-stat {% if past_expiry %}attention{% endif %}">
+            <strong>{{ past_expiry }}</strong>
+            <span>Already past the expiry date</span>
         </div>
     </div>
     {% if status_type and status_message %}
@@ -29,6 +29,10 @@
     {% if expiring_soon > 0 %}
         <div class="fb-alert warning" role="status">
             {{ expiring_soon }} item{{ expiring_soon|pluralize }} expire{{ expiring_soon|pluralize:'s,' }} within 3 days or {{ expiring_soon|pluralize:'is,are' }} already past the expiry date. Check the dates below.</div>
+    {% endif %}
+    {% if past_expiry > 0 %}
+        <div class="fb-alert error" role="status">
+            {{ past_expiry }} item{{ past_expiry|pluralize }} {{ past_expiry|pluralize:'is,are' }} past the expiry date. Check {{ past_expiry|pluralize:'it,them' }} before use.</div>
     {% endif %}
     <div class="fb-pantry-grid">
         {% for p in pantry_items %}
@@ -71,6 +75,18 @@
                         <button type="submit" class="secondary" onclick="return confirm('Are you sure you want to throw this item away?');" aria-label="Mark {{ p.item.Iproduct.Pname }} as thrown away">Thrown away</button>
                     </form>
                 </div>
+                <details>
+                    <summary>Report a problem with this item</summary>
+                    <form class="fb-form" action="/store/pantry/{{ p.item.pk }}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="report">
+                        <div class="fb-field">
+                            <label for="report-{{ p.item.pk }}">What is wrong?</label>
+                            <textarea id="report-{{ p.item.pk }}" name="Tmessage" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="secondary">Send to support</button>
+                    </form>
+                </details>
                 {% if p.item.Irating %}
                     <p>Your rating: {{ p.item.Irating }} / 5</p>
                 {% else %}

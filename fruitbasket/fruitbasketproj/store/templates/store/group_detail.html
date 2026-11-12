@@ -1,0 +1,153 @@
+{% extends 'store/store_base.html' %}
+{% block title %}{{ group.Gname }} | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <div class="fb-section-heading">
+        <div>
+            <h1>{{ group.Gname }}</h1>
+            <p>Organiser and payer: {{ group.Gorganiser.Cname }} &middot; Delivered to: {{ group.Gaddress }} &middot; <span class="fb-status">{{ group.get_Gstatus_display }}</span></p>
+        </div>
+        <a class="fb-text-link" href="/store/groups">&larr; All group buys</a>
+    </div>
+    {% if group.Gstatus == 'open' %}
+        <section class="fb-panel">
+            <h2>Invite people</h2>
+            <p class="fb-help">Send this link to customers you want to invite. They must log in to join.</p>
+            <p><a href="{{ invite_link }}">{{ invite_link }}</a></p>
+        </section>
+    {% elif group.Gstatus == 'ordered' %}
+        <div class="fb-alert" role="status">This group purchase was ordered as order {{ group.Gorder.Oid }}.{% if is_organiser %} <a href="/store/orders/{{ group.Gorder.Oid }}">View the order</a>.{% endif %}</div>
+    {% else %}
+        <div class="fb-alert warning" role="status">This group purchase is locked. Quantities can no longer be changed.</div>
+    {% endif %}
+    <section>
+        <h2>Members</h2>
+        <p>{% for m in members %}{{ m.GMcustomer.Cname }}{% if m.GMcustomer_id == group.Gorganiser_id %} (organiser){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    </section>
+    {% if group.Gstatus == 'open' %}
+        <section class="fb-panel">
+            <h2>My contribution</h2>
+            <p class="fb-help">Adding a quantity does not reserve stock. Stock is checked when the organiser checks out.</p>
+            {% for line in my_lines %}
+                <form method="post" action="/store/groups/{{ group.pk }}" class="fb-inline-actions">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="line">
+                    <input type="hidden" name="Pid" value="{{ line.GLproduct.Pid }}">
+                    <label for="line-{{ line.pk }}">{{ line.GLproduct.Pname }} ({{ line.GLproduct.Psize }})</label>
+                    <input id="line-{{ line.pk }}" type="number" name="quantity" value="{{ line.GLquantity }}" min="0" style="width:5em">
+                    <button type="submit" class="secondary">Update</button>
+                    <span class="fb-help">Set to 0 to remove.</span>
+                </form>
+            {% empty %}
+                <p>You have not added anything yet.</p>
+            {% endfor %}
+            <form method="post" action="/store/groups/{{ group.pk }}" class="fb-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="line">
+                <div class="fb-field">
+                    <label for="add-product">Product</label>
+                    <select id="add-product" name="Pid">
+                        {% for product in products %}
+                            <option value="{{ product.Pid }}">{{ product.Pname }} ({{ product.Psize }}) - ${{ product.Pprice|floatformat:2 }}{% if product.Pbulkquantity and product.Pbulkprice %}, ${{ product.Pbulkprice|floatformat:2 }} for {{ product.Pbulkquantity }}+{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="fb-field">
+                    <label for="add-quantity">Packs</label>
+                    <input id="add-quantity" type="number" name="quantity" value="1" min="1">
+                </div>
+                <button type="submit">Set my quantity</button>
+            </form>
+        </section>
+    {% endif %}
+    <section>
+        <h2>Pooled basket</h2>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Pooled basket" tabindex="0">
+            <table>
+                <thead>
+                    <tr><th scope="col">Product</th><th scope="col">Pooled packs</th><th scope="col">Unit price</th><th scope="col">Subtotal</th></tr>
+                </thead>
+                <tbody>
+                    {% for line in pooled %}
+                        <tr>
+                            <td>{{ line.product.Pname }}<br><span class="fb-help">{{ line.product.Psize }}</span></td>
+                            <td>{{ line.quantity }}</td>
+                            <td>${{ line.price|floatformat:2 }}{% if line.bulk %} <span class="fb-status">Bulk price</span>{% elif line.product.Pbulkquantity %}<br><span class="fb-help">Bulk price from {{ line.product.Pbulkquantity }} packs</span>{% endif %}</td>
+                            <td>${{ line.subtotal|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4">Nothing has been added yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="fb-total"><span>Pooled total</span><span>${{ total|floatformat:2 }}</span></div>
+    </section>
+    <section>
+        <h2>Each member's share</h2>
+        <p>Your share: <strong>${{ my_share|floatformat:2 }}</strong>. {% if is_organiser %}You pay the whole order and collect the other shares yourself.{% else %}The organiser pays the whole order, so this is what you owe them.{% endif %} FruitBasket does not collect money between members.</p>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Share by member" tabindex="0">
+            <table>
+                <thead>
+                    <tr><th scope="col">Member</th><th scope="col">Share</th></tr>
+                </thead>
+                <tbody>
+                    {% for member, amount in shares %}
+                        <tr><td>{{ member.Cname }}</td><td>${{ amount|floatformat:2 }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">No contributions yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section>
+        <h2>Who asked for what</h2>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Contributions by member" tabindex="0">
+            <table>
+                <thead>
+                    <tr><th scope="col">Product</th><th scope="col">Member</th><th scope="col">Packs</th></tr>
+                </thead>
+                <tbody>
+                    {% for line in all_lines %}
+                        <tr><td>{{ line.GLproduct.Pname }}</td><td>{{ line.GLcustomer.Cname }}</td><td>{{ line.GLquantity }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="3">No contributions yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% if not is_organiser and group.Gstatus == 'open' %}
+        <section class="fb-panel">
+            <h2>Leave this group purchase</h2>
+            <p class="fb-help">Your quantities are removed. You can join again with the invitation link while the group is open.</p>
+            <form method="post" action="/store/groups/{{ group.pk }}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="leave">
+                <button type="submit" class="secondary" onclick="return confirm('Leave this group purchase?');">Leave group</button>
+            </form>
+        </section>
+    {% endif %}
+    {% if is_organiser and group.Gstatus == 'open' %}
+        <section class="fb-panel">
+            <h2>Lock the basket</h2>
+            <p class="fb-help">Locking stops everyone from changing quantities, so the total you pay cannot change.</p>
+            <form method="post" action="/store/groups/{{ group.pk }}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="lock">
+                <button type="submit" onclick="return confirm('Lock the basket? Members will not be able to change quantities.');">Lock basket</button>
+            </form>
+        </section>
+    {% elif is_organiser and group.Gstatus == 'locked' %}
+        <section class="fb-panel">
+            <h2>Check out</h2>
+            <p class="fb-help">You pay ${{ total|floatformat:2 }} for one order delivered to {{ group.Gaddress }}. Payment is simulated; no real payment is taken. If stock has run short, no order is placed and you can try again.</p>
+            <form method="post" action="/store/groups/{{ group.pk }}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="checkout">
+                <button type="submit">Pay and place group order &rarr;</button>
+            </form>
+        </section>
+    {% endif %}
+{% endblock %}

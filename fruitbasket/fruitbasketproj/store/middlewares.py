@@ -11,6 +11,11 @@ def login_middleware(get_response):
             '/store/orders',
             '/store/pantry',
             '/store/restock',
+            '/store/profile',
+            '/store/subscriptions',
+            '/store/groups',
+            '/store/list',
+            '/store/notify',
         )) and not request.session.get('Cid', False):
             if (request.method == 'POST' and request.path.startswith('/store/cart/')
                     and request.POST.get('action') != 'remove'):

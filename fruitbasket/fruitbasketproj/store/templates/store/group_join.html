@@ -1,0 +1,17 @@
+{% extends 'store/store_base.html' %}
+{% block title %}Join {{ group.Gname }} | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <section class="fb-panel">
+        <h1>Join {{ group.Gname }}</h1>
+        <p>{{ group.Gorganiser.Cname }} invited you to a group purchase. The organiser pays for one order, delivered to: {{ group.Gaddress }}.</p>
+        {% if group.Gstatus == 'open' %}
+            <form method="post" action="/store/groups/join/{{ group.Gcode }}">
+                {% csrf_token %}
+                <button type="submit">Join group purchase</button>
+            </form>
+        {% else %}
+            <p>This group purchase is no longer open to new members.</p>
+        {% endif %}
+    </section>
+{% endblock %}

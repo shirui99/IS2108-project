@@ -1,0 +1,88 @@
+{% extends 'store/store_base.html' %}
+{% block title %}{{ product.Pname }} | FruitBasket{% endblock %}
+{% block page_class %}fb-store-page{% endblock %}
+{% block content %}
+    <div class="fb-section-heading">
+        <div>
+            <p class="fb-eyebrow">{{ product.get_Pcategory_display }}</p>
+            <h1>{{ product.Pname }}</h1>
+        </div>
+        <a class="fb-text-link" href="/store/">&larr; Back to the shop</a>
+    </div>
+    <div class="fb-two-column">
+        <section class="fb-panel">
+            {% if product.Pimage %}
+                <img src="{{ product.Pimage.url }}" alt="{{ product.Pname }}" style="max-width:100%;height:auto">
+            {% else %}
+                <p class="fb-help">No product photo</p>
+            {% endif %}
+            <table>
+                <tbody>
+                    <tr><th scope="row">Pack size</th><td>{{ product.Psize }}</td></tr>
+                    <tr><th scope="row">Price</th><td>${{ product.Pprice|floatformat:2 }} per pack</td></tr>
+                    {% if product.Pbulkquantity and product.Pbulkprice %}
+                        <tr><th scope="row">Group purchase price</th><td>${{ product.Pbulkprice|floatformat:2 }} per pack when a group purchase pools {{ product.Pbulkquantity }} or more</td></tr>
+                    {% endif %}
+                    <tr><th scope="row">Availability</th><td>{% if product.sellable_stock %}{{ product.sellable_stock }} pack{{ product.sellable_stock|pluralize }} available{% else %}Unavailable{% endif %}</td></tr>
+                    <tr><th scope="row">Date label</th><td>{% if has_dated_stock %}Expiry date on the pack. The date of your pack is shown in your order after checkout.{% else %}No expiry date is recorded for the packs in stock.{% endif %}</td></tr>
+                    <tr><th scope="row">Rating</th><td>{% if product.reviews > 0 %}{{ product.rating|floatformat:1 }} / 5 from {{ product.reviews }} rating{{ product.reviews|pluralize }}{% else %}No ratings yet{% endif %}</td></tr>
+                </tbody>
+            </table>
+        </section>
+        <aside class="fb-panel fb-order-summary">
+            <h2>Add to cart</h2>
+            <form action="/store/cart/{{ product.Pid }}" method="post" class="fb-form">
+                {% csrf_token %}
+                <div class="fb-field">
+                    <label for="quantity">Packs</label>
+                    <input id="quantity" type="number" name="quantity" value="1" min="1" {% if product.sellable_stock %}max="{{ product.sellable_stock }}"{% endif %}>
+                </div>
+                <button type="submit" {% if not product.sellable_stock %}disabled{% endif %}>{% if product.sellable_stock %}+ Add to cart{% else %}Unavailable{% endif %}</button>
+            </form>
+            {% if request.session.Cid %}
+                <hr>
+                <form action="/store/list/{{ product.Pid }}" method="post">
+                    {% csrf_token %}
+                    {% if saved %}
+                        <input type="hidden" name="action" value="remove">
+                        <button type="submit" class="secondary">Remove from my list</button>
+                    {% else %}
+                        <button type="submit" class="secondary">Save to my list</button>
+                    {% endif %}
+                </form>
+                {% if watching %}
+                    <p class="fb-help">You asked to be told when this is back in stock.</p>
+                {% elif not product.sellable_stock %}
+                    <form action="/store/notify/{{ product.Pid }}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="secondary">Tell me when it is back</button>
+                    </form>
+                {% endif %}
+                <p class="fb-help">Buy this regularly? <a href="/store/subscriptions/new/{{ product.Pid }}">Set up a subscription</a>.</p>
+            {% endif %}
+        </aside>
+    </div>
+    <section>
+        <h2>Customer reviews</h2>
+        {% for review in visible_reviews %}
+            <article class="fb-panel">
+                <p><strong>{{ review.Rrating }} / 5</strong> &middot; {{ review.Rcustomer.Cname }} &middot; {{ review.Rdate|date:'j M Y' }} &middot; <span class="fb-status">Verified purchase</span></p>
+                {% if review.Rtext %}<p>{{ review.Rtext|linebreaksbr }}</p>{% endif %}
+            </article>
+        {% empty %}
+            <p>No written reviews yet.</p>
+        {% endfor %}
+    </section>
+    {% if can_review %}
+        <section class="fb-panel">
+            <h2>{% if my_review %}Update your review{% else %}Review this product{% endif %}</h2>
+            <form method="post" action="/store/product/{{ product.Pid }}" class="fb-form">
+                {% csrf_token %}
+                {% include 'store/form_fields.html' %}
+                <button type="submit">Save review</button>
+            </form>
+        </section>
+    {% elif request.session.Cid %}
+        <p class="fb-help">You can review this product after an order containing it has been delivered.</p>
+    {% endif %}
+{% endblock %}

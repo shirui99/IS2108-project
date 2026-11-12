@@ -13,6 +13,18 @@
             <a class="{% if '/store/orders' in request.path %}is-active{% endif %}" {% if '/store/orders' in request.path %}aria-current="page"{% endif %} href="/store/orders">My orders</a>
         </li>
         <li>
+            <a class="{% if '/store/list' in request.path %}is-active{% endif %}" {% if '/store/list' in request.path %}aria-current="page"{% endif %} href="/store/list">My list</a>
+        </li>
+        <li>
+            <a class="{% if '/store/subscriptions' in request.path %}is-active{% endif %}" {% if '/store/subscriptions' in request.path %}aria-current="page"{% endif %} href="/store/subscriptions">Subscriptions</a>
+        </li>
+        <li>
+            <a class="{% if '/store/groups' in request.path %}is-active{% endif %}" {% if '/store/groups' in request.path %}aria-current="page"{% endif %} href="/store/groups">Group buys</a>
+        </li>
+        <li>
+            <a class="{% if '/store/profile' in request.path %}is-active{% endif %}" {% if '/store/profile' in request.path %}aria-current="page"{% endif %} href="/store/profile">My profile</a>
+        </li>
+        <li>
             <form action="/store/logout" method="post">
                 {% csrf_token %}
                 <button class="fb-nav-logout" type="submit">Log out</button>

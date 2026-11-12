@@ -11,7 +11,10 @@ from adminpanel.models import Customer, Product, Orders, Item, SupportTicket
 from adminpanel.inventory import sellable_stock_filter
 from django.db import transaction
 from django.db.models import F
+from adminpanel.models import Review, Subscription, SavedItem, StockNotice
 from .restock import get_customer_purchase_history, get_restock_suggestions
+from .ordering import OrderNotPlaced, generate_order_id, place_order
+from .forms import ProfileForm, ReviewForm
 
 # Create your views here.
 
@@ -23,6 +26,11 @@ def index(request):
         reviews=Count('product_items__Irating'),
         sellable_stock=Count('product_items', filter=sellable_stock_filter(item_prefix='product_items__', product_prefix=''))
     )
+
+    # SF05: search by product name
+    search = request.GET.get('q', '').strip()
+    if search:
+        products = products.filter(Pname__icontains=search)
 
     category = request.GET.get('category', '')
     if category not in dict(Product.CATEGORY):
@@ -40,11 +48,24 @@ def index(request):
         sort = 'name'
     products = products.order_by(*sort_options[sort])
 
+    # SF29: products this customer asked about that can be bought again
+    back_in_stock = []
+
+    if request.session.get('Cid'):
+
+        back_in_stock = Product.objects.filter(
+            Pactive=True, product_notices__SNcustomer_id=request.session['Cid']
+        ).annotate(
+            sellable_stock=Count('product_items', filter=sellable_stock_filter(item_prefix='product_items__', product_prefix=''))
+        ).filter(sellable_stock__gt=0)
+
     return render(request, 'store/index.html', {
         'products': products,
         'categories': Product.CATEGORY,
         'selected_category': category,
         'selected_sort': sort,
+        'search': search,
+        'back_in_stock': back_in_stock,
     })
 
 
@@ -65,6 +86,10 @@ def restock(request):
     has_purchase_history = bool(get_customer_purchase_history(customer_id))
     suggestions = get_restock_suggestions(customer_id)
     today = timezone.localdate()
+
+    # A product on an active subscription will be ordered anyway, so it is not suggested again
+    subscribed = set(Subscription.objects.filter(Scustomer_id=customer_id, Sstatus='active').values_list('Sproduct_id', flat=True))
+    suggestions = [suggestion for suggestion in suggestions if suggestion['product_id'] not in subscribed]
     for suggestion in suggestions:
         suggestion['due_status'] = (
             'Overdue'
@@ -91,10 +116,6 @@ def restock(request):
 def generate_customer_id():
     customer_count = Customer.objects.count()
     return str(customer_count + 1).zfill(4)
-
-def generate_order_id():
-    order_count = Orders.objects.count()
-    return str(order_count + 1).zfill(5)
 
 def signup(request):
 
@@ -196,19 +217,41 @@ def cart(request, pk=None):
 
         else:
             available = Item.objects.filter(sellable_stock_filter(), Iproduct_id=pk).count()
-            if available <= cart.get(pk, 0):
-                messages.error(request, f'Only {available} sellable pack(s) available. Your cart was not changed.')
+
+            # A missing quantity means one pack, which is what the Add to cart buttons send
+            try:
+                quantity = int(request.POST.get('quantity', 1))
+            except (TypeError, ValueError):
+                quantity = 0
+
+            if quantity < 1:
+                messages.error(request, 'Enter a quantity of at least 1. Your cart was not changed.')
                 return redirect('/store/cart')
 
-            if pk in cart:
+            if request.POST.get('action') == 'set':
 
-                cart[pk] += 1
+                # SF08: replace the quantity of a product that is already in the cart
+                if pk not in cart:
+                    messages.error(request, 'That product is not in your cart.')
+                    return redirect('/store/cart')
+
+                if quantity > available:
+                    messages.error(request, f'Only {available} sellable pack(s) available. Your cart was not changed.')
+                    return redirect('/store/cart')
+
+                cart[pk] = quantity
+                messages.success(request, 'Quantity updated.')
 
             else:
 
-                cart[pk] = 1
+                # SF07: add the chosen number of packs on top of what is already in the cart
+                if available < cart.get(pk, 0) + quantity:
+                    messages.error(request, f'Only {available} sellable pack(s) available. Your cart was not changed.')
+                    return redirect('/store/cart')
 
-            messages.success(request, 'Product added to cart.')
+                cart[pk] = cart.get(pk, 0) + quantity
+
+                messages.success(request, 'Product added to cart.')
 
         request.session['cart'] = cart
         return redirect('/store/cart')
@@ -280,35 +323,10 @@ def checkout(request):
 
             return render(request, 'store/checkout.html', context)
 
-        class StockShortage(Exception):
-            pass
-
+        # place_order creates the whole order or nothing (see store/ordering.py)
         try:
-            with transaction.atomic():
-                allocations = []
-                for Pid, quantity in cart.items():
-                    product = Product.objects.filter(pk=Pid).first()
-                    if type(quantity) is not int or quantity <= 0:
-                        raise StockShortage('Invalid cart quantity. Please remove the product and add it again.')
-                    eligible = Item.objects.filter(sellable_stock_filter(), Iproduct_id=Pid)
-                    available = eligible.count()
-                    if available < quantity or product is None:
-                        name = product.Pname if product else Pid
-                        raise StockShortage(f'Only {available} sellable pack(s) of {name} available; you requested {quantity}. No order was placed.')
-                    ids = list(eligible.order_by(F('Iexpiry').asc(nulls_last=True), 'pk').values_list('pk', flat=True)[:quantity])
-                    allocations.append((product, quantity, ids))
-
-                newOrder = Orders.objects.create(
-                    Oid='O' + generate_order_id(), Odate=timezone.localdate(),
-                    Oaddress=Oaddress, Ocustomer=Customer.objects.get(pk=request.session['Cid']),
-                )
-                for product, quantity, ids in allocations:
-                    claimed = Item.objects.filter(sellable_stock_filter(), pk__in=ids).update(
-                        Iorder=newOrder, Istatus='delivered', Ipurchasedprice=product.Pprice,
-                    )
-                    if claimed != quantity:
-                        raise StockShortage('Sellable stock changed during checkout. No order was placed. Please review your cart.')
-        except StockShortage as error:
+            newOrder, total = place_order(Customer.objects.get(pk=request.session['Cid']), Oaddress, cart)
+        except OrderNotPlaced as error:
             context['status_type'] = 'error'
             context['status_message'] = str(error)
             return render(request, 'store/checkout.html', context)
@@ -332,6 +350,15 @@ def orders(request, pk=None):
 
     orders = Orders.objects.filter(Ocustomer_id=request.session.get('Cid')).annotate(items=Count('order_items'))
 
+    # SF37: the list can be narrowed to one status. Opening an order still works for any status.
+    status_filter = request.GET.get('status', '')
+
+    if status_filter not in dict(Orders.STATUS):
+
+        status_filter = ''
+
+    listed_orders = orders.filter(Ostatus=status_filter) if status_filter else orders
+
     if pk is not None:
 
         # Only show an order that belongs to the logged in customer
@@ -340,7 +367,75 @@ def orders(request, pk=None):
         if order is not None:
 
 
-            if request.method == 'POST': #handle the post request
+            if request.method == 'POST' and request.POST.get('action') == 'reorder':
+
+                # SF27: put the same products and quantities into the cart, limited by what can be sold now
+                cart = request.session.get('cart', {})
+                added = 0
+                short = []
+
+                for line in order.order_items.values('Iproduct', 'Iproduct__Pname').annotate(count=Count('id')):
+
+                    Pid = line['Iproduct']
+                    in_cart = cart.get(Pid, 0) if type(cart.get(Pid, 0)) is int else 0
+                    available = Item.objects.filter(sellable_stock_filter(), Iproduct_id=Pid).count()
+                    quantity = min(in_cart + line['count'], available)
+
+                    if quantity > in_cart:
+
+                        cart[Pid] = quantity
+                        added += quantity - in_cart
+
+                    if quantity < in_cart + line['count']:
+
+                        short.append(line['Iproduct__Pname'])
+
+                request.session['cart'] = cart
+
+                if added:
+
+                    messages.success(request, f'{added} pack(s) from order {order.Oid} added to your cart.')
+
+                else:
+
+                    messages.error(request, f'Nothing from order {order.Oid} could be added to your cart.')
+
+                if short:
+
+                    messages.warning(request, 'Not enough stock to add all of: ' + ', '.join(short) + '.')
+
+                return redirect('/store/cart')
+
+            elif request.method == 'POST' and request.POST.get('action') == 'cancel':
+
+                # SF25: only a placed order whose items are all untouched can be cancelled
+                if order.Ostatus != 'placed':
+
+                    status_type = 'error'
+                    status_message = 'Only a placed order can be cancelled. Please contact support below.'
+
+                elif order.order_items.exclude(Istatus='delivered').exists():
+
+                    status_type = 'error'
+                    status_message = 'Some items in this order were already used or thrown away. Please contact support below.'
+
+                else:
+
+                    with transaction.atomic():
+
+                        # The status check is repeated in the update, so a double click releases the stock once
+                        cancelled = Orders.objects.filter(pk=order.pk, Ostatus='placed').update(Ostatus='cancelled', Opayment='refunded')
+
+                        if cancelled:
+
+                            order.order_items.update(Iorder=None, Istatus='available', Ipurchasedprice=None, Irating=None)
+
+                    order = orders.filter(pk=pk).first()
+
+                    status_type = 'success'
+                    status_message = f'Order {order.Oid} was cancelled. The items went back into stock and the simulated payment was refunded.'
+
+            elif request.method == 'POST': #handle the post request
 
                 subject = request.POST.get('Tsubject', '').strip()
                 message = request.POST.get('Tmessage', '').strip()
@@ -361,7 +456,9 @@ def orders(request, pk=None):
             tickets = order.order_tickets.order_by('-Tsubmitted')
 
     context = {
-        'orders': orders,
+        'orders': listed_orders,
+        'status_filter': status_filter,
+        'statuses': Orders.STATUS,
         'order': order,
         'order_items': order_items,
         'tickets': tickets,
@@ -385,6 +482,22 @@ def pantry(request, pk=None):
         if item is None:
 
             messages.error(request, 'Item not found.')
+
+        elif request.POST.get('action') == 'report':
+
+            # SF36: the ticket is attached to the order this item came from
+            message = request.POST.get('Tmessage', '').strip()
+
+            if message:
+
+                SupportTicket.objects.create(
+                    Torder=item.Iorder, Tsubject=f'Problem with {item.Iproduct.Pname} (pantry item {item.pk})'[:200], Tmessage=message
+                )
+                messages.success(request, f'Your issue was sent to support. The reply will appear under order {item.Iorder_id}.')
+
+            else:
+
+                messages.error(request, 'Please describe the problem before sending.')
 
         elif request.POST.get('action') == 'used':
 
@@ -418,10 +531,14 @@ def pantry(request, pk=None):
 
         return redirect('/store/pantry')
 
-    items = Item.objects.filter(Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered').order_by('Iexpiry')
+    # SF12: a group order is shared between households, so it is not added to one customer's pantry
+    items = Item.objects.filter(
+        Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered', Iorder__group_purchase__isnull=True
+    ).order_by('Iexpiry')
 
     pantry_items = []
     expiring_soon = 0
+    past_expiry = 0
 
     for item in items:
 
@@ -437,11 +554,132 @@ def pantry(request, pk=None):
 
                 expiring_soon += 1
 
+            # SF14: dates that have already passed are also counted on their own
+            if days_left < 0:
+
+                past_expiry += 1
+
         pantry_items.append({'item': item, 'days_left': days_left})
 
     context = {
         'pantry_items': pantry_items,
         'expiring_soon': expiring_soon,
+        'past_expiry': past_expiry,
     }
 
     return render(request, 'store/pantry.html', context)
+
+
+
+def product(request, pk):
+
+    # SF06: product details page. SF24: review a delivered product.
+
+    product = Product.objects.filter(pk=pk, Pactive=True).annotate(
+        rating=Avg('product_items__Irating'),
+        reviews=Count('product_items__Irating'),
+        sellable_stock=Count('product_items', filter=sellable_stock_filter(item_prefix='product_items__', product_prefix=''))
+    ).first()
+
+    if product is None:
+
+        messages.error(request, 'Product not found.')
+        return redirect('/store/')
+
+    Cid = request.session.get('Cid')
+    purchase = None
+    my_review = None
+
+    if Cid:
+
+        # The purchase that proves this customer received the product. Group orders do not count.
+        purchase = Item.objects.filter(
+            Iproduct=product, Iorder__Ocustomer_id=Cid, Iorder__Ostatus='delivered', Iorder__group_purchase__isnull=True
+        ).order_by('pk').first()
+        my_review = Review.objects.filter(Rcustomer_id=Cid, Rproduct=product).first()
+
+    form = ReviewForm(initial={'Rrating': my_review.Rrating, 'Rtext': my_review.Rtext} if my_review else None)
+
+    if request.method == 'POST':
+
+        form = ReviewForm(request.POST)
+
+        if purchase is None:
+
+            messages.error(request, 'You can review a product after an order containing it has been delivered.')
+            return redirect(f'/store/product/{product.Pid}')
+
+        if form.is_valid():
+
+            # One review per customer and product: a second submission replaces the first
+            Review.objects.update_or_create(
+                Rcustomer_id=Cid, Rproduct=product,
+                defaults={
+                    'Rrating': form.cleaned_data['Rrating'],
+                    'Rtext': form.cleaned_data['Rtext'],
+                    'Rdate': timezone.localdate(),
+                    'Ritem': purchase,
+                }
+            )
+
+            # The shop page averages Irating, so the rating is copied onto the purchased item
+            purchase.Irating = form.cleaned_data['Rrating']
+            purchase.save()
+
+            messages.success(request, 'Thank you. Your review was saved.')
+            return redirect(f'/store/product/{product.Pid}')
+
+    # Dates are recorded on each pack, so the page can only say whether packs in stock carry a date
+    has_dated_stock = Item.objects.filter(sellable_stock_filter(), Iproduct=product, Iexpiry__isnull=False).exists()
+
+    context = {
+        'product': product,
+        'has_dated_stock': has_dated_stock,
+        'visible_reviews': product.product_reviews.filter(Rvisible=True).select_related('Rcustomer').order_by('-Rdate', '-pk'),
+        'can_review': purchase is not None,
+        'saved': bool(Cid) and SavedItem.objects.filter(SVcustomer_id=Cid, SVproduct=product).exists(),
+        'watching': bool(Cid) and StockNotice.objects.filter(SNcustomer_id=Cid, SNproduct=product).exists(),
+        'my_review': my_review,
+        'form': form,
+    }
+
+    return render(request, 'store/product.html', context)
+
+
+
+def profile(request):
+
+    # SF04: update household and contact details
+
+    customer = Customer.objects.get(pk=request.session['Cid'])
+
+    if request.method == 'POST':
+
+        form = ProfileForm(request.POST)
+
+        if form.is_valid():
+
+            customer.Cname = form.cleaned_data['Cname']
+            customer.Caddress = form.cleaned_data['Caddress']
+            customer.Chouseholdsize = form.cleaned_data['Chouseholdsize']
+            customer.Cmealsperweek = form.cleaned_data['Cmealsperweek']
+            customer.save()
+
+            customer.Cuser.email = form.cleaned_data['email']
+            customer.Cuser.save()
+
+            # Earlier orders keep the address stored in Oaddress when they were placed
+            messages.success(request, 'Profile updated. Your new details will be used for future orders.')
+            return redirect('/store/profile')
+
+    else:
+
+        form = ProfileForm(initial={
+            'Cname': customer.Cname,
+            'email': customer.Cuser.email,
+            'Caddress': customer.Caddress,
+            'Chouseholdsize': customer.Chouseholdsize,
+            'Cmealsperweek': customer.Cmealsperweek,
+        })
+
+    return render(request, 'store/profile.html', {'form': form, 'customer': customer})

@@ -14,6 +14,13 @@
         </div>
         {% include 'grocery_art.html' %}
     </section>
+    {% if back_in_stock %}
+        <div class="fb-alert" role="status">
+            Back in stock:
+            {% for product in back_in_stock %}<a href="/store/product/{{ product.Pid }}">{{ product.Pname }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}.
+            You asked to be told. Manage these on <a href="/store/list">My list</a>.
+        </div>
+    {% endif %}
     <section id="groceries">
         <div class="fb-section-heading">
             <div>
@@ -22,6 +29,10 @@
             <span class="fb-help">{{ products|length }} product{{ products|length|pluralize }} found</span>
         </div>
         <form class="fb-shop-filters" method="get" action="{% url 'store_index' %}#groceries">
+            <div class="fb-field">
+                <label for="search">Search by name</label>
+                <input id="search" type="search" name="q" value="{{ search }}" maxlength="100">
+            </div>
             <div class="fb-field">
                 <label for="category">Category</label>
                 <select id="category" name="category">
@@ -61,7 +72,7 @@
                     </div>
                     <div class="fb-product-info">
                         <p class="fb-eyebrow">{{ product.get_Pcategory_display }}</p>
-                        <h3>{{ product.Pname }}</h3>
+                        <h3><a href="/store/product/{{ product.Pid }}">{{ product.Pname }}</a></h3>
                         <p class="fb-product-size">{{ product.Psize }}</p>
                         <p class="fb-rating">
                             {% if product.reviews > 0 %}
@@ -79,7 +90,7 @@
             {% empty %}
                 <div class="fb-empty">
                     <h3>No products found</h3>
-                    <p>Try another category or clear your filters to see all products.</p>
+                    <p>No products match your search. Try another name or category, or clear your filters to see all products.</p>
                 </div>
             {% endfor %}
         </div>
