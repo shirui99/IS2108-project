@@ -90,5 +90,5 @@ class ReceiptTests(TestCase):
     def test_legacy_delete_does_not_delete_new_receipt(self):
         self.client.post('/adminpanel/item_new', self.data)
         response = self.client.post('/adminpanel/item_new', {'action': 'delete', 'product': 'R001', 'received': self.data['Ireceived'], 'expiry': self.data['Iexpiry']})
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(Item.objects.count(), 3)

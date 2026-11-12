@@ -78,3 +78,29 @@ class CategoryForm(forms.ModelForm):
 
     def clean_Cname(self):
         return self.cleaned_data['Cname'].strip(CATEGORY_WHITESPACE)
+
+
+class StockAdjustmentForm(forms.Form):
+    request_id = forms.UUIDField(widget=forms.HiddenInput)
+    expected_count = forms.IntegerField(min_value=0, widget=forms.HiddenInput)
+    snapshot = forms.CharField(widget=forms.HiddenInput)
+    group = forms.CharField(widget=forms.HiddenInput)
+    action = forms.ChoiceField(choices=[('correction', 'Correct stock count'), ('writeoff', 'Write off stock')], widget=forms.HiddenInput)
+    quantity = forms.IntegerField(min_value=0, max_value=10000, label='Physical available count')
+    reason = forms.CharField(max_length=500, label='Reason')
+    note = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={'rows': 3}), label='Additional note (optional)')
+
+    def __init__(self, *args, action, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.expected_action = action
+        if action == 'writeoff':
+            self.fields['quantity'] = forms.IntegerField(min_value=1, max_value=10000, label='Packs to write off')
+            self.fields['reason'] = forms.ChoiceField(choices=[('', 'Select a reason'), ('expired', 'Expired'), ('damaged', 'Damaged'), ('spoiled', 'Spoiled'), ('recalled', 'Recalled')], label='Reason')
+        else:
+            self.fields.pop('note')
+
+    def clean_action(self):
+        action = self.cleaned_data['action']
+        if action != self.expected_action:
+            raise forms.ValidationError('Invalid adjustment action.')
+        return action

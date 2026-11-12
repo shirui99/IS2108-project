@@ -152,6 +152,8 @@ class Item(models.Model):
 
     STATUS = [
         ('available', 'In warehouse'),
+        ('adjusted', 'Adjusted out'),
+        ('writtenoff', 'Written off'),
         ('delivered', 'Delivered'),
         ('used', 'Used up'),
         ('expired', 'Expired/Discarded')
@@ -175,7 +177,7 @@ class Item(models.Model):
 
         constraints = [
             models.CheckConstraint(
-                check=models.Q(Iorder__isnull=True, Istatus__in=['available', 'expired']) | (models.Q(Iorder__isnull=False) & ~models.Q(Istatus='available')),
+                check=models.Q(Iorder__isnull=True, Istatus__in=['available', 'expired', 'adjusted', 'writtenoff']) | (models.Q(Iorder__isnull=False) & ~models.Q(Istatus='available')),
                 name='Iorder_matches_Istatus'
             ),
             models.CheckConstraint(
@@ -187,6 +189,26 @@ class Item(models.Model):
     def __str__(self):
 
         return f'Item {self.pk} - {self.Iproduct.Pname} (expires {self.Iexpiry})'
+
+
+class StockAdjustment(models.Model):
+    request_id = models.UUIDField(unique=True, editable=False)
+    kind = models.CharField(max_length=12, choices=[('correction', 'Count correction'), ('writeoff', 'Write-off')])
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    batch = models.ForeignKey(InventoryBatch, null=True, blank=True, on_delete=models.PROTECT)
+    received = models.DateField()
+    recorded_date = models.DateField(null=True, blank=True)
+    before_count = models.PositiveIntegerField()
+    after_count = models.PositiveIntegerField()
+    difference = models.IntegerField()
+    reason = models.CharField(max_length=500)
+    note = models.TextField(blank=True)
+    staff = models.ForeignKey(User, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    items = models.ManyToManyField(Item, related_name='stock_adjustments')
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
 
 
 class SupportTicket(models.Model):

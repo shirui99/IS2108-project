@@ -1,0 +1,14 @@
+{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Stock adjustment | FruitBasket staff{% endblock %}
+{% block content %}
+<section class="fb-staff-section">
+<h1 class="fb-staff-page-title">{% if action == 'correction' %}Correct stock count{% else %}Write off stock{% endif %}</h1>
+<p>{{ product }} - {% if batch %}Batch {{ batch.Breference }}{% else %}Legacy stock, received {{ received }}, recorded date {{ recorded|default:'undated' }}{% endif %}</p>
+<p>Currently available and unallocated: {{ available }} packs. The count is checked again when you submit.</p>
+<form method="post" class="fb-staff-editor" novalidate>
+{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}{% if field.is_hidden %}{{ field }}{{ field.errors }}{% else %}<div class="fb-field">{{ field.label_tag }} {{ field }} {{ field.errors }}</div>{% endif %}{% endfor %}
+<button type="submit">{% if action == 'correction' %}Save count{% else %}Record write-off{% endif %}</button>
+</form><p><a href="{% url 'item_new' %}">Back to warehouse stock</a></p>
+</section>
+{% endblock %}

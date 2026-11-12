@@ -51,10 +51,10 @@
         <p>Received quantities are original pack counts; available counts reflect packs still in the warehouse. Date concerns do not change stock status.</p>
         <div class="fb-table-wrap fb-records-table" role="region" aria-label="Received batches" tabindex="0">
         <p class="fb-table-hint">Scroll to see all columns.</p>
-        <table><thead><tr><th scope="col">Reference</th><th scope="col">Product</th><th scope="col">Received</th><th scope="col">Printed date</th><th scope="col">Received packs</th><th scope="col">Available packs</th><th scope="col">Date concern</th></tr></thead><tbody>
+        <table><thead><tr><th scope="col">Reference</th><th scope="col">Product</th><th scope="col">Received</th><th scope="col">Printed date</th><th scope="col">Received packs</th><th scope="col">Available packs</th><th scope="col">Date concern</th><th scope="col">Actions</th></tr></thead><tbody>
         {% for receipt in receipts %}
-        <tr><td>{{ receipt.Breference }}</td><td>{{ receipt.Bproduct }}</td><td>{{ receipt.Breceived }}</td><td>{% if receipt.Bdate %}{{ receipt.get_Bdatetype_display }}: {{ receipt.Bdate }}{% else %}Undated{% endif %}</td><td>{{ receipt.Bquantity }}</td><td>{{ receipt.available }}</td><td>{{ receipt.concern }}</td></tr>
-        {% empty %}<tr><td colspan="7">No batches have been received.</td></tr>{% endfor %}
+        <tr><td>{{ receipt.Breference }}</td><td>{{ receipt.Bproduct }}</td><td>{{ receipt.Breceived }}</td><td>{% if receipt.Bdate %}{{ receipt.get_Bdatetype_display }}: {{ receipt.Bdate }}{% else %}Undated{% endif %}</td><td>{{ receipt.Bquantity }}</td><td>{{ receipt.available }}</td><td>{{ receipt.concern }}</td><td><a href="{% url 'stock_adjust' %}?group={{ receipt.group_token|urlencode }}&amp;action=correction">Correct count</a> | <a href="{% url 'stock_adjust' %}?group={{ receipt.group_token|urlencode }}&amp;action=writeoff">Write off</a></td></tr>
+        {% empty %}<tr><td colspan="8">No batches have been received.</td></tr>{% endfor %}
         </tbody></table></div>
         <h2 class="fb-records-heading">Legacy warehouse stock</h2>
         <p>Existing records have no batch reference or recorded date type.</p>
@@ -66,7 +66,7 @@
                         <th>Product</th>
                         <th>Received</th>
                         <th>Recorded date (type unknown)</th>
-                        <th>Quantity</th>
+                        <th>Available packs</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -82,14 +82,8 @@
                         </td>
                         <td>{{ batch.count }}</td>
                         <td>
-                            <form action="/adminpanel/item_new" method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="product" value="{{ batch.Iproduct }}">
-                                <input type="hidden" name="received" value="{{ batch.Ireceived|date:'Y-m-d' }}">
-                                <input type="hidden" name="expiry" value="{{ batch.Iexpiry|date:'Y-m-d' }}">
-                                <button class="fb-danger" type="submit">Delete</button>
-                            </form>
+                            <a href="{% url 'stock_adjust' %}?group={{ batch.group_token|urlencode }}&amp;action=correction">Correct count</a> |
+                            <a href="{% url 'stock_adjust' %}?group={{ batch.group_token|urlencode }}&amp;action=writeoff">Write off</a>
                         </td>
                     </tr>
 
@@ -105,6 +99,14 @@
             </table>
         </div>
     </div>
+    <section class="fb-staff-section">
+        <h2 class="fb-records-heading">Stock adjustment history</h2>
+        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Stock adjustment history" tabindex="0">
+        <p class="fb-table-hint">Scroll to see all columns.</p>
+        <table><thead><tr><th>Time</th><th>Staff</th><th>Action</th><th>Product</th><th>Batch or legacy dates</th><th>Before</th><th>After</th><th>Change</th><th>Reason</th><th>Note</th></tr></thead><tbody>
+        {% for record in history %}<tr><td>{{ record.created_at }}</td><td>{{ record.staff.username }}</td><td>{{ record.get_kind_display }}</td><td>{{ record.product }}</td><td>{% if record.batch %}{{ record.batch.Breference }}{% else %}Legacy: {{ record.received }} / {{ record.recorded_date|default:'undated' }}{% endif %}</td><td>{{ record.before_count }}</td><td>{{ record.after_count }}</td><td>{{ record.difference }}</td><td>{{ record.reason }}</td><td>{{ record.note|default:'-' }}</td></tr>{% empty %}<tr><td colspan="10">No stock adjustments recorded.</td></tr>{% endfor %}
+        </tbody></table></div>
+    </section>
     <hr />
     <div class="fb-staff-section">
         <a href="/adminpanel">Staff workspace</a>
