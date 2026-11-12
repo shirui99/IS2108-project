@@ -9,7 +9,7 @@ class ProductViewTests(TestCase):
         Product.objects.create(
             Pid='P001',
             Pname='Original name',
-            Pcategory='fruit',
+            Pcategory_id='fruit',
             Psize='1 pack',
             Pprice=2.5,
             Plowstock=3,

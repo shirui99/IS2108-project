@@ -61,7 +61,7 @@ class Command(BaseCommand):
                 Pid=pid,
                 defaults={
                     "Pname": name,
-                    "Pcategory": category,
+                    "Pcategory_id": category,
                     "Psize": size,
                     "Pprice": price,
                     "Plowstock": 1,

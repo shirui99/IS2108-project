@@ -1,25 +1,44 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.core.validators import MinValueValidator
+from uuid import uuid4
+from django.db.models.functions import Length
+from django.db.models.lookups import LessThanOrEqual
+
+
+# Explicit Python str.strip whitespace set, also enforced by SQLite TRIM.
+CATEGORY_WHITESPACE = "\t\n\v\f\r\x1c\x1d\x1e\x1f \x85\xa0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000"
+
+
+def category_code():
+    return "c" + uuid4().hex[:19]
+
+
+class Category(models.Model):
+    Ccode = models.CharField(max_length=20, primary_key=True, default=category_code, editable=False)
+    Cname = models.CharField(max_length=200, unique=True, db_collation="nocase", verbose_name="Category name")
+
+    class Meta:
+        ordering = ["Cname", "Ccode"]
+        constraints = [
+            models.CheckConstraint(condition=~models.Q(Cname="") & models.Q(Cname=models.Func(models.F("Cname"), models.Value(CATEGORY_WHITESPACE), function="TRIM")), name="category_name_trimmed_nonempty"),
+            models.CheckConstraint(condition=LessThanOrEqual(Length("Cname"), models.Value(200)), name="category_name_length"),
+        ]
+
+    def save(self, *args, **kwargs):
+        self.Cname = self.Cname.strip(CATEGORY_WHITESPACE)
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.Cname
 
 # Create your models here.
 
 class Product(models.Model):
 
-    CATEGORY = [
-        ('dairy', 'Dairy, Chilled & Eggs'),
-        ('fruit', 'Fruit & Vegetables'),
-        ('meat', 'Meat & Seafood'),
-        ('bakery', 'Bakery'),
-        ('rice', 'Rice, Noodles & Cooking Ingredients'),
-        ('snacks', 'Snacks & Confectionery'),
-        ('frozen', 'Frozen'),
-        ('household', 'Household')
-    ]
-
     Pid = models.CharField(max_length=5, primary_key=True)
     Pname = models.CharField(max_length=200)
-    Pcategory = models.CharField(max_length=20, choices=CATEGORY)
+    Pcategory = models.ForeignKey(Category, on_delete=models.PROTECT, db_column="Pcategory", related_name="products", verbose_name="Category")
     Psize = models.CharField(max_length=30)
     Pprice = models.FloatField()
     Plowstock = models.IntegerField(validators=[MinValueValidator(0)])

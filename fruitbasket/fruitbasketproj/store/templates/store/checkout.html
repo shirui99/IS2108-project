@@ -32,6 +32,7 @@
                     <div class="fb-summary-line">
                         <div>
                             <strong>{{ item.product.Pname }}</strong>
+                            {% if not item.product.Pactive %}<p class="fb-cart-unavailable" role="status">No longer available. Remove this product from your cart before placing an order.</p>{% endif %}
                             <p class="fb-help">{{ item.product.Psize }} &middot; ${{ item.product.Pprice|floatformat:2 }} &times; {{ item.quantity }}</p>
                         </div>
                         <strong>${{ item.subtotal|floatformat:2 }}</strong>

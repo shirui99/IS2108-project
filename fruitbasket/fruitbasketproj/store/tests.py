@@ -40,7 +40,7 @@ class CatalogueAndCartLoginTests(TestCase):
             ('P003', 'Milk', 'dairy', 2, True),
             ('P004', 'Hidden', 'fruit', 4, False),
         ]:
-            Product.objects.create(Pid=product_id, Pname=name, Pcategory=category,
+            Product.objects.create(Pid=product_id, Pname=name, Pcategory_id=category,
                                    Psize='1 pack', Pprice=price, Plowstock=1,
                                    Pactive=active)
 
@@ -78,7 +78,7 @@ class StoreMutationTests(TestCase):
         self.product = Product.objects.create(
             Pid="S001",
             Pname="Store Apples",
-            Pcategory="fruit",
+            Pcategory_id="fruit",
             Psize="1 pack",
             Pprice=2.0,
             Plowstock=1,
@@ -238,7 +238,7 @@ class RestockFeatureTests(TestCase):
         return Product.objects.create(
             Pid=pid,
             Pname=name,
-            Pcategory=category,
+            Pcategory_id=category,
             Psize="1 pack",
             Pprice=2.0,
             Plowstock=1,

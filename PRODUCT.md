@@ -44,7 +44,7 @@ FruitBasket connects the grocery purchase journey to a personal pantry and resto
 
 - Product and workflow implementation: `fruitbasket/fruitbasketproj/store/` and `fruitbasket/fruitbasketproj/adminpanel/`.
 - Existing product categories and data model: `fruitbasket/fruitbasketproj/adminpanel/models.py`.
-- Restock implementation and model documentation: `fruitbasket/fruitbasketproj/store/restock.py` and `fruitbasket/fruitbasketproj/ml/README.md`.
+- Restock implementation and model documentation: `fruitbasket/fruitbasketproj/store/restock.py` and `docs/ml/restock-model.md`.
 - Sample catalogue setup: `fruitbasket/fruitbasketproj/store/management/commands/seed_catalog.py`.
 - Local setup instructions: `fruitbasket/readme.txt`.
 - No verified customer testimonials, commercial performance figures or real-world model effectiveness evidence were supplied. Do not invent them.

@@ -13,7 +13,7 @@
     {% endif %}
     {% if cart_items %}
         <div class="fb-two-column">
-            <div class="fb-table-wrap fb-records-table" role="region" aria-label="Cart items" tabindex="0">
+            <div class="fb-table-wrap fb-records-table fb-cart-items" role="region" aria-label="Cart items" tabindex="0">
                 <p class="fb-table-hint">Scroll to see all columns.</p>
                 <table>
                     <thead>
@@ -32,6 +32,7 @@
                                     <strong>{{ item.product.Pname }}</strong>
                                     <br>
                                     <span class="fb-help">{{ item.product.Psize }}</span>
+                                    {% if not item.product.Pactive %}<span class="fb-cart-unavailable">No longer available. Remove this product before checkout.</span>{% endif %}
                                 </td>
                                 <td>${{ item.product.Pprice|floatformat:2 }}</td>
                                 <td>
@@ -47,7 +48,7 @@
                                 <td>
                                     <form action="/store/cart/{{ item.product.Pid }}" method="post">
                                         {% csrf_token %}
-                                        <button type="submit" aria-label="Add one more {{ item.product.Pname }}">+ Add one</button>
+                                        <button type="submit" aria-label="Add one more {{ item.product.Pname }}" {% if not item.product.Pactive %}disabled{% endif %}>+ Add one</button>
                                     </form>
                                     <form action="/store/cart/{{ item.product.Pid }}" method="post">
                                         {% csrf_token %}

@@ -1,114 +1,62 @@
-# AGENTS.md — IS2108 Pair Project
+# AGENTS.md - FruitBasket pair project
 
-## Working agreement
+## Scope and authority
 
-- Apply to work in this repository and its subdirectories; also read any applicable nested AGENTS.md.
-- Complete the requested bounded task. Reviews are read-only unless fixes are requested or already authorised. Do not regenerate the application.
-- Follow Graphify navigation below when applicable; inspect relevant current source before editing. Use `rg` for targeted discovery and avoid full-repository scans for small edits.
-- Prefer small, explainable diffs. Preserve unrelated work. Ask only when a real ambiguity blocks correctness; otherwise proceed within the agreed scope.
-- Follow the course brief and supplied instructor clarifications. These instructions apply to the pair project, not practical examinations.
+- Applies to this repository and its subdirectories; also read applicable nested `AGENTS.md` files. Complete the requested bounded task. Reviews are read-only unless fixes are authorised; do not regenerate the application or essentially the entire report.
+- Inspect the relevant URL, view, form/model/service, template and CSS before editing using targeted `rg` searches. Preserve unrelated work, existing paths, IDs, relationships, routes, session keys, form contracts and status values. Ask only when ambiguity blocks correctness.
+- Follow the supplied IS2108 pair-project brief (pp. 1–7) and later instructor clarifications; flag conflicts and cite the source/page when asserting a course prohibition. Course requirements cover Python/Django, a relational database, customer storefront, custom employee panel, minimal JavaScript, no exposed default Django admin or full JavaScript frontend framework, and an integrated trained classification/regression model. Other rules below are team or engineering decisions.
+- The user has permission to use LLMs; retain human review and group understanding. Never fabricate authorship, reviews, results, screenshots or model metrics.
 
 ## Graphify navigation
 
-- When `graphify-out/graph.json` exists and the CLI is available, start architecture, dependency and code-location questions with `graphify query "<question>"` before broad source searches.
-- Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused explanations.
-- Use `graphify-out/wiki/index.md`, if present, for broad navigation. Read the full `GRAPH_REPORT.md` only when scoped queries are insufficient.
-- Treat graphs as navigation aids: verify relevant source, view/template contracts and current behaviour before editing.
-- If Graphify is missing, fails or is stale, use targeted `rg` and source reads. Do not block the task, claim graph verification, install tooling or rebuild the graph unnecessarily.
+- When `graphify-out/graph.json` and the CLI are available, start architecture, dependency and code-location questions with `graphify query`, `graphify path` or `graphify explain` (and `graphify-out/wiki/index.md` for broad navigation) before broad source searches.
+- Verify graph findings against current source. If Graphify is missing, fails or is stale, fall back to targeted `rg` and source reads without blocking work, installing tools or rebuilding the graph unnecessarily.
 
-## 1. Authority and human review
+## Architecture and changes
 
-- **Course requirements:** Python/Django; relational database through Django ORM; customer storefront; custom employee panel; minimal JavaScript; no default Django admin or full JavaScript frontend framework; at least one trained classification/regression model persisted as joblib and integrated into storefront automation.
-- Other rules below are adopted project/engineering safeguards, not necessarily explicit course requirements. Follow the supplied brief and later instructor clarifications; flag unresolved conflicts. Cite a source/page when asserting a course prohibition. Do not invent penalties or guarantee grades.
-- The user reports permission to use ChatGPT and other LLMs. Retain human-in-the-loop coding, group understanding and AI disclosure. Do not outright generate the entire application or substitute for essentially the entire report. The brief does not explicitly ban every complete template.
-- Synthetic ML data and training/persistence code may use unrestricted AI assistance; application integration still requires understanding. Never fabricate authorship, reviews, results, screenshots or model metrics.
-- Record material AI assistance: known tool/model, date, prompt, output/diff, accepted/rejected suggestions, human changes and actual checks. Report processes, evidence and reflection in Section 6; use Appendix B if established, not as an invented course requirement.
+- Use native Django MVT, server-rendered DTL, the Django ORM and the custom staff panel. Do not introduce SPA frameworks, DRF or Flask for the main application, a second ORM or a flat-file business database. Do not expose `admin.site.urls`; its presence in `INSTALLED_APPS` alone does not establish exposure.
+- Preserve existing prefixed model field names and authentication/session contracts unless the task requires changing them. Do not rely on session
+  flags alone for staff authorisation. Use plain-language form labels and template headings.
+- Preserve development media serving (`MEDIA_URL`/`MEDIA_ROOT`) in URL routing and `request.FILES` handling on product image forms.
+- Use FBVs or CBVs and forms or ModelForms as appropriate, keeping business decisions, validation, routing and cart state server-side with minimal JavaScript limited to optional UI helpers.
+- Make small, understandable changes tied to the current story and acceptance criteria without unrelated refactoring, dependencies or feature expansion. For UI-only work, change backend, schema, authentication or ML only when concretely necessary, explained and authorised; report unrelated security defects separately.
+- Commit, push, merge, deploy or transfer only within existing authorisation. Inspect dependency and run instructions before installing or upgrading anything.
 
-## 2. Scope and minimal changes
+## Requests, security and data
 
-- Confirm repository owner/name, branch and project root. Never assume similarly named projects share code or schema. Inspect repository instructions and the relevant URL → view → form/model/service → template → CSS chain.
-- Current task defines the change; approved stories, report and logical model define scope. Flag discrepancies between documentation and code; do not automatically add/remove features.
-- Preserve fields, relationships, IDs, route names, session/context keys, status values, form names and template blocks. Never invent fields such as available_packs, checkout_key or is_active from examples.
-- Make the smallest coherent edit. No unrelated cleanup, abstractions, dependencies or feature expansion. **UI-only tasks: no backend, schema, authentication, migrations or ML changes unless concretely necessary, explained and within authorisation.** Report unrelated security defects separately.
-- Preserve user work. Commit, push, merge, deploy or transfer repositories only within existing authorisation. Avoid repeated permission requests for already-authorised work.
+- GET must not perform business mutations. State-changing actions require POST, CSRF protection and server-side validation; enforce methods in handlers. Redirect after successful mutations and re-render invalid bound forms with entered values and useful field/non-field errors. PRG does not prevent duplicate or concurrent requests.
+- Check current authentication and active staff status for every protected staff operation, and customer ownership for each protected customer record or action. Do not trust hidden controls, submitted customer IDs, session flags alone, browser validation or submitted prices. Use Django password hashing/authentication, never echo passwords, and keep secrets and private records out of evidence and logs.
+- Validate quantities, amounts, dates, types, statuses and business rules server-side. Preserve HTML escaping for untrusted content; do not use `safe` or `mark_safe` as a general workaround.
+- Preserve existing form and template contracts (including `multipart` upload encoding, CSRF tokens, names, IDs and blocks). If a view supplies rendered HTML from `form.render(...)`, retain `{{ form }}`; loop over fields only when the template receives a form object.
+- Use atomic transactions for dependent writes and appropriate repeat-request and concurrency safeguards for sensitive workflows. Verify conditional claims or updates and roll back shortfalls. SQLite `select_for_update()` does not provide row locking; substantiate concurrency claims with tests.
+- Keep uncommitted carts in sessions, preserving `request.session['cart']` and its existing ID/quantity conventions. Use serialisable values and save nested changes correctly. Recalculate prices and availability on the server; clear carts only after database success. Do not reserve transient cart stock unless explicitly designed.
+- Preserve historical relationships and purchase-price snapshots; prefer deactivation or protected deletion where deletion would damage history. Never invent historical prices. Label simulated payments honestly and remember database transactions do not roll back external effects.
 
-## 3. Architecture
+## FruitBasket stock policy
 
-- Project choice: Python 3.14, Django 5.2.x, native MVT and server-rendered DTL. Verify actual versions/dependencies; Python 3.14 requires Django 5.2.8 or later within that series. Do not upgrade environments automatically.
-- Use existing FBVs/CBVs and forms/ModelForms as appropriate. No React/Vue/Angular/Svelte, SPA, client routing, DRF page wrappers, second ORM or flat-file business database.
-- Keep routing, validation, carts and business decisions server-side. No fetch/AJAX business workflows or frontend build process. JavaScript only for small optional UI behaviours; do not add it without need.
-- Use custom staff views/forms/templates. Never expose admin.site.urls under any URL. Its presence in INSTALLED_APPS alone does not prove exposure; do not blindly remove apps/settings/migrations.
+- Sellable stock requires an active product and an item with warehouse status `available`. A dated item is sellable when its recorded date is on or after today + `Pexpirydays`; an undated available item is sellable.
+- Apply the shared sellability rule consistently to purchase eligibility, checkout allocation, customer restock screening and staff advice. Replenishment is `max(target - sellable stock, 0)`; an unset target produces no suggestion.
+- Keep parent order status and allocated item lifecycle states consistent across checkout, staff fulfilment, pantry display and ML qualifying-order queries.
+- Exclusion from sale does not automatically change stored status. Write-offs require an explicit staff action and recorded reason; if that workflow is missing, report the gap rather than silently inventing one. Preserve existing records and purchase history.
+- Clearly disclose data limitations. For example, quantities selected by order date and current order status are not verified deliveries during that period when delivery timestamps are unavailable. Do not imply that an untyped recorded date is a confirmed use-by date.
 
-## 4. Security and forms
+## Templates and UI
 
-- Enforce staff permissions and customer ownership server-side. Hidden links, URL IDs and submitted customer IDs are not authorisation. Preserve account conventions; use Django password hashing/authentication.
-- GET displays; POST with CSRF performs mutations, including cart changes, checkout, logout, cancellations, delivery, ratings and pantry actions. Enforce methods in handlers. Audit indirect GET writes such as automatic stock updates. Never disable CSRF to fix errors.
-- Redirect after successful state-changing POSTs; re-render invalid bound forms with values and field/non-field errors. PRG prevents ordinary refresh resubmission, not duplicate/concurrent POSTs or guaranteed idempotency.
-- Validate quantities, amounts, types, dates, statuses and business rules server-side. Do not trust browser validation or submitted prices. Escape user text; no indiscriminate safe/mark_safe. Never expose passwords, secrets or private records in evidence/logs/commits.
-- Preserve method, action, enctype, CSRF, hidden fields, names, IDs and submit values. Keep multipart encoding for uploads; do not echo passwords.
-- **Respect the form contract:** if views pass rendered HTML from form.render(...), retain {{ form }}. Only loop/include a field-rendering partial when receiving an actual form object. Do not add |safe as a rendering workaround.
-- Use associated, human-readable labels and errors without renaming model fields. No reset controls under the current project preference. Provide explicit empty states using {% empty %} or appropriate if/else.
+- Reuse shared layouts, navigation, messages and existing styles; namespace new templates and static assets where appropriate. Preserve the approved FruitBasket identity and existing functionality. Use real data and honest placeholders; do not invent discounts, stock, reviews or delivery promises.
+- Maintain semantic HTML (useful titles, headings, associated labels/errors, alt text), visible keyboard focus, sensible tab order, adequate contrast, textual statuses, responsive layouts (including scrollable dense tables on mobile) and helpful empty states.
+- Keep navigation working without a JavaScript hamburger, avoid reset controls per project preference, and check relevant template, form and CSS contracts before editing.
 
-## 5. Transactions, inventory and sessions
+## Machine learning
 
-- Use transaction.atomic() for dependent database writes; rollback incomplete orders/allocations. Atomicity alone does not prevent races. SQLite select_for_update() provides no row locking.
-- Match concurrency control to the existing model: conditional decrement for quantity counters, or conditional claims of eligible items/batches. Verify affected counts and rollback shortfalls. Do not redesign inventory to fit an example.
-- Consider idempotency constraints/tokens only when required; propose schema changes explicitly. Neither a session flag nor PRG eliminates all duplicate-request races.
-- Preserve request.session['cart'] if used, including ID/quantity conventions. Use serialisable values; reassign nested changes or mark session.modified. Recalculate prices/totals and recheck active status/stock at checkout.
-- Do not reserve stock in transient carts unless explicitly designed. Clear carts only after database success; sessions/external effects are not automatically rolled back with database writes.
-- Preserve historical relationships using existing deactivation flags or protected-deletion handling. No silent cascading history loss. Label simulated payments honestly; database atomicity does not cover external gateways.
+- Keep preprocessing and estimator together in a persisted `.joblib` pipeline. Fit preprocessing on training data; use prediction-time features and held-out evaluation without target or future leakage. Document feature schema, data assumptions, dependencies, artifact versions and reproducibility.
+- Run cached inference server-side and connect predictions to a concrete storefront workflow. Avoid eager artifact loading at module startup so missing or incompatible artifacts do not break management commands; deliberately handle those failures and invalid predictions. Caching alone is not error handling.
+- Provide clearly labelled deterministic fallbacks for insufficient history or unavailable/invalid output, using approved fallback logic. Validate finite and range-safe results and relevant ownership, product and stock inputs. Keep model predictions distinct from rule-based stock calculations; do not describe heuristics as trained ML or synthetic accuracy as real-world effectiveness.
+- Preserve approved artifacts and logic during unrelated work. Unrestricted AI assistance is permitted for synthetic training data and training/persistence code; application integration still requires team understanding and disclosure.
 
-## 6. Visual design
+## Verification and AI assistance
 
-- Reuse inheritance/partials and existing CSS paths. Prefer local Bootstrap CSS followed by one app-namespaced shared stylesheet; no required custom.css filename or CDN. Explain static discovery when changed: installed-app assets are project-wide; namespaces avoid collisions.
-- Include doctype, language, charset, viewport, useful titles and heading hierarchy. Use readable typography, consistent spacing, restrained grocery colours and neutral surfaces. Avoid giant repeated banners, unnecessary cards/slogans, animations and icon libraries.
-- Use natural labels such as Shop, Cart and My pantry; distinguish staff access. Preserve public browsing/login policy. Wrapping/stacking navigation must work without a JS hamburger; show active routes, including detail variants.
-- Provide keyboard focus, sensible tab order, associated labels, alt text, contrast and textual alert/badge states. Use responsive product grids and scrollable dense tables where appropriate; retain essential mobile information.
-- Use real data and honest image placeholders. No invented discounts, stock, reviews or delivery promises. Match availability queries to actual relations; avoid per-card query growth.
-
-## 7. ML integration
-
-- Connect real inputs → trained prediction → an identifiable storefront decision/workflow. Document algorithm, data and automation; displaying isolated predictions is insufficient. Model mathematics may remain a black box under the brief.
-- Preserve approved logic/artifacts during unrelated tasks. Fit preprocessing on training data and reproduce it at inference; prefer a Pipeline when needed. Prevent future/target leakage; use appropriate held-out evaluation and a useful baseline. Never call heuristics trained ML.
-- Serve inference server-side using a trusted joblib artifact and cached loading. Handle missing/incompatible artifacts; avoid repeated loading or eager startup failures that break management commands.
-- Use the approved, honestly labelled deterministic fallback for insufficient history/invalid predictions; do not invent universal thresholds. Validate finite/range-safe outputs, dates, ownership, active products and stock.
-- Document feature schema, synthetic assumptions, artifact/dependency versions and reproducibility. Demonstrate live-model and fallback paths; synthetic accuracy does not establish real-world effectiveness.
-
-## 8. Verification and communication
-
-From the actual directory containing `manage.py`, use the existing project environment:
-
-```sh
-python manage.py check
-python manage.py test <relevant_app_or_test>
-python manage.py findstatic store/css/site.css --verbosity 2
-```
-
-Select commands relevant to the task; the static path is an example, not an assumed repository layout. Inspect dependency/run instructions before installing anything. For authorised model changes, inspect migration status and run the relevant migration checks without resetting data.
-
-
-- Before edits, briefly state existing behaviour, intended change and affected files. Comment only non-obvious reasons/contracts in short plain language.
-- Run proportionate checks: manage.py check, focused tests and migration checks when relevant. For UI, render actual Django pages and inspect desktop/mobile, customer/staff, signed-in/out, empty/error and long-content cases.
-- Verify fields render, errors retain values, routes resolve, forms submit and navigation/focus work. For sensitive workflows, test ownership, invalid input, stock shortage, duplicate submission and rollback; substantiate concurrency claims with concurrency tests.
-- Confirm the latest CSS response loaded: inspect URL/body, cache and findstatic. Do not redesign around stale CSS.
-- Distinguish source checks, rendering, screenshots and functional tests. Static mockups do not verify Django/session/database behaviour. Report exact environment blockers and outstanding checks; do not claim unperformed verification or commit temporary previews/secrets/test data.
-- Finish with outcome, targeted diff/files, backend/behaviour changes, checks/results, limitations and a short oral-review explanation. Avoid full-file dumps, repetitive commentary and grade predictions.
-
-## 9. Delivery checks — apply only when requested
-
-- Implement agreed stories for both panels; keep report, logical model, ML and code consistent. No invented minimum story count; UML diagrams are optional, logical modelling is required.
-- Report: cover/group details, contents, business model, stories (ID/title, role-goal-benefit, notes, wireframes/screenshots), ML and AI reflection/evidence; optional appendices. A4 portrait, 1-inch margins, double spacing, Times New Roman 12 pt main text, ≤50 inclusive pages; PPXX.docx, not PDF.
-- ZIP: docs/report and source/project parent/main folder per brief p. 3; exclude .git/venv; include requirements.txt and readme.txt with required member/leader contacts, run instructions and YouTube link. Never invent personal details.
-- Demo: ≤15 minutes, both members, real storefront/staff stories; slides unnecessary. Both members must complete code review satisfactorily and explain application code.
-
-Source: IS2108 AY2627S1 Pair Project brief, pp. 1–7. Version pins, SSR/DRF choices, POST/PRG, concurrency recipes, cart keys, no-reset policy, CSS paths, Pipelines and fallback cutoffs are project/engineering rules, not universal verbatim course mandates. These instructions support, but cannot certify, compliance.
-
-## UI verification
-
-For changes affecting rendered pages, use Playwright to inspect the
-affected pages at desktop and mobile widths. Review screenshots and
-report what was checked.
-
-Use the project's Python virtual environment. If the app or browser
-cannot be launched, report the exact blocker rather than claiming
-visual verification was completed.
+- Before substantial edits, briefly state current behaviour, intended change and affected files. Add short plain-language comments only for non-obvious contracts or business rules; avoid long tutorial comments.
+- Use the project virtual environment to run `manage.py check`, focused tests (covering validation, permissions, regressions, and `Client(enforce_csrf_checks=True)` for CSRF) and migration checks from the directory containing `manage.py`. For sensitive workflows, test ownership, stock shortage, repeat requests and rollback. Never reset application data for verification.
+- For UI changes, inspect rendered desktop and mobile pages with Playwright where available (covering signed-in/out, empty, error and long-content states, routes, form submissions, retained values, focus and navigation). Check static discovery and caching if the browser displays an unexpected CSS version.
+- Report what was actually tested, failures, blockers and unverified cases, distinguishing source inspection from automated and browser verification. Do not commit temporary previews, secrets or test data.
+- Record material AI assistance and actual verification by task or user story (tool/model, date, prompt, output/diff, accepted/rejected suggestions, human changes and checks) in Section 6 (and Appendix B if established), keeping changes understandable so both teammates can explain and defend them.

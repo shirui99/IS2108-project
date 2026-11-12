@@ -21,7 +21,7 @@ class SellabilityTests(TestCase):
         session = self.client.session
         session['Cid'] = self.customer.pk
         session.save()
-        self.product = Product.objects.create(Pid='P001', Pname='Milk', Pcategory='dairy', Psize='1 litre', Pprice=3, Plowstock=2, Ptargetstock=5, Pexpirydays=3)
+        self.product = Product.objects.create(Pid='P001', Pname='Milk', Pcategory_id='dairy', Psize='1 litre', Pprice=3, Plowstock=2, Ptargetstock=5, Pexpirydays=3)
         self.clock = patch('django.utils.timezone.localdate', return_value=self.today)
         self.clock.start()
         self.addCleanup(self.clock.stop)
@@ -104,7 +104,7 @@ class SellabilityTests(TestCase):
     def test_allocation_only_sellable_and_claim_shortfall_rolls_back(self):
         excluded = self.item(2)
         eligible = self.item(3)
-        second = Product.objects.create(Pid='P002', Pname='Rice', Pcategory='rice', Psize='1 kg', Pprice=2, Plowstock=0)
+        second = Product.objects.create(Pid='P002', Pname='Rice', Pcategory_id='rice', Psize='1 kg', Pprice=2, Plowstock=0)
         self.item(product=second)
         self.cart({'P001': 1, 'P002': 1})
         original = QuerySet.update

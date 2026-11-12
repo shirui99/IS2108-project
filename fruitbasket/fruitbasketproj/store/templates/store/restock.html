@@ -9,7 +9,7 @@
         <a class="fb-text-link" href="/store/pantry">Check my pantry &rarr;</a>
     </div>
     <div class="fb-alert">
-        ML estimates use the trained restock model; initial estimates are used when there is not enough history or the model cannot provide a valid prediction.</div>
+        ML estimates use the trained restock model; initial estimates are used when there is not enough history the category was not in the training metadata, or the model cannot provide a valid prediction.</div>
     {% if suggestions %}
         <div class="fb-pantry-grid">
             {% for suggestion in suggestions %}
@@ -21,11 +21,12 @@
                         <span class="fb-status {% if suggestion.due_status == 'Overdue' %}urgent{% else %}soon{% endif %}">{{ suggestion.due_status }}</span>
                     </div>
                     <div class="fb-pantry-dates">
-                        <div>Estimated next purchase<strong>{{ suggestion.restock_date }}</strong>
+                        <div>Estimated next purchase<strong>{{ suggestion.restock_date|default:"No estimate available" }}</strong>
                         </div>
                         <div>Suggestion source<strong>{{ suggestion.estimate_label }}</strong>
                         </div>
                     </div>
+                    {% if suggestion.status == 'UNAVAILABLE' %}<p>No estimate is available because a usable model or training-median fallback is unavailable.</p>{% endif %}
                     <form action="/store/cart/{{ suggestion.product_id }}" method="post">
                         {% csrf_token %}
                         <button type="submit" aria-label="Add {{ suggestion.product_name }} to cart">+ Add to cart</button>
