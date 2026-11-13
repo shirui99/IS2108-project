@@ -491,3 +491,14 @@ class RestockCapture(models.Model):
 
     class Meta:
         ordering = ['-captured_at', '-pk']
+
+
+class ReviewModeration(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.PROTECT, related_name='moderation_history')
+    employee = models.ForeignKey(User, on_delete=models.PROTECT)
+    action = models.CharField(max_length=7, choices=[('hide', 'Hidden'), ('restore', 'Restored')])
+    reason = models.CharField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']

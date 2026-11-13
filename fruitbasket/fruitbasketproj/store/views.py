@@ -1,4 +1,5 @@
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from django.shortcuts import redirect, render, HttpResponse
 from django.utils import timezone
 
@@ -10,7 +11,7 @@ from django.contrib import messages
 from adminpanel.models import Customer, Product, Orders, Item, SupportTicket, Category
 from adminpanel.inventory import sellable_stock_filter
 from django.db import DatabaseError, transaction
-from django.db.models import F
+from django.db.models import F, Q
 from adminpanel.models import Review, Subscription, SavedItem, StockNotice
 from .restock import get_customer_purchase_history, get_restock_suggestions
 from .ordering import OrderNotPlaced, generate_order_id, place_order
@@ -19,12 +20,19 @@ from .forms import ProfileForm, ReviewForm, SignupForm
 
 # Create your views here.
 
+def public_rating_annotations():
+    # A written review is authoritative for its linked pack; standalone packs use Irating.
+    ratings = Review.objects.filter(Ritem_id=OuterRef('product_items__pk')).order_by('pk').values('Rrating')[:1]
+    rating = Coalesce(Subquery(ratings), F('product_items__Irating'))
+    visible = ~Q(product_items__id__in=Review.objects.filter(Rvisible=False).values('Ritem_id'))
+    return {'rating': Avg(rating, filter=visible), 'reviews': Count(rating, filter=visible)}
+
+
 def index(request):
 
     # Find avg rating and number of ratings from all items
     products = Product.objects.filter(Pactive=True).select_related("Pcategory").annotate(
-        rating=Avg('product_items__Irating'),
-        reviews=Count('product_items__Irating'),
+        **public_rating_annotations(),
         sellable_stock=Count('product_items', filter=sellable_stock_filter(item_prefix='product_items__', product_prefix=''))
     )
 
@@ -544,8 +552,10 @@ def pantry(request, pk=None):
             if rating not in range(1, 6):
                 messages.error(request, 'Please choose a rating from 1 to 5.')
             else:
-                item.Irating = rating
-                item.save()
+                with transaction.atomic():
+                    item.Irating = rating
+                    item.save(update_fields=['Irating'])
+                    Review.objects.filter(Ritem=item, Rcustomer_id=request.session.get('Cid')).update(Rrating=rating)
                 messages.success(request, f'Thank you for rating {item.Iproduct.Pname}.')
 
         return redirect('/store/pantry')
@@ -595,8 +605,7 @@ def product(request, pk):
     # SF06: product details page. SF24: review a delivered product.
 
     product = Product.objects.filter(pk=pk, Pactive=True).annotate(
-        rating=Avg('product_items__Irating'),
-        reviews=Count('product_items__Irating'),
+        **public_rating_annotations(),
         sellable_stock=Count('product_items', filter=sellable_stock_filter(item_prefix='product_items__', product_prefix=''))
     ).first()
 
@@ -631,19 +640,18 @@ def product(request, pk):
         if form.is_valid():
 
             # One review per customer and product: a second submission replaces the first
-            Review.objects.update_or_create(
-                Rcustomer_id=Cid, Rproduct=product,
-                defaults={
-                    'Rrating': form.cleaned_data['Rrating'],
-                    'Rtext': form.cleaned_data['Rtext'],
-                    'Rdate': timezone.localdate(),
-                    'Ritem': purchase,
-                }
-            )
-
-            # The shop page averages Irating, so the rating is copied onto the purchased item
-            purchase.Irating = form.cleaned_data['Rrating']
-            purchase.save()
+            with transaction.atomic():
+                Review.objects.update_or_create(
+                    Rcustomer_id=Cid, Rproduct=product,
+                    defaults={
+                        'Rrating': form.cleaned_data['Rrating'],
+                        'Rtext': form.cleaned_data['Rtext'],
+                        'Rdate': timezone.localdate(),
+                        'Ritem': purchase,
+                    }
+                )
+                purchase.Irating = form.cleaned_data['Rrating']
+                purchase.save(update_fields=['Irating'])
 
             messages.success(request, 'Thank you. Your review was saved.')
             return redirect(f'/store/product/{product.Pid}')

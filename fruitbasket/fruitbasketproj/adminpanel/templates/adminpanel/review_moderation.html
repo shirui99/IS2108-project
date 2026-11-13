@@ -1,0 +1,18 @@
+﻿{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Review moderation | FruitBasket staff{% endblock %}
+{% block content %}
+<h1 class="fb-staff-page-title">Review moderation</h1>
+<p>Find reviews by customer or product name or ID.</p>
+<form method="get" action="{% url 'review_list' %}" class="fb-form"><label for="review-search">Search reviews</label><input id="review-search" name="q" value="{{ query }}"><button type="submit">Search</button></form>
+{% if review %}
+<section class="fb-staff-section"><h2>Review {{ review.pk }}</h2>
+<p>Product: {{ review.Rproduct }} | Customer: {{ review.Rcustomer }}</p>
+<p>Status: {% if review.Rvisible %}Visible{% else %}Hidden{% endif %} | Rating: {{ review.Rrating }} / 5 | {{ review.Rdate }}</p>
+<p>{{ review.Rtext|default:'No written review'|linebreaksbr }}</p>
+<form method="post" action="{% url 'review_action' review.pk %}" class="fb-form">{% csrf_token %}{{ form.as_p }}<button type="submit">{% if review.Rvisible %}Hide review{% else %}Restore review{% endif %}</button></form>
+<h3>Moderation history</h3><ul>{% for event in review.moderation_history.all %}<li>{{ event.get_action_display }} by {{ event.employee.username }} at {{ event.created_at }}: {{ event.reason }}</li>{% empty %}<li>No moderation actions recorded.</li>{% endfor %}</ul></section>
+{% endif %}
+<section class="fb-staff-section"><h2>Reviews</h2><div class="fb-table-wrap fb-records-table" role="region" aria-label="Reviews" tabindex="0"><p class="fb-table-hint">Scroll to see all columns.</p><table><thead><tr><th>Product</th><th>Customer</th><th>Rating</th><th>Status</th><th>Details</th></tr></thead><tbody>
+{% for r in reviews %}<tr><td>{{ r.Rproduct }}</td><td>{{ r.Rcustomer }}</td><td>{{ r.Rrating }} / 5</td><td>{% if r.Rvisible %}Visible{% else %}Hidden{% endif %}</td><td><a href="{% url 'review_detail' r.pk %}">Inspect review {{ r.pk }}</a></td></tr>{% empty %}<tr><td colspan="5">No reviews found.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}
