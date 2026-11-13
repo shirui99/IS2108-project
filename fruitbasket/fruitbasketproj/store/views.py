@@ -9,7 +9,7 @@ from django.contrib import messages
 
 from adminpanel.models import Customer, Product, Orders, Item, SupportTicket, Category
 from adminpanel.inventory import sellable_stock_filter
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import F
 from adminpanel.models import Review, Subscription, SavedItem, StockNotice
 from .restock import get_customer_purchase_history, get_restock_suggestions
@@ -429,32 +429,32 @@ def orders(request, pk=None):
 
             elif request.method == 'POST' and request.POST.get('action') == 'cancel':
 
-                # SF25: only a placed order whose items are all untouched can be cancelled
-                if order.Ostatus != 'placed':
-
-                    status_type = 'error'
-                    status_message = 'Only a placed order can be cancelled. Please contact support below.'
-
-                elif order.order_items.exclude(Istatus='delivered').exists():
-
-                    status_type = 'error'
-                    status_message = 'Some items in this order were already used or thrown away. Please contact support below.'
-
-                else:
-
+                # Claim the placed order first; preparation uses the same conditional status update.
+                try:
                     with transaction.atomic():
-
-                        # The status check is repeated in the update, so a double click releases the stock once
-                        cancelled = Orders.objects.filter(pk=order.pk, Ostatus='placed').update(Ostatus='cancelled', Opayment='refunded')
-
+                        cancelled = Orders.objects.filter(pk=order.pk, Ocustomer_id=request.session.get('Cid'),
+                            Ostatus='placed').update(Ostatus='cancelled', Opayment='refunded')
                         if cancelled:
-
-                            order.order_items.update(Iorder=None, Istatus='available', Ipurchasedprice=None, Irating=None)
-
-                    order = orders.filter(pk=pk).first()
-
-                    status_type = 'success'
-                    status_message = f'Order {order.Oid} was cancelled. The items went back into stock and the simulated payment was refunded.'
+                            packs = Item.objects.filter(Iorder_id=order.pk)
+                            total = packs.count()
+                            eligible = packs.filter(Istatus__in=['allocated', 'delivered'],
+                                Ifinished__isnull=True, Irating__isnull=True)
+                            if eligible.count() != total:
+                                raise ValueError('Some items in this order were already used or thrown away. Please contact support below.')
+                            released = eligible.update(Iorder=None, Istatus='available', Ipurchasedprice=None, Irating=None)
+                            if released != total:
+                                raise ValueError('Order items changed during cancellation. Please review the order and try again.')
+                except (ValueError, DatabaseError) as error:
+                    status_type = 'error'
+                    status_message = str(error) if isinstance(error, ValueError) else 'The order could not be cancelled because it changed or the database is busy. Please try again.'
+                else:
+                    if cancelled:
+                        status_type = 'success'
+                        status_message = f'Order {order.Oid} was cancelled. The items went back into stock and the simulated payment was refunded.'
+                    else:
+                        status_type = 'error'
+                        status_message = 'Only a placed order can be cancelled. Please contact support below.'
+                order = orders.filter(pk=pk).first()
 
             elif request.method == 'POST': #handle the post request
 
@@ -503,7 +503,7 @@ def pantry(request, pk=None):
     if request.method == 'POST' and pk is not None:
 
         # Only change an item that is in the logged in customer's pantry
-        item = Item.objects.filter(pk=pk, Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered').first()
+        item = Item.objects.filter(pk=pk, Iorder__Ocustomer_id=request.session.get('Cid'), Iorder__Ostatus='delivered', Iorder__group_purchase__isnull=True, Istatus='delivered').first()
 
         if item is None:
 
@@ -563,7 +563,7 @@ def pantry(request, pk=None):
 
     # SF12: a group order is shared between households, so it is not added to one customer's pantry
     items = Item.objects.filter(
-        Iorder__Ocustomer_id=request.session.get('Cid'), Istatus='delivered', Iorder__group_purchase__isnull=True
+        Iorder__Ocustomer_id=request.session.get('Cid'), Iorder__Ostatus='delivered', Istatus='delivered', Iorder__group_purchase__isnull=True
     ).order_by('Iexpiry')
 
     pantry_items = []

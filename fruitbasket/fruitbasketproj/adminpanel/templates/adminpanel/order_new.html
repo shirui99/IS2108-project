@@ -17,7 +17,7 @@
         <h1 class="fb-staff-page-title">Orders</h1>
         <p class="fb-page-help">Create an order or update its delivery details and status below.</p><p><a href="{% url 'staff_order_list' %}">Inspect orders</a></p>
         
-        <form class="fb-staff-editor" action="/adminpanel/order_new" method="post">
+        <form class="fb-staff-editor" action="{% if action == 'update' %}/adminpanel/order_new/{{ order_id }}{% else %}/adminpanel/order_new{% endif %}" method="post">
             {% csrf_token %}
 
             <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
@@ -66,12 +66,7 @@
                         <td>{{ order.items }}</td>
                         <td>
                             <a href="/adminpanel/order_new/{{ order.Oid }}">Update</a>
-                            <form action="/adminpanel/order_new/{{ order.Oid }}" method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="Oid" value="{{ order.Oid }}">
-                                <button class="fb-danger" type="submit">Delete</button>
-                            </form>
+
                         </td>
                     </tr>
 

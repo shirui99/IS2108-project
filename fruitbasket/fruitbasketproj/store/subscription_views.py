@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib import messages
+from django.db import DatabaseError, transaction
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -140,17 +141,20 @@ def subscription_action(request, pk):
         # so a double click skips only once.
         new_date = plan.Snextdate + timedelta(days=plan.Sinterval)
 
-        if Subscription.objects.filter(pk=plan.pk, Sstatus='active', Snextdate=plan.Snextdate).update(Snextdate=new_date):
-
-            SubscriptionCycle.objects.create(
-                SCsubscription=plan, SCdate=timezone.localdate(), SCresult='skipped',
-                SCnote=f'Order planned for {plan.Snextdate:%d %b %Y} skipped'
-            )
-            messages.success(request, f'Next {plan.Sproduct.Pname} order skipped. The following order is planned for {new_date:%d %b %Y}.')
-
+        try:
+            with transaction.atomic():
+                changed = Subscription.objects.filter(pk=plan.pk, Sstatus='active', Snextdate=plan.Snextdate).update(Snextdate=new_date)
+                if changed:
+                    SubscriptionCycle.objects.create(
+                        SCsubscription=plan, SCdate=timezone.localdate(), SCscheduleddate=plan.Snextdate,
+                        SCresult='skipped', SCnote=f'Order planned for {plan.Snextdate:%d %b %Y} skipped')
+        except DatabaseError:
+            messages.error(request, 'This cycle could not be skipped. Please review the plan and try again.')
         else:
-
-            messages.error(request, 'Only an active subscription can skip an order.')
+            if changed:
+                messages.success(request, f'Next {plan.Sproduct.Pname} order skipped. The following order is planned for {new_date:%d %b %Y}.')
+            else:
+                messages.error(request, 'Only an active subscription can skip an order.')
 
     elif action == 'cancel':
 
@@ -191,10 +195,11 @@ def subscription_edit(request, pk):
 
             else:
 
-                plan.Squantity = form.cleaned_data['Squantity']
-                plan.Sinterval = form.cleaned_data['Sinterval']
-                plan.Sceiling = form.cleaned_data['Sceiling']
-                plan.save()
+                updated = Subscription.objects.filter(pk=plan.pk, Scustomer_id=request.session['Cid']).exclude(Sstatus='cancelled').update(
+                    Squantity=form.cleaned_data['Squantity'], Sinterval=form.cleaned_data['Sinterval'], Sceiling=form.cleaned_data['Sceiling'])
+                if not updated:
+                    messages.error(request, 'The subscription changed or was cancelled. Please review it again.')
+                    return redirect('/store/subscriptions')
 
                 # The next order date is not moved; the new schedule applies after that order
                 messages.success(request, f'{plan.Sproduct.Pname} subscription updated.')

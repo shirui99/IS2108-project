@@ -118,7 +118,7 @@ class CustomerStoryTests(TestCase):
 
     # SF14
     def test_pantry_counts_passed_dates_separately(self):
-        order = Orders.objects.create(Oid='OPAN1', Odate=self.today, Oaddress='x', Ocustomer=self.customer)
+        order = Orders.objects.create(Oid='OPAN1', Odate=self.today, Oaddress='x', Ocustomer=self.customer, Ostatus='delivered')
         items = list(Item.objects.filter(Iproduct=self.milk)[:3])
         for item, days in zip(items, [-2, 1, 20]):
             item.Iexpiry = self.today + timedelta(days=days)

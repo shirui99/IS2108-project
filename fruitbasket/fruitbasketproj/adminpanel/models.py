@@ -109,6 +109,8 @@ class Orders(models.Model):
 
     STATUS = [
         ('placed', 'Placed'),
+        ('preparing', 'Preparing'),
+        ('dispatched', 'Dispatched'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled')
     ]
@@ -122,6 +124,8 @@ class Orders(models.Model):
     Odate = models.DateField()
     Oaddress = models.CharField(max_length=255)
     Ostatus = models.CharField(max_length=10, choices=STATUS, default='placed')
+    Odispatched = models.DateTimeField(null=True, blank=True, editable=False)
+    Odelivered = models.DateTimeField(null=True, blank=True, editable=False)
     Opayment = models.CharField(max_length=10, choices=PAYMENT, default='paid', verbose_name='Simulated payment')
 
     Ocustomer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='customer_orders')
@@ -154,6 +158,7 @@ class Item(models.Model):
         ('available', 'In warehouse'),
         ('adjusted', 'Adjusted out'),
         ('writtenoff', 'Written off'),
+        ('allocated', 'Allocated to order'),
         ('delivered', 'Delivered'),
         ('used', 'Used up'),
         ('expired', 'Expired/Discarded')
@@ -326,10 +331,14 @@ class SubscriptionCycle(models.Model):
     ]
 
     SCdate = models.DateField()
+    SCscheduleddate = models.DateField(null=True, blank=True)
     SCresult = models.CharField(max_length=10, choices=RESULT)
     SCnote = models.CharField(max_length=255, blank=True)
     SCsubscription = models.ForeignKey(Subscription, on_delete=models.RESTRICT, related_name='subscription_cycles')
     SCorder = models.OneToOneField(Orders, on_delete=models.RESTRICT, related_name='subscription_cycle', blank=True, null=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['SCsubscription', 'SCscheduleddate'], name='unique_subscription_scheduled_cycle')]
 
     def __str__(self):
 

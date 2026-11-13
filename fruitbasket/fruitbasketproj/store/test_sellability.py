@@ -110,7 +110,7 @@ class SellabilityTests(TestCase):
         original = QuerySet.update
         calls = []
         def shortfall(queryset, **kwargs):
-            if kwargs.get('Istatus') == 'delivered':
+            if kwargs.get('Istatus') == 'allocated':
                 calls.append(True)
                 if len(calls) == 2:
                     return 0
@@ -123,7 +123,7 @@ class SellabilityTests(TestCase):
         self.assertContains(self.client.post('/store/checkout', {'Oaddress': 'Address'}), 'placed successfully')
         eligible.refresh_from_db()
         excluded.refresh_from_db()
-        self.assertEqual(eligible.Istatus, 'delivered')
+        self.assertEqual(eligible.Istatus, 'allocated')
         self.assertEqual(excluded.Istatus, 'available')
 
     @patch('store.restock.predict_restock', return_value={'status': 'INITIAL', 'interval_days': 1, 'restock_date': '2026-11-12'})

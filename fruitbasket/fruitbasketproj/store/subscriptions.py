@@ -40,6 +40,10 @@ def suggest_interval(customer, product):
     return interval, label
 
 
+class ScheduledCycleConflict(Exception):
+    """The due date may already have been processed and requires staff review."""
+
+
 def process_due_subscriptions(today=None):
 
     # Creates one order for every active subscription whose next date has arrived.
@@ -57,12 +61,22 @@ def process_due_subscriptions(today=None):
             # cycle being ordered twice when the command is run twice.
             # The next date counts from today, so missed dates never create backdated orders.
             claimed = Subscription.objects.filter(
-                pk=subscription.pk, Sstatus='active', Snextdate=subscription.Snextdate
+                pk=subscription.pk, Sstatus='active', Snextdate=subscription.Snextdate,
+                Squantity=subscription.Squantity, Sinterval=subscription.Sinterval, Sceiling=subscription.Sceiling
             ).update(Snextdate=today + timedelta(days=subscription.Sinterval))
 
             if not claimed:
 
                 continue
+
+            # Older records have no scheduled date. If their processing date falls
+            # in this due window, do not guess whether they already cover this cycle.
+            ambiguous = SubscriptionCycle.objects.filter(SCsubscription=subscription, SCscheduleddate__isnull=True,
+                SCdate__gte=subscription.Snextdate, SCdate__lte=today).exists()
+            duplicate = SubscriptionCycle.objects.filter(SCsubscription=subscription,
+                SCscheduleddate=subscription.Snextdate).exists()
+            if ambiguous or duplicate:
+                raise ScheduledCycleConflict(f'Subscription {subscription.pk}: scheduled cycle {subscription.Snextdate} may already be recorded; review before processing.')
 
             customer = Customer.objects.get(pk=subscription.Scustomer_id)
 
@@ -73,14 +87,14 @@ def process_due_subscriptions(today=None):
                 )
 
                 cycle = SubscriptionCycle.objects.create(
-                    SCsubscription=subscription, SCdate=today, SCresult='ordered', SCorder=order,
+                    SCsubscription=subscription, SCdate=today, SCscheduleddate=subscription.Snextdate, SCresult='ordered', SCorder=order,
                     SCnote=f'Order {order.Oid} for ${total:.2f}'
                 )
 
             except OrderNotPlaced as error:
 
                 cycle = SubscriptionCycle.objects.create(
-                    SCsubscription=subscription, SCdate=today, SCresult='failed', SCnote=str(error)[:255]
+                    SCsubscription=subscription, SCdate=today, SCscheduleddate=subscription.Snextdate, SCresult='failed', SCnote=str(error)[:255]
                 )
 
             cycles.append(cycle)

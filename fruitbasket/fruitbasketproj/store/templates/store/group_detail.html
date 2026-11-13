@@ -16,7 +16,7 @@
             <p><a href="{{ invite_link }}">{{ invite_link }}</a></p>
         </section>
     {% elif group.Gstatus == 'ordered' %}
-        <div class="fb-alert" role="status">This group purchase was ordered as order {{ group.Gorder.Oid }}.{% if is_organiser %} <a href="/store/orders/{{ group.Gorder.Oid }}">View the order</a>.{% endif %}</div>
+        <div class="fb-alert" role="status">This group purchase was ordered as order {{ group.Gorder.Oid }}. Current order status: {{ group.Gorder.get_Ostatus_display }}.{% if group.Gorder.Ostatus == 'cancelled' %} Simulated payment: {{ group.Gorder.get_Opayment_display }}.{% endif %}{% if is_organiser %} <a href="/store/orders/{{ group.Gorder.Oid }}">View the order</a>.{% endif %}</div>
     {% else %}
         <div class="fb-alert warning" role="status">This group purchase is locked. Quantities can no longer be changed.</div>
     {% endif %}
@@ -65,27 +65,27 @@
         <div class="fb-table-wrap fb-records-table" role="region" aria-label="Pooled basket" tabindex="0">
             <table>
                 <thead>
-                    <tr><th scope="col">Product</th><th scope="col">Pooled packs</th><th scope="col">Unit price</th><th scope="col">Subtotal</th></tr>
+                    <tr><th scope="col">Product</th><th scope="col">Pooled packs</th>{% if group.Gstatus != 'ordered' %}<th scope="col">Current unit price</th><th scope="col">Current subtotal</th>{% endif %}</tr>
                 </thead>
                 <tbody>
                     {% for line in pooled %}
                         <tr>
                             <td>{{ line.product.Pname }}<br><span class="fb-help">{{ line.product.Psize }}</span></td>
                             <td>{{ line.quantity }}</td>
-                            <td>${{ line.price|floatformat:2 }}{% if line.bulk %} <span class="fb-status">Bulk price</span>{% elif line.product.Pbulkquantity %}<br><span class="fb-help">Bulk price from {{ line.product.Pbulkquantity }} packs</span>{% endif %}</td>
-                            <td>${{ line.subtotal|floatformat:2 }}</td>
+                            {% if group.Gstatus != 'ordered' %}<td>${{ line.price|floatformat:2 }}{% if line.bulk %} <span class="fb-status">Bulk price</span>{% elif line.product.Pbulkquantity %}<br><span class="fb-help">Bulk price from {{ line.product.Pbulkquantity }} packs</span>{% endif %}</td>
+                            <td>${{ line.subtotal|floatformat:2 }}</td>{% endif %}
                         </tr>
                     {% empty %}
-                        <tr><td colspan="4">Nothing has been added yet.</td></tr>
+                        <tr><td colspan="{% if group.Gstatus == 'ordered' %}2{% else %}4{% endif %}">Nothing has been added yet.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="fb-total"><span>Pooled total</span><span>${{ total|floatformat:2 }}</span></div>
+        {% if group.Gstatus != 'ordered' %}<div class="fb-total"><span>Current estimated total</span><span>${{ total|floatformat:2 }}</span></div>{% else %}<p>Historical payment amounts are not shown here.</p>{% endif %}
     </section>
-    <section>
-        <h2>Each member's share</h2>
-        <p>Your share: <strong>${{ my_share|floatformat:2 }}</strong>. {% if is_organiser %}You pay the whole order and collect the other shares yourself.{% else %}The organiser pays the whole order, so this is what you owe them.{% endif %} FruitBasket does not collect money between members.</p>
+    {% if group.Gstatus != 'ordered' %}<section>
+        <h2>Each member's estimated share at current prices</h2>
+        <p>Estimated share at current prices: <strong>${{ my_share|floatformat:2 }}</strong>. The organiser pays for the group order; FruitBasket does not collect money between members.</p>
         <div class="fb-table-wrap fb-records-table" role="region" aria-label="Share by member" tabindex="0">
             <table>
                 <thead>
@@ -101,7 +101,7 @@
             </table>
         </div>
     </section>
-    <section>
+    {% endif %}<section>
         <h2>Who asked for what</h2>
         <div class="fb-table-wrap fb-records-table" role="region" aria-label="Contributions by member" tabindex="0">
             <table>

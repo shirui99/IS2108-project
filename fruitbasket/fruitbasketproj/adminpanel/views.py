@@ -489,6 +489,11 @@ class OrderView(View):
 
 
 
+    def dispatch(self, request, *args, **kwargs):
+        if not _staff_order_access(request):
+            return redirect('adminpanel_login')
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
 
         pk = kwargs.get('pk') # returns None if not provided
@@ -524,7 +529,7 @@ class OrderView(View):
         orders = Orders.objects.annotate(items=Count('order_items'))
 
         context = {
-            'form': rendered_form, 
+            'order_id': form.instance.pk or '', 'form': rendered_form,
             'action': action, 
             'orders': orders,
             'status_type': status_type,
@@ -536,135 +541,75 @@ class OrderView(View):
 
 
     def post(self, request, *args, **kwargs):
-        
-        action = request.POST.get('action')  # returns None if not provided
-        form = self.form_class(request.POST)
-        status_type = None
-        status_message = None        
-        save_succeeded = False
-
+        action = request.POST.get('action')
+        order = get_object_or_404(Orders, pk=kwargs.get('pk') or request.POST.get('Oid')) if action in ('update', 'delete') else None
         if action == 'delete':
-            form = self.form_class()
-            try:
-                Orders.objects.get(pk=request.POST.get('Oid')).delete()
-                status_type = 'success'
-                status_message = 'Order deleted successfully.'
-            except Orders.DoesNotExist:
-                status_type = 'error'
-                status_message = 'Order could not be found.'
-            except RestrictedError:
-                status_type = 'error'
-                status_message = 'This order cannot be deleted while related items or tickets exist.'
-            except Exception:
-                status_type = 'error'
-                status_message = 'The order could not be deleted.'
-
-            rendered_form = form.render('adminpanel/form_template.html')
-            orders = Orders.objects.annotate(items=Count('order_items'))
-            context = {
-                'form': rendered_form,
-                'action': 'create',
-                'orders': orders,
-                'status_type': status_type,
-                'status_message': status_message,
-            }
-            return render(request, self.template_name, context)
-
-
-        
-        if action == 'update':
-
-            order = Orders.objects.get(pk=request.POST.get('Oid'))
-            form = self.form_class(request.POST, instance=order)
-
-        else:
-            
-            form = self.form_class(request.POST)
-        
+            # Orders are retained once created; deleting them could erase fulfilment history.
+            return HttpResponse('Orders must be retained. Use the supported order workflows.', status=400)
+        if action not in ('create', 'update'):
+            return HttpResponse('Invalid order action.', status=400)
+        original_pk = order.pk if order else None
+        form = self.form_class(request.POST, instance=order)
         if form.is_valid():
-
-            if action == 'create':
-
-                newOrder = Orders(
-                    Oid=form.cleaned_data['Oid'],
-                    Ocustomer=form.cleaned_data['Ocustomer'],
-                    Oaddress=form.cleaned_data['Oaddress'],
-                    Odate=form.cleaned_data['Odate'],
-                    Ostatus=form.cleaned_data['Ostatus']
-                )
-
-                try:                    
-                    
-                    newOrder.save()
-                    save_succeeded = True
-                    status_type = 'success'
-                    status_message = 'Order created successfully.'
-    
-                except Exception as e:
-    
-                    status_type = 'error'
-                    status_message = f'Error creating order: {str(e)}'
-
-            elif action == 'update':
-                
-                try:
-
-                    order = Orders.objects.get(pk=form.cleaned_data['Oid'])
-                    order.Ocustomer = form.cleaned_data['Ocustomer']
-                    order.Oaddress = form.cleaned_data['Oaddress']
-                    order.Odate = form.cleaned_data['Odate']
-                    order.Ostatus = form.cleaned_data['Ostatus']
-                    
-                    try:
-
-                        order.save()
-
-                        save_succeeded = True
-                        status_type = 'success'
-                        status_message = 'Order updated successfully.'
-
-                    except Exception as e:
-                                        
-                        status_type = 'error'
-                        status_message = f'Error updating order: {str(e)}'
-
-                except Orders.DoesNotExist:
-
-                    status_type = 'error'
-                    status_message = 'Order not found.'           
-
-        else:
-
-            if action == 'create':
-            
-                status_type = 'error'
-                status_message = f'Error creating order'
-
+            try:
+                with transaction.atomic():
+                    if order:
+                        Orders.objects.filter(pk=original_pk).update(Ostatus=F('Ostatus'))
+                        current = Orders.objects.get(pk=original_pk)
+                        if request.POST.get('Oid') != current.pk:
+                            form.add_error('Oid', 'The order ID cannot be changed.')
+                        if request.POST.get('Ostatus', current.Ostatus) != current.Ostatus:
+                            form.add_error(None, 'Use the fulfilment actions to change status.')
+                        owner_changed = form.cleaned_data['Ocustomer'].pk != current.Ocustomer_id
+                        if owner_changed and (current.order_items.exists() or getattr(current, 'group_purchase', None) or getattr(current, 'subscription_cycle', None)):
+                            form.add_error('Ocustomer', 'The customer cannot change for an allocated or linked order.')
+                        if not form.errors:
+                            Orders.objects.filter(pk=current.pk).update(Ocustomer=form.cleaned_data['Ocustomer'], Oaddress=form.cleaned_data['Oaddress'], Odate=form.cleaned_data['Odate'])
+                    elif request.POST.get('Ostatus', 'placed') != 'placed':
+                        form.add_error(None, 'New manual orders must start as placed.')
+                    else:
+                        form.save(commit=False).save(force_insert=True)
+            except DatabaseError:
+                form.add_error(None, 'The order could not be saved. Review its ID and try again.')
             else:
-                
-                status_type = 'error'
-                status_message = f'Error updating order'
+                if not form.errors:
+                    return redirect('order_new')
+        return render(request, self.template_name, {'order_id': original_pk or '', 'form': form.render('adminpanel/form_template.html'), 'action': action,
+            'orders': Orders.objects.annotate(items=Count('order_items')), 'status_type': 'error', 'status_message': 'Please correct the order details.'})
 
-        if save_succeeded:
-            # Keep invalid bound data visible so staff can correct the submitted form.
-            form = self.form_class()
-            action = 'create'
 
-        rendered_form = form.render('adminpanel/form_template.html')
+@require_POST
+def fulfil_order(request, pk):
+    if not _staff_order_access(request):
+        return redirect('adminpanel_login')
+    transitions = {'prepare': ('placed', 'preparing'), 'dispatch': ('preparing', 'dispatched'), 'deliver': ('dispatched', 'delivered')}
+    step = transitions.get(request.POST.get('action'))
+    if not step:
+        return HttpResponse('Invalid fulfilment action.', status=400)
+    source, target = step
+    try:
+        get_object_or_404(Orders, pk=pk)
+        with transaction.atomic():
+            changes = {'Ostatus': target}
+            if target == 'dispatched': changes['Odispatched'] = timezone.now()
+            if target == 'delivered': changes['Odelivered'] = timezone.now()
+            if not Orders.objects.filter(pk=pk, Ostatus=source).update(**changes):
+                messages.info(request, 'The order has already moved on or this action is out of sequence.')
+                return redirect('staff_order_detail', pk=pk)
+            packs = Item.objects.filter(Iorder_id=pk)
+            total = packs.count()
+            if not total or packs.exclude(Istatus__in=['allocated', 'delivered'], Ifinished__isnull=True, Irating__isnull=True).exists():
+                raise ValueError('The order has no untouched allocation. Review its packs before fulfilment.')
+            if target == 'delivered':
+                changed = packs.filter(Istatus__in=['allocated', 'delivered'], Ifinished__isnull=True, Irating__isnull=True).update(Istatus='delivered')
+                if changed != total:
+                    raise ValueError('Allocated packs changed. No delivery was recorded.')
+    except (ValueError, DatabaseError) as error:
+        messages.error(request, str(error) if isinstance(error, ValueError) else 'The order could not be updated. Please try again.')
+    else:
+        messages.success(request, f'Order marked {target}.')
+    return redirect('staff_order_detail', pk=pk)
 
-        # Count the items in each order
-
-        orders = Orders.objects.annotate(items=Count('order_items'))
-
-        context = {
-            'form': rendered_form, 
-            'action': action, 
-            'orders': orders,
-            'status_type': status_type,
-            'status_message': status_message,
-        }
-
-        return render(request, self.template_name, context)
 
 class ItemView(View):
     form_class = ItemBatchForm

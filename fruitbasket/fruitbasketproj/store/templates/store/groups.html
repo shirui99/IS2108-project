@@ -19,7 +19,7 @@
                         <td><strong>{{ m.GMgroup.Gname }}</strong></td>
                         <td>{% if m.GMgroup.Gorganiser_id == customer.Cid %}You{% else %}{{ m.GMgroup.Gorganiser.Cname }}{% endif %}</td>
                         <td>{{ m.GMgroup.Gcreated|date:'j M Y' }}</td>
-                        <td><span class="fb-status">{{ m.GMgroup.get_Gstatus_display }}</span></td>
+                        <td><span class="fb-status">{{ m.GMgroup.get_Gstatus_display }}</span>{% if m.GMgroup.Gorder %}<br>Order: {{ m.GMgroup.Gorder.get_Ostatus_display }}{% if m.GMgroup.Gorder.Ostatus == 'cancelled' %}<br>Simulated payment: {{ m.GMgroup.Gorder.get_Opayment_display }}{% endif %}{% endif %}</td>
                         <td><a href="/store/groups/{{ m.GMgroup.pk }}" aria-label="Open {{ m.GMgroup.Gname }}">Open &rarr;</a></td>
                     </tr>
                 {% empty %}

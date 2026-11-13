@@ -121,7 +121,7 @@ def place_order(customer, address, quantities, use_bulk_price=False, ceiling=Non
         for quantity, ids, price in allocations:
 
             claimed = Item.objects.filter(sellable_stock_filter(), pk__in=ids).update(
-                Iorder=newOrder, Istatus='delivered', Ipurchasedprice=price,
+                Iorder=newOrder, Istatus='allocated', Ipurchasedprice=price,
             )
 
             # Another customer took one of these items between the check and the claim

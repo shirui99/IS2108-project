@@ -62,7 +62,7 @@ class OrderForm(forms.ModelForm):
     class Meta:
 
         model = Orders
-        fields = ['Oid', 'Ocustomer', 'Oaddress', 'Odate', 'Ostatus']
+        fields = ['Oid', 'Ocustomer', 'Oaddress', 'Odate']
 
         widgets = {
             'Odate': forms.DateInput(attrs={'type': 'date'})
