@@ -17,6 +17,15 @@
         <h1 class="fb-staff-page-title">Products</h1>
         <p class="fb-page-help">Create a product or choose Update from the catalogue below. Use a separate SKU for each pack size. Target stock and bulk settings are optional.</p>
         
+        {% if action == 'update' and current_product %}
+            <div class="fb-staff-section">
+                <h2>Current product photo</h2>
+                {% if current_product.Pimage %}<img src="{{ current_product.Pimage.url }}" width="160" alt="Current photo of {{ current_product.Pname }}">
+                {% else %}<p>No product photo.</p>{% endif %}
+            </div>
+        {% endif %}
+        <p class="fb-page-help">Photos: JPEG, PNG or WebP, up to 2 MiB and 16 megapixels; animated photos are not supported. After an error, select the file again before saving.</p>
+
         <form class="fb-staff-editor" action="{% if action == 'update' %}/adminpanel/product_new/{{ product_id }}{% else %}/adminpanel/product_new{% endif %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {% if action == 'update' %}<input type="hidden" name="Pid" value="{{ product_id }}">{% endif %}

@@ -1,4 +1,5 @@
 from django import forms
+from PIL import Image, UnidentifiedImageError
 
 from .models import Product, Customer, Orders, Item, Category, CATEGORY_WHITESPACE, InventoryBatch
 
@@ -10,6 +11,28 @@ class ProductForm(forms.ModelForm):
 
         model = Product
         fields = ['Pid', 'Pname', 'Pcategory', 'Psize', 'Pprice', 'Plowstock', 'Ptargetstock', 'Pbulkquantity', 'Pbulkprice', 'Pactive', 'Pimage', 'Pexpirydays']
+
+    def clean_Pimage(self):
+        image = self.cleaned_data.get('Pimage')
+        upload = self.files.get('Pimage')
+        if upload:
+            if upload.size > 2 * 1024 * 1024:
+                raise forms.ValidationError('The photo must be no larger than 2 MiB.')
+            if getattr(getattr(upload, 'image', None), 'format', None) not in {'JPEG', 'PNG', 'WEBP'}:
+                raise forms.ValidationError('Choose a JPEG, PNG or WebP image.')
+            try:
+                upload.seek(0)
+                with Image.open(upload) as decoded:
+                    if decoded.width * decoded.height > 16_000_000:
+                        raise forms.ValidationError('The photo must not exceed 16 megapixels.')
+                    if getattr(decoded, 'n_frames', 1) != 1:
+                        raise forms.ValidationError('Animated photos are not supported.')
+                    decoded.load()
+            except (OSError, ValueError, SyntaxError, Image.DecompressionBombError, UnidentifiedImageError):
+                raise forms.ValidationError('The photo is corrupt or incomplete. Choose another image.')
+            finally:
+                upload.seek(0)
+        return image
 
     def clean(self):
         data = super().clean()

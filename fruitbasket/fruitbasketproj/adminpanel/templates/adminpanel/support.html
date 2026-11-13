@@ -20,7 +20,7 @@
         <div class="fb-table-wrap fb-support-details" role="region" aria-label="Staff data table" tabindex="0">
             <table>
                 <tbody>
-                    <tr><th>Order</th><td>{{ ticket.Torder.Oid }}</td></tr>
+                    <tr><th>Order</th><td><a href="{% url 'staff_order_detail' ticket.Torder_id %}">{{ ticket.Torder.Oid }}</a></td></tr>
                     <tr><th>Customer</th><td>{{ ticket.Torder.Ocustomer }}</td></tr>
                     <tr><th>Submitted</th><td>{{ ticket.Tsubmitted }}</td></tr>
                     <tr><th>Status</th><td>{{ ticket.get_Tstatus_display }}</td></tr>
@@ -40,7 +40,9 @@
     <form class="fb-panel fb-form" action="/adminpanel/support/{{ ticket.pk }}" method="post">
         {% csrf_token %}
         <label for="support-response">Response</label><br>
-        <textarea id="support-response" name="Tresponse" rows="5" cols="60" required>{{ request.POST.Tresponse }}</textarea><br>
+        <p id="response-help">Maximum {{ response_max_length }} characters.</p>
+        {% if status_message %}<p id="response-error" class="fb-form-error">{{ status_message }}</p>{% endif %}
+        <textarea id="support-response" name="Tresponse" rows="5" cols="60" maxlength="{{ response_max_length }}" aria-describedby="response-help{% if status_message %} response-error{% endif %}" required>{{ request.POST.Tresponse }}</textarea><br>
         <input type="submit" value="Send Response">
     </form>
     {% endif %}

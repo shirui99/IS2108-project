@@ -73,6 +73,11 @@ class ProductView(View):
     form_class = ProductForm
     template_name = 'adminpanel/product_new.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_authenticated and request.user.is_active and request.user.is_staff):
+            return redirect('adminpanel_login')
+        return super().dispatch(request, *args, **kwargs)
+
 
 
     def get(self, request, *args, **kwargs):
@@ -94,11 +99,7 @@ class ProductView(View):
                 action = 'update'
 
             except Product.DoesNotExist:
-
-                form = self.form_class()
-
-                status_type = 'error'
-                status_message = 'Product not found.'
+                return HttpResponse('Product not found.', status=404)
 
         else:
 
@@ -114,6 +115,7 @@ class ProductView(View):
 
         context = {
             'product_id': form.instance.pk or '',
+            'current_product': Product.objects.filter(pk=form.instance.pk).first() if action == 'update' else None,
             'form': rendered_form,
             'action': action,
             'products': products,
@@ -194,8 +196,8 @@ class ProductView(View):
                         form.save(commit=False).save(force_insert=True)
                     else:
                         form.save()
-            except IntegrityError:
-                form.add_error(None, 'The product could not be saved. Check that its SKU is unique and try again.')
+            except (DatabaseError, OSError):
+                form.add_error(None, 'The product could not be saved. Check its details and try again.')
             else:
                 return redirect('/adminpanel/product_new')
         status_type = 'error'
@@ -210,6 +212,7 @@ class ProductView(View):
         )
         context = {
             'product_id': form.instance.pk or '',
+            'current_product': Product.objects.filter(pk=form.instance.pk).first() if action == 'update' else None,
             'form': rendered_form,
             'action': action,
             'products': products,
@@ -683,57 +686,46 @@ class StockAdjustmentView(View):
 
 
 class SupportView(View):
+    template_name = 'adminpanel/support.html'
+    response_max_length = 2000
 
-    template_name = 'adminpanel/support.html' #support page for tickets
+    def dispatch(self, request, *args, **kwargs):
+        if not _staff_order_access(request):
+            return redirect('adminpanel_login')
+        return super().dispatch(request, *args, **kwargs)
 
+    def get(self, request, pk=None):
+        return self.render_page(request, pk)
 
-
-    def get(self, request, *args, **kwargs):
-
-        return self.render_page(request, kwargs.get('pk'), None, None)
-
-
-
-    def post(self, request, *args, **kwargs):
-
-        pk = kwargs.get('pk')
+    def post(self, request, pk=None):
+        if pk is None:
+            return HttpResponse('Select a ticket before responding.', status=405)
+        get_object_or_404(SupportTicket, pk=pk)
         response = request.POST.get('Tresponse', '').strip()
-
         if not response:
-
-            return self.render_page(request, pk, 'error', 'Please enter a response.')
-
-        # Only answer a ticket that is still open, so a repeated submission changes nothing
-        updated = SupportTicket.objects.filter(pk=pk, Tstatus='open').update(
-            Tresponse=response,
-            Tstatus='answered',
-            Tresponder_id=request.user.pk,
-            Tresponded=timezone.now()
-        )
-
+            return self.render_page(request, pk, 'Please enter a response.')
+        if len(response) > self.response_max_length:
+            return self.render_page(request, pk, 'The response can be at most 2000 characters.')
+        try:
+            # A single conditional update ensures the first response wins.
+            updated = SupportTicket.objects.filter(pk=pk, Tstatus='open').update(
+                Tresponse=response, Tstatus='answered', Tresponder_id=request.user.pk,
+                Tresponded=timezone.now(),
+            )
+        except DatabaseError:
+            return self.render_page(request, pk, 'The response could not be saved. Please try again.')
         if updated:
+            messages.success(request, 'Response sent.')
+            return redirect('support', pk=pk)
+        return self.render_page(request, pk, 'This ticket has already been answered.')
 
-            return self.render_page(request, pk, 'success', 'Response sent.')
-
-        return self.render_page(request, pk, 'error', 'This ticket has already been answered.')
-
-
-
-    def render_page(self, request, pk, status_type, status_message):
-
-        # Open tickets first, oldest first
-        tickets = SupportTicket.objects.select_related('Torder__Ocustomer').order_by('-Tstatus', 'Tsubmitted')
-
-        ticket = tickets.filter(pk=pk).first() if pk is not None else None
-
-        context = {
-            'tickets': tickets,
-            'ticket': ticket,
-            'status_type': status_type,
-            'status_message': status_message,
-        }
-
-        return render(request, self.template_name, context)
+    def render_page(self, request, pk=None, error=None):
+        tickets = SupportTicket.objects.select_related('Torder__Ocustomer', 'Tresponder').order_by('-Tstatus', 'Tsubmitted', 'pk')
+        ticket = get_object_or_404(tickets, pk=pk) if pk is not None else None
+        return render(request, self.template_name, {
+            'tickets': tickets, 'ticket': ticket, 'status_type': 'error' if error else None,
+            'status_message': error, 'response_max_length': self.response_max_length,
+        })
 
 
 class CategoryView(View):
