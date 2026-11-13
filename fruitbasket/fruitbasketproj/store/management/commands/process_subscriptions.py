@@ -19,6 +19,7 @@ class Command(BaseCommand):
 
         for cycle in cycles:
 
-            self.stdout.write(f'Subscription {cycle.SCsubscription_id}: {cycle.get_SCresult_display()} - {cycle.SCnote}')
+            label = 'On hold' if cycle.SCretryable else cycle.get_SCresult_display()
+            self.stdout.write(f'Subscription {cycle.SCsubscription_id}: {label} - {cycle.SCnote}')
 
         self.stdout.write(f'{len(cycles)} due subscription(s) processed.')

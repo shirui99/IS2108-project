@@ -59,13 +59,13 @@
                 <div class="fb-table-wrap fb-records-table" role="region" aria-label="Orders from this subscription" tabindex="0">
                     <table>
                         <thead>
-                            <tr><th scope="col">Date</th><th scope="col">Result</th><th scope="col">Details</th></tr>
+                            <tr><th scope="col">Latest processing date</th><th scope="col">Scheduled date</th><th scope="col">Result</th><th scope="col">Details</th></tr>
                         </thead>
                         <tbody>
                             {% for cycle in plan.subscription_cycles.all %}
                                 <tr>
-                                    <td>{{ cycle.SCdate|date:'j M Y' }}</td>
-                                    <td>{{ cycle.get_SCresult_display }}</td>
+                                    <td>{{ cycle.SCdate|date:'j M Y' }}</td><td>{{ cycle.SCscheduleddate|date:'j M Y'|default:'Not recorded' }}</td>
+                                    <td>{% if cycle.SCretryable %}On hold ? retry pending{% else %}{{ cycle.get_SCresult_display }}{% endif %}</td>
                                     <td>{% if cycle.SCorder %}<a href="/store/orders/{{ cycle.SCorder.Oid }}">{{ cycle.SCnote }}</a><br>Current order status: {{ cycle.SCorder.get_Ostatus_display }}{% if cycle.SCorder.Ostatus == 'cancelled' %}; simulated payment: {{ cycle.SCorder.get_Opayment_display }}{% endif %}{% else %}{{ cycle.SCnote }}{% endif %}</td>
                                 </tr>
                             {% endfor %}

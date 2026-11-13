@@ -1,8 +1,11 @@
 from django.urls import path
 
-from . import views, prediction_records, review_moderation
+from . import views, prediction_records, review_moderation, subscription_processing
 
 urlpatterns = [
+    path('subscriptions/', subscription_processing.subscription_processing, name='subscription_processing'),
+    path('subscriptions/process/', subscription_processing.process_subscriptions, name='process_subscriptions'),
+    path('subscriptions/<int:pk>/process/', subscription_processing.process_subscriptions, name='process_subscription'),
     path('reviews/', review_moderation.review_list, name='review_list'),
     path('reviews/<int:pk>/', review_moderation.review_detail, name='review_detail'),
     path('reviews/<int:pk>/action/', review_moderation.review_action, name='review_action'),

@@ -355,6 +355,7 @@ class SubscriptionCycle(models.Model):
 
     SCdate = models.DateField()
     SCscheduleddate = models.DateField(null=True, blank=True)
+    SCretryable = models.BooleanField(default=False)
     SCresult = models.CharField(max_length=10, choices=RESULT)
     SCnote = models.CharField(max_length=255, blank=True)
     SCsubscription = models.ForeignKey(Subscription, on_delete=models.RESTRICT, related_name='subscription_cycles')

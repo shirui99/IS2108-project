@@ -44,7 +44,7 @@ class ScheduledCycleConflict(Exception):
     """The due date may already have been processed and requires staff review."""
 
 
-def process_due_subscriptions(today=None):
+def process_due_subscriptions(today=None, subscription_id=None):
 
     # Creates one order for every active subscription whose next date has arrived.
     # Paused and cancelled plans are skipped because only active plans are selected.
@@ -53,7 +53,10 @@ def process_due_subscriptions(today=None):
     today = today or timezone.localdate()
     cycles = []
 
-    for subscription in Subscription.objects.filter(Sstatus='active', Snextdate__lte=today).order_by('pk'):
+    due = Subscription.objects.filter(Sstatus='active', Snextdate__lte=today).order_by('pk')
+    if subscription_id is not None:
+        due = due.filter(pk=subscription_id)
+    for subscription in due:
 
         with transaction.atomic():
 
@@ -73,9 +76,10 @@ def process_due_subscriptions(today=None):
             # in this due window, do not guess whether they already cover this cycle.
             ambiguous = SubscriptionCycle.objects.filter(SCsubscription=subscription, SCscheduleddate__isnull=True,
                 SCdate__gte=subscription.Snextdate, SCdate__lte=today).exists()
-            duplicate = SubscriptionCycle.objects.filter(SCsubscription=subscription,
-                SCscheduleddate=subscription.Snextdate).exists()
-            if ambiguous or duplicate:
+            cycle = SubscriptionCycle.objects.filter(SCsubscription=subscription,
+                SCscheduleddate=subscription.Snextdate).first()
+            retryable = cycle and cycle.SCresult == 'failed' and cycle.SCretryable and cycle.SCorder_id is None
+            if ambiguous or (cycle and not retryable):
                 raise ScheduledCycleConflict(f'Subscription {subscription.pk}: scheduled cycle {subscription.Snextdate} may already be recorded; review before processing.')
 
             customer = Customer.objects.get(pk=subscription.Scustomer_id)
@@ -86,16 +90,26 @@ def process_due_subscriptions(today=None):
                     customer, customer.Caddress, {subscription.Sproduct_id: subscription.Squantity}, ceiling=subscription.Sceiling
                 )
 
-                cycle = SubscriptionCycle.objects.create(
-                    SCsubscription=subscription, SCdate=today, SCscheduleddate=subscription.Snextdate, SCresult='ordered', SCorder=order,
-                    SCnote=f'Order {order.Oid} for ${total:.2f}'
-                )
+                values = dict(SCdate=today, SCresult='ordered', SCorder=order, SCretryable=False, SCnote=f'Order {order.Oid} for ${total:.2f}')
+                if cycle:
+                    for name, value in values.items():
+                        setattr(cycle, name, value)
+                    cycle.save(update_fields=list(values))
+                else:
+                    cycle = SubscriptionCycle.objects.create(SCsubscription=subscription, SCscheduleddate=subscription.Snextdate, **values)
 
             except OrderNotPlaced as error:
 
-                cycle = SubscriptionCycle.objects.create(
-                    SCsubscription=subscription, SCdate=today, SCscheduleddate=subscription.Snextdate, SCresult='failed', SCnote=str(error)[:255]
-                )
+                # The provisional schedule claim is retained only after a successful order.
+                if Subscription.objects.filter(pk=subscription.pk).update(Snextdate=subscription.Snextdate) != 1:
+                    raise ScheduledCycleConflict('The held plan changed; review before retrying.')
+                values = dict(SCdate=today, SCresult='failed', SCretryable=True, SCnote=str(error)[:255])
+                if cycle:
+                    for name, value in values.items():
+                        setattr(cycle, name, value)
+                    cycle.save(update_fields=list(values))
+                else:
+                    cycle = SubscriptionCycle.objects.create(SCsubscription=subscription, SCscheduleddate=subscription.Snextdate, **values)
 
             cycles.append(cycle)
 

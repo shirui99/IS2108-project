@@ -1,0 +1,10 @@
+﻿{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Due subscriptions | FruitBasket staff{% endblock %}
+{% block content %}
+<h1 class="fb-staff-page-title">Due subscriptions</h1>
+<p>Process active plans due today or earlier. A hold keeps the scheduled date for retry. Historical failures are not automatically rewound or retried.</p>
+<form method="post" action="{% url 'process_subscriptions' %}">{% csrf_token %}<button type="submit">Process due plans</button></form>
+<div class="fb-table-wrap fb-records-table" role="region" aria-label="Due subscriptions" tabindex="0"><p class="fb-table-hint">Scroll to see all columns.</p><table><thead><tr><th>Plan</th><th>Customer</th><th>Product</th><th>Scheduled date</th><th>Quantity / ceiling</th><th>State</th><th>Action</th></tr></thead><tbody>
+{% for plan in plans %}<tr><td>{{ plan.pk }}</td><td>{{ plan.Scustomer }}</td><td>{{ plan.Sproduct }}</td><td>{{ plan.Snextdate }}</td><td>{{ plan.Squantity }} / ${{ plan.Sceiling|floatformat:2 }}</td><td>{% if plan.current_cycle.SCretryable %}On hold: {{ plan.current_cycle.SCnote }}{% elif plan.current_cycle %}Already recorded — staff review required: {{ plan.current_cycle.get_SCresult_display }}. {{ plan.current_cycle.SCnote }}{% else %}Due{% endif %}</td><td><form method="post" action="{% url 'process_subscription' plan.pk %}">{% csrf_token %}<button type="submit">{% if plan.current_cycle.SCretryable %}Retry{% else %}Process{% endif %}</button></form></td></tr>
+{% empty %}<tr><td colspan="7">No active subscriptions are currently due.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
