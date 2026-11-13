@@ -1,5 +1,6 @@
 import json
 import math
+import pickle
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -153,60 +154,27 @@ def load_restock_artifacts():
         Reads `ml_models/restock_model.joblib` and
         `ml_models/restock_metadata.json` below Django's `settings.BASE_DIR`.
     """
+    artifact_dir = Path(settings.BASE_DIR) / "ml_models"
     try:
-        artifact_dir = Path(settings.BASE_DIR) / "ml_models"
-        model_path = artifact_dir / "restock_model.joblib"
-        metadata_path = artifact_dir / "restock_metadata.json"
+        metadata = json.loads((artifact_dir / "restock_metadata.json").read_text(encoding="utf-8"))
+        if not isinstance(metadata, dict):
+            raise ValueError("Metadata must be an object")
+    except (OSError, ValueError, TypeError):
+        return {"pipeline": None, "metadata": None, "error": "Restock metadata is unavailable or invalid"}
 
-        if not metadata_path.is_file():
-            raise FileNotFoundError(f"Missing restock metadata: {metadata_path}")
-
-        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-        feature_names = metadata.get("feature_names")
-        if feature_names != EXPECTED_FEATURES:
-            raise ValueError(
-                f"Unexpected restock feature names: {feature_names!r}"
-            )
-        if joblib is None:
-            return {
-                "pipeline": None,
-                "metadata": metadata,
-                "error": "joblib is not installed",
-            }
-        if not model_path.is_file():
-            return {
-                "pipeline": None,
-                "metadata": metadata,
-                "error": f"Missing restock pipeline: {model_path}",
-            }
-        try:
-            pipeline = joblib.load(model_path)
-        except (
-            OSError,
-            EOFError,
-            ImportError,
-            AttributeError,
-            ModuleNotFoundError,
-            ValueError,
-        ) as error:
-            return {
-                "pipeline": None,
-                "metadata": metadata,
-                "error": f"Unable to load restock pipeline: {error}",
-            }
-        return {"pipeline": pipeline, "metadata": metadata, "error": None}
-    except (
-        OSError,
-        ValueError,
-        TypeError,
-        RuntimeError,
-        EOFError,
-        ImportError,
-        AttributeError,
-        ModuleNotFoundError,
-        json.JSONDecodeError,
-    ) as error:
-        return {"pipeline": None, "metadata": None, "error": str(error)}
+    # Model failures must not discard independently usable training medians.
+    if metadata.get("feature_names") != EXPECTED_FEATURES:
+        return {"pipeline": None, "metadata": metadata, "error": "Restock feature schema is incompatible"}
+    if joblib is None:
+        return {"pipeline": None, "metadata": metadata, "error": "Restock model dependencies are unavailable"}
+    try:
+        pipeline = joblib.load(artifact_dir / "restock_model.joblib")
+        if not callable(getattr(pipeline, "predict", None)):
+            raise ValueError("Artifact is not a prediction pipeline")
+    except (OSError, EOFError, ImportError, AttributeError, ValueError, TypeError,
+            KeyError, IndexError, RuntimeError, pickle.PickleError):
+        return {"pipeline": None, "metadata": metadata, "error": "Restock model is unavailable or invalid"}
+    return {"pipeline": pipeline, "metadata": metadata, "error": None}
 
 
 def _prediction_result(status, latest_purchase_at, interval_days=None, reason=None):
@@ -239,7 +207,7 @@ def _prediction_result(status, latest_purchase_at, interval_days=None, reason=No
         ).isoformat()
     except (TypeError, ValueError, OverflowError) as error:
         result["status"] = "UNAVAILABLE"
-        result["reason"] = f"Invalid latest purchase date: {error}"
+        result["reason"] = "Invalid latest purchase date"
         result["interval_days"] = None
     return result
 
@@ -288,7 +256,7 @@ def predict_restock(
         return _prediction_result(
             "UNAVAILABLE",
             latest_purchase_at,
-            reason=f"Invalid latest purchase date: {error}",
+            reason="Invalid latest purchase date",
         )
 
     def fallback(reason):
@@ -355,4 +323,4 @@ def predict_restock(
         IndexError,
         RuntimeError,
     ) as error:
-        return fallback(f"Restock model prediction failed: {error}")
+        return fallback("Restock model could not provide an estimate")

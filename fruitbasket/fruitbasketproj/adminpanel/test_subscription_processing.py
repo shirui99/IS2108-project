@@ -78,9 +78,43 @@ class DueSubscriptionTests(TestCase):
 
     def test_historical_failures_not_retried(self):
         SubscriptionCycle.objects.create(SCsubscription=self.plan,SCdate=self.today,SCscheduleddate=self.today,SCresult='failed',SCnote='Old failure')
-        with self.assertRaises(ScheduledCycleConflict):process_due_subscriptions(self.today)
+        with self.assertRaises(ScheduledCycleConflict):process_due_subscriptions(self.today, subscription_id=self.plan.pk)
         self.plan.refresh_from_db();self.assertEqual(self.plan.Snextdate,self.today)
         self.assertFalse(Orders.objects.exists())
+
+    def test_bulk_continues_after_conflict_and_reports(self):
+        blocked=Subscription.objects.create(Scustomer=self.customer,Sproduct=self.product,Squantity=1,Sinterval=7,Snextdate=self.today,Sceiling=10,Screated=self.today)
+        later=Subscription.objects.create(Scustomer=self.customer,Sproduct=self.product,Squantity=1,Sinterval=7,Snextdate=self.today,Sceiling=10,Screated=self.today)
+        SubscriptionCycle.objects.create(SCsubscription=blocked,SCdate=self.today,SCscheduleddate=self.today,SCresult='failed',SCnote='Historical')
+        Item.objects.create(Iproduct=self.product,Ireceived=self.today)
+        response=self.client.post('/adminpanel/subscriptions/process/',follow=True)
+        self.assertContains(response,'Requires review')
+        self.assertContains(response,f'Subscription {self.plan.pk}: order')
+        self.assertContains(response,f'Subscription {later.pk}: order')
+        blocked.refresh_from_db();self.assertEqual(blocked.Snextdate,self.today)
+        self.assertEqual(Orders.objects.count(),2)
+        self.assertFalse(Orders.objects.filter(subscription_cycle__SCsubscription=blocked).exists())
+        output=StringIO();call_command('process_subscriptions',stdout=output)
+        self.assertIn('Requires review',output.getvalue())
+        self.assertEqual(Orders.objects.count(),2)
+
+    def test_blocked_first_bulk_reports_hold_and_success(self):
+        SubscriptionCycle.objects.create(SCsubscription=self.plan,SCdate=self.today,SCscheduleddate=self.today,SCresult='failed',SCnote='Historical')
+        later=Subscription.objects.create(Scustomer=self.customer,Sproduct=self.product,Squantity=1,Sinterval=7,Snextdate=self.today,Sceiling=10,Screated=self.today)
+        hold=Subscription.objects.create(Scustomer=self.customer,Sproduct=self.product,Squantity=2,Sinterval=7,Snextdate=self.today,Sceiling=10,Screated=self.today)
+        output=StringIO();call_command('process_subscriptions',stdout=output)
+        self.assertIn('Requires review',output.getvalue())
+        self.assertIn('Order created',output.getvalue())
+        self.assertIn('On hold',output.getvalue())
+        self.plan.refresh_from_db();hold.refresh_from_db()
+        self.assertEqual((self.plan.Snextdate,hold.Snextdate),(self.today,self.today))
+        self.assertEqual(Orders.objects.count(),1)
+        self.assertEqual(SubscriptionCycle.objects.get(SCsubscription=later).SCresult,'ordered')
+        self.assertTrue(SubscriptionCycle.objects.get(SCsubscription=hold).SCretryable)
+        response=self.client.post('/adminpanel/subscriptions/process/',follow=True)
+        self.assertContains(response,'Requires review')
+        self.assertContains(response,'on hold')
+        self.assertEqual(Orders.objects.count(),1)
 
     def test_excluded_plans_permissions_csrf_and_screen(self):
         for status,due in [('paused',self.today),('cancelled',self.today),('active',self.today+timedelta(days=1))]:

@@ -5,12 +5,12 @@
         <h1 class="fb-staff-page-title">Stock advice</h1>
         <p class="fb-page-help">Review packs to replenish or check for promotion. Each product and pack size has its own stock count. Staff decide what action to take.</p>
         <p>Suggested replenishment is the target minus sellable stock, with a minimum of zero. An unset target gives no suggestion. Inactive products are labelled for review before replenishing.</p>
-        <div class="fb-alert warning" role="note">Recorded available counts include every pack with warehouse status available. Sellable counts require an active product and a recorded date on or after today plus its shelf-life cutoff days, or no recorded date. Below-cutoff counts show dated available packs excluded by that rule. No stock status changes automatically. Stored dates have no recorded type; they are not confirmed use-by dates.</div>
+        <div class="fb-alert warning" role="note">Recorded available counts include every pack with warehouse status available. Sellable counts require an active product and a recorded date on or after today plus its shelf-life cutoff days, or no recorded date. Below-cutoff counts show dated available packs excluded by that rule. No stock status changes automatically. Received batches may record Use by, Best before or Expiry dates; legacy date types may be unknown. The same cutoff rule applies regardless of printed date type.</div>
     </section>
     <section class="fb-staff-section">
         <h2 class="fb-records-heading">Stock and recent order quantities</h2>
         <p>Packs in orders currently marked delivered, with order dates from {{ period_start|date:'j M Y' }} to {{ today|date:'j M Y' }} inclusive (30 calendar days). This includes packs later used or discarded.</p>
-        <p class="fb-help">No delivery date is recorded. Checkout item status alone does not confirm delivery, so this is an order-date count, not verified deliveries during this period. Placed and cancelled orders are excluded.</p>
+        <p class="fb-help">Delivery timestamps may be recorded for newer orders; legacy timestamps may be missing. This order-date count does not establish when delivery occurred. Placed and cancelled orders are excluded.</p>
         <div class="fb-table-wrap fb-records-table fb-stock-advice" role="region" aria-label="Stock advice by product" tabindex="0">
             <p class="fb-table-hint">Scroll to see all columns.</p>
             <table>

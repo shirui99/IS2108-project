@@ -17,6 +17,9 @@ class Command(BaseCommand):
         except DatabaseError as error:
             raise CommandError('Subscription processing could not complete because the database is busy or unavailable. Retry after checking the database; completed cycles will not be repeated.') from error
 
+        for problem in cycles.blocked:
+            self.stdout.write(f'Requires review: {problem}')
+
         for cycle in cycles:
 
             label = 'On hold' if cycle.SCretryable else cycle.get_SCresult_display()

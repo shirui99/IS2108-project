@@ -39,11 +39,8 @@
     </div>
     <hr />
     <div class="fb-staff-section">
-        {% if removed %}
-            <h3 style="color: #8a3529;">{{ removed }} item(s) were just written off as expired.</h3>
-        {% endif %}
-
-        Total written off as expired: {{ written_off }}
+        <p>Audited write-offs (all reasons): {{ writeoff_total }} packs. Of these, expiry reason: {{ writeoff_expired }} packs.</p>
+        <p>Legacy expired/discarded, reason not recorded: {{ legacy_expired }} packs.</p>
     </div>
     <hr />
     <div class="fb-staff-section">

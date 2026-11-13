@@ -32,7 +32,9 @@ def process_subscriptions(request, pk=None):
     except (DatabaseError, ScheduledCycleConflict) as error:
         messages.error(request, str(error) if isinstance(error, ScheduledCycleConflict) else 'The database is busy or unavailable. Please try again. Earlier completed plans will not be repeated.')
     else:
-        if not cycles:
+        for problem in cycles.blocked:
+            messages.error(request, f"Requires review: {problem}")
+        if not cycles and not cycles.blocked:
             messages.info(request, 'No active due plans were processed. The plan may have changed or already completed.')
         for cycle in cycles:
             if cycle.SCresult == 'ordered':

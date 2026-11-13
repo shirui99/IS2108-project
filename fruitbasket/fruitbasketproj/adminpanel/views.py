@@ -4,9 +4,9 @@ from django.core import signing
 from django.core.exceptions import ValidationError
 from uuid import uuid4
 from django.views.decorators.http import require_POST
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 from django.db import DatabaseError, IntegrityError, transaction
-from django.db.models import Count, Q, F
+from django.db.models import Count, Q, F, Sum
 from django.db.models.deletion import RestrictedError
 from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
 from datetime import timedelta
@@ -31,6 +31,7 @@ def stock_advice(request):
 
 
 
+@require_http_methods(["GET", "POST"])
 def login(request):
 
     if request.method == 'GET':
@@ -264,13 +265,17 @@ class CustomerView(View):
             form.add_error(None, 'Only the displayed contact fields can be changed.')
             valid = False
         if valid:
-            with transaction.atomic():
-                customer = form.save(commit=False)
-                customer.save(update_fields=['Cname', 'Caddress'])
-                customer.Cuser.email = form.cleaned_data['email']
-                customer.Cuser.save(update_fields=['email'])
-            messages.success(request, 'Contact details updated.')
-            return redirect('customer_new', pk=customer.pk)
+            try:
+                with transaction.atomic():
+                    customer = form.save(commit=False)
+                    customer.save(update_fields=['Cname', 'Caddress'])
+                    customer.Cuser.email = form.cleaned_data['email']
+                    customer.Cuser.save(update_fields=['email'])
+            except DatabaseError:
+                form.add_error(None, 'The contact details could not be saved. Please try again.')
+            else:
+                messages.success(request, 'Contact details updated.')
+                return redirect('customer_new', pk=customer.pk)
         return self.page(request, customer, form)
 
 
@@ -569,9 +574,11 @@ class ItemView(View):
         legacy = list(legacy)
         for group in legacy:
             group['group_token'] = signing.dumps({'product': group['Iproduct'], 'received': group['Ireceived'].isoformat(), 'date': group['Iexpiry'].isoformat() if group['Iexpiry'] else None}, salt='stock-group')
-        return render(request, self.template_name, {'history': StockAdjustment.objects.select_related('staff', 'product', 'batch'), 'form': form.render('adminpanel/form_template.html'),
+        # Differences record pack quantities, not the number of adjustment events.
+        totals = StockAdjustment.objects.filter(kind='writeoff').aggregate(total=Sum('difference'), expiry=Sum('difference', filter=Q(reason='expired')))
+        return render(request, self.template_name, {'writeoff_total': -(totals['total'] or 0), 'writeoff_expired': -(totals['expiry'] or 0), 'history': StockAdjustment.objects.select_related('staff', 'product', 'batch'), 'form': form.render('adminpanel/form_template.html'),
             'receipts': receipts, 'batches': legacy, 'today': today,
-            'written_off': Item.objects.filter(Iorder__isnull=True, Istatus='expired').count()})
+            'legacy_expired': Item.objects.filter(Iorder__isnull=True, Istatus='expired').count()})
 
 class StockChanged(Exception):
     pass

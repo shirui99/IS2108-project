@@ -57,7 +57,7 @@ class SubscriptionSafetyTests(TestCase):
         self.assertContains(response,'was cancelled')
         self.assertEqual(process_due_subscriptions(self.today),[])
         Subscription.objects.filter(pk=self.plan.pk).update(Snextdate=self.today)
-        with self.assertRaises(ScheduledCycleConflict): process_due_subscriptions(self.today)
+        with self.assertRaises(ScheduledCycleConflict): process_due_subscriptions(self.today, subscription_id=self.plan.pk)
         self.plan.refresh_from_db();self.assertEqual(self.plan.Snextdate,self.today)
         self.assertEqual((Orders.objects.count(),SubscriptionCycle.objects.count()),(1,1))
         self.assertEqual(Orders.objects.get().Opayment,'refunded')
@@ -76,7 +76,7 @@ class SubscriptionSafetyTests(TestCase):
 
     def test_ambiguous_legacy_cycle_fails_closed(self):
         SubscriptionCycle.objects.create(SCsubscription=self.plan,SCdate=self.today,SCresult='failed')
-        with self.assertRaises(ScheduledCycleConflict): process_due_subscriptions(self.today)
+        with self.assertRaises(ScheduledCycleConflict): process_due_subscriptions(self.today, subscription_id=self.plan.pk)
         self.plan.refresh_from_db();self.assertEqual(self.plan.Snextdate,self.today)
         self.assertEqual(Orders.objects.count(),0)
     def test_cancellation_outcomes_visible_only_to_group_members(self):

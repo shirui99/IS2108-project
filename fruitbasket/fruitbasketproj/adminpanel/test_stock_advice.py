@@ -95,6 +95,13 @@ class StockAdviceTests(TestCase):
         self.staff.save()
         self.assertRedirects(self.client.get('/adminpanel/stock_advice'), '/adminpanel/login')
 
+    def test_explanation_describes_actual_date_limits(self):
+        response=self.client.get('/adminpanel/stock_advice')
+        for phrase in ['order dates from', 'Delivery timestamps may be recorded', 'legacy timestamps may be missing', 'Use by, Best before or Expiry', 'legacy date types may be unknown', 'same cutoff rule']:
+            self.assertContains(response,phrase)
+        self.assertNotContains(response,'No delivery date is recorded')
+        self.assertNotContains(response,'Stored dates have no recorded type')
+
     def test_empty_states_and_bounded_queries(self):
         response = self.client.get('/adminpanel/stock_advice')
         self.assertContains(response, 'No products configured.')

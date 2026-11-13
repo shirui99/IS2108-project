@@ -7,7 +7,7 @@ from .inventory import sellable_stock_filter, stock_cutoff
 
 
 def get_stock_advice(today):
-    # There is no delivery timestamp: the recent period uses order dates.
+    # The agreed recent-sales measure uses order dates and current delivered status.
     period_start = today - timedelta(days=29)
     near_end = today + timedelta(days=7)
     available = Q(product_items__Istatus='available')

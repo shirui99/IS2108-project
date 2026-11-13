@@ -86,6 +86,22 @@ class AdjustmentTests(TestCase):
         self.assertEqual(StockAdjustment.objects.count(), 1)
         self.assertEqual(Item.objects.filter(Ibatch=self.batch, Istatus='writtenoff').count(), 1)
 
+    def test_writeoff_summary_counts_packs_not_events(self):
+        page=self.client.get('/adminpanel/item_new')
+        self.assertEqual((page.context['writeoff_total'],page.context['writeoff_expired'],page.context['legacy_expired']),(0,0,0))
+        Item.objects.create(Iproduct=self.product,Ireceived=self.today,Istatus='expired')
+        expiry=self.data(action='writeoff',quantity='2',reason='expired')
+        self.client.post('/adminpanel/stock_adjust',expiry)
+        self.client.post('/adminpanel/stock_adjust',expiry)
+        self.client.post('/adminpanel/stock_adjust',self.data(self.legacy_token,action='writeoff',quantity='1',reason='damaged'))
+        data=self.data(self.legacy_token,action='correction',quantity='0',reason='Count')
+        data['expected_count']='1';data['snapshot']=signing.dumps([data['group'],data['action'],1],salt='stock-snapshot')
+        self.client.post('/adminpanel/stock_adjust',data)
+        for _ in range(2):
+            page=self.client.get('/adminpanel/item_new')
+            self.assertEqual((page.context['writeoff_total'],page.context['writeoff_expired'],page.context['legacy_expired']),(3,2,1))
+            self.assertContains(page,'reason not recorded')
+
     def test_invalid_fields(self):
         for action, quantity, reason in [('correction', '-1', 'why'), ('correction', '1.5', 'why'), ('correction', '1', ''), ('writeoff', '0', 'expired'), ('writeoff', '4', 'expired'), ('writeoff', '1', 'other'), ('writeoff', 'x', 'expired')]:
             with self.subTest(action=action, quantity=quantity, reason=reason):

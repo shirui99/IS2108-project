@@ -44,6 +44,12 @@ class ScheduledCycleConflict(Exception):
     """The due date may already have been processed and requires staff review."""
 
 
+class ProcessingResults(list):
+    def __init__(self):
+        super().__init__()
+        self.blocked = []
+
+
 def process_due_subscriptions(today=None, subscription_id=None):
 
     # Creates one order for every active subscription whose next date has arrived.
@@ -51,66 +57,72 @@ def process_due_subscriptions(today=None, subscription_id=None):
     # Returns the list of cycle records that were written.
 
     today = today or timezone.localdate()
-    cycles = []
+    cycles = ProcessingResults()
 
     due = Subscription.objects.filter(Sstatus='active', Snextdate__lte=today).order_by('pk')
     if subscription_id is not None:
         due = due.filter(pk=subscription_id)
     for subscription in due:
 
-        with transaction.atomic():
+        try:
+            with transaction.atomic():
 
-            # Moving the next date first, and only if it has not moved yet, stops the same
-            # cycle being ordered twice when the command is run twice.
-            # The next date counts from today, so missed dates never create backdated orders.
-            claimed = Subscription.objects.filter(
-                pk=subscription.pk, Sstatus='active', Snextdate=subscription.Snextdate,
-                Squantity=subscription.Squantity, Sinterval=subscription.Sinterval, Sceiling=subscription.Sceiling
-            ).update(Snextdate=today + timedelta(days=subscription.Sinterval))
+                # Moving the next date first, and only if it has not moved yet, stops the same
+                # cycle being ordered twice when the command is run twice.
+                # The next date counts from today, so missed dates never create backdated orders.
+                claimed = Subscription.objects.filter(
+                    pk=subscription.pk, Sstatus='active', Snextdate=subscription.Snextdate,
+                    Squantity=subscription.Squantity, Sinterval=subscription.Sinterval, Sceiling=subscription.Sceiling
+                ).update(Snextdate=today + timedelta(days=subscription.Sinterval))
 
-            if not claimed:
+                if not claimed:
 
-                continue
+                    continue
 
-            # Older records have no scheduled date. If their processing date falls
-            # in this due window, do not guess whether they already cover this cycle.
-            ambiguous = SubscriptionCycle.objects.filter(SCsubscription=subscription, SCscheduleddate__isnull=True,
-                SCdate__gte=subscription.Snextdate, SCdate__lte=today).exists()
-            cycle = SubscriptionCycle.objects.filter(SCsubscription=subscription,
-                SCscheduleddate=subscription.Snextdate).first()
-            retryable = cycle and cycle.SCresult == 'failed' and cycle.SCretryable and cycle.SCorder_id is None
-            if ambiguous or (cycle and not retryable):
-                raise ScheduledCycleConflict(f'Subscription {subscription.pk}: scheduled cycle {subscription.Snextdate} may already be recorded; review before processing.')
+                # Older records have no scheduled date. If their processing date falls
+                # in this due window, do not guess whether they already cover this cycle.
+                ambiguous = SubscriptionCycle.objects.filter(SCsubscription=subscription, SCscheduleddate__isnull=True,
+                    SCdate__gte=subscription.Snextdate, SCdate__lte=today).exists()
+                cycle = SubscriptionCycle.objects.filter(SCsubscription=subscription,
+                    SCscheduleddate=subscription.Snextdate).first()
+                retryable = cycle and cycle.SCresult == 'failed' and cycle.SCretryable and cycle.SCorder_id is None
+                if ambiguous or (cycle and not retryable):
+                    raise ScheduledCycleConflict(f'Subscription {subscription.pk}: scheduled cycle {subscription.Snextdate} may already be recorded; review before processing.')
 
-            customer = Customer.objects.get(pk=subscription.Scustomer_id)
+                customer = Customer.objects.get(pk=subscription.Scustomer_id)
 
-            try:
+                try:
 
-                order, total = place_order(
-                    customer, customer.Caddress, {subscription.Sproduct_id: subscription.Squantity}, ceiling=subscription.Sceiling
-                )
+                    order, total = place_order(
+                        customer, customer.Caddress, {subscription.Sproduct_id: subscription.Squantity}, ceiling=subscription.Sceiling
+                    )
 
-                values = dict(SCdate=today, SCresult='ordered', SCorder=order, SCretryable=False, SCnote=f'Order {order.Oid} for ${total:.2f}')
-                if cycle:
-                    for name, value in values.items():
-                        setattr(cycle, name, value)
-                    cycle.save(update_fields=list(values))
-                else:
-                    cycle = SubscriptionCycle.objects.create(SCsubscription=subscription, SCscheduleddate=subscription.Snextdate, **values)
+                    values = dict(SCdate=today, SCresult='ordered', SCorder=order, SCretryable=False, SCnote=f'Order {order.Oid} for ${total:.2f}')
+                    if cycle:
+                        for name, value in values.items():
+                            setattr(cycle, name, value)
+                        cycle.save(update_fields=list(values))
+                    else:
+                        cycle = SubscriptionCycle.objects.create(SCsubscription=subscription, SCscheduleddate=subscription.Snextdate, **values)
 
-            except OrderNotPlaced as error:
+                except OrderNotPlaced as error:
 
-                # The provisional schedule claim is retained only after a successful order.
-                if Subscription.objects.filter(pk=subscription.pk).update(Snextdate=subscription.Snextdate) != 1:
-                    raise ScheduledCycleConflict('The held plan changed; review before retrying.')
-                values = dict(SCdate=today, SCresult='failed', SCretryable=True, SCnote=str(error)[:255])
-                if cycle:
-                    for name, value in values.items():
-                        setattr(cycle, name, value)
-                    cycle.save(update_fields=list(values))
-                else:
-                    cycle = SubscriptionCycle.objects.create(SCsubscription=subscription, SCscheduleddate=subscription.Snextdate, **values)
+                    # The provisional schedule claim is retained only after a successful order.
+                    if Subscription.objects.filter(pk=subscription.pk).update(Snextdate=subscription.Snextdate) != 1:
+                        raise ScheduledCycleConflict('The held plan changed; review before retrying.')
+                    values = dict(SCdate=today, SCresult='failed', SCretryable=True, SCnote=str(error)[:255])
+                    if cycle:
+                        for name, value in values.items():
+                            setattr(cycle, name, value)
+                        cycle.save(update_fields=list(values))
+                    else:
+                        cycle = SubscriptionCycle.objects.create(SCsubscription=subscription, SCscheduleddate=subscription.Snextdate, **values)
 
-            cycles.append(cycle)
+                cycles.append(cycle)
+
+        except ScheduledCycleConflict as error:
+            if subscription_id is not None:
+                raise
+            cycles.blocked.append(str(error))
 
     return cycles
