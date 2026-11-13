@@ -13,6 +13,7 @@ class FulfilmentTests(TestCase):
         cls.buyer=User.objects.create_user('fulfil_buyer')
         cls.other=User.objects.create_user('other_buyer')
         cls.inactive=User.objects.create_user('inactive',is_staff=True,is_active=False)
+        cls.other_customer=Customer.objects.create(Cid='F0002',Cname='Other',Caddress='x',Chouseholdsize=1,Cmealsperweek=1,Cuser=cls.other)
         cls.customer=Customer.objects.create(Cid='F0001',Cname='Buyer',Caddress='Address',Chouseholdsize=1,Cmealsperweek=1,Cuser=cls.buyer)
         cls.product=Product.objects.create(Pid='F0001',Pname='Apple',Pcategory_id='fruit',Psize='pack',Pprice=3,Plowstock=0)
     def setUp(self):
@@ -24,7 +25,7 @@ class FulfilmentTests(TestCase):
     def step(self,action): return self.client.post(self.url,{'action':action})
     def pantry(self,user=None):
         c=Client(); c.force_login(user or self.buyer)
-        session=c.session; session['Cid']=self.customer.pk if user!=self.other else 'OTHER'; session.save()
+        session=c.session; session['Cid']=self.customer.pk if user!=self.other else self.other_customer.pk; session.save()
         return c.get('/store/pantry').context['pantry_items']
     def test_sequence_repeat_timestamps_and_pantry(self):
         self.assertEqual(self.item.Istatus,'allocated')
@@ -85,7 +86,7 @@ class FulfilmentTests(TestCase):
         data['Ostatus']='placed';data['Oid']='OTHER'
         self.assertContains(self.client.post(f'/adminpanel/order_new/{self.order.pk}',data),'order ID cannot be changed')
         data['Oid']=self.order.pk;data.pop('Ostatus')
-        other_customer=Customer.objects.create(Cid='F0002',Cname='Other',Caddress='x',Chouseholdsize=1,Cmealsperweek=1,Cuser=self.other)
+        other_customer=self.other_customer
         data['Ocustomer']=other_customer.pk
         self.assertContains(self.client.post(f'/adminpanel/order_new/{self.order.pk}',data),'customer cannot change')
         data['Ocustomer']=self.customer.pk

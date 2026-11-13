@@ -1,0 +1,5 @@
+{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Cancel order {{ order.pk }} | FruitBasket staff{% endblock %}
+{% block content %}<section class="fb-staff-section"><h1>Cancel order {{ order.pk }}</h1>
+<form method="post" action="{% url 'staff_order_cancel' order.pk %}" class="fb-staff-editor" novalidate>{% csrf_token %}{{ form.non_field_errors }}{{ form.reason.label_tag }}{{ form.reason }}{{ form.reason.errors }}<button type="submit">Cancel placed order</button></form>
+<p><a href="{% url 'staff_order_detail' order.pk %}">Back to order</a></p></section>{% endblock %}

@@ -1,0 +1,9 @@
+{% if order.cancellation %}
+<section><h2>Cancellation record</h2>
+<p>{{ order.cancellation.get_source_display }} cancellation: {{ order.cancellation.created_at }}{% if show_employee and order.cancellation.employee %} by {{ order.cancellation.employee.username }}{% endif %}</p>
+{% if order.cancellation.reason %}<p>Reason: {{ order.cancellation.reason }}</p>{% endif %}
+<p>Recorded simulated payment: {{ order.cancellation.payment_before }} to {{ order.cancellation.payment_after }}.</p>
+<h3>Allocation retained at cancellation</h3><p>Product descriptions were captured at cancellation. Unknown recorded prices and batches remain unknown.</p>
+<div class="fb-table-wrap fb-records-table" role="region" aria-label="Cancelled allocation history" tabindex="0"><p class="fb-table-hint">Scroll to see all columns.</p><table><thead><tr><th>Product</th><th>Quantity</th><th>Recorded unit price</th><th>Batch</th><th>Received</th><th>Recorded date</th></tr></thead><tbody>
+{% for line in order.cancellation.allocations.all %}<tr><td>{{ line.product_id }} - {{ line.product_name }} ({{ line.pack_size }})</td><td>{{ line.quantity }}</td><td>{% if line.unit_price is not None %}${{ line.unit_price|floatformat:2 }}{% else %}Not recorded{% endif %}</td><td>{{ line.batch_reference|default:'Batch not recorded' }}</td><td>{{ line.received }}</td><td>{{ line.recorded_date|default:'Not recorded' }}</td></tr>{% empty %}<tr><td colspan="6">No allocated packs were recorded at cancellation.</td></tr>{% endfor %}
+</tbody></table></div></section>{% elif order.Ostatus == 'cancelled' %}<p>No cancellation snapshot was recorded for this historical order.</p>{% endif %}

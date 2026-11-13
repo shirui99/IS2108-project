@@ -136,6 +136,29 @@ class Orders(models.Model):
 
 
 
+class OrderCancellation(models.Model):
+    order = models.OneToOneField(Orders, on_delete=models.PROTECT, related_name='cancellation')
+    source = models.CharField(max_length=8, choices=[('staff', 'Staff'), ('customer', 'Customer')])
+    employee = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT)
+    reason = models.CharField(max_length=1000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    payment_before = models.CharField(max_length=10)
+    payment_after = models.CharField(max_length=10)
+
+
+class CancelledAllocation(models.Model):
+    cancellation = models.ForeignKey(OrderCancellation, on_delete=models.PROTECT, related_name='allocations')
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    product_name = models.CharField(max_length=200)
+    pack_size = models.CharField(max_length=30)
+    quantity = models.PositiveIntegerField()
+    unit_price = models.FloatField(null=True, blank=True)
+    batch = models.ForeignKey('InventoryBatch', null=True, blank=True, on_delete=models.PROTECT)
+    batch_reference = models.CharField(max_length=100, null=True, blank=True)
+    received = models.DateField()
+    recorded_date = models.DateField(null=True, blank=True)
+
+
 class InventoryBatch(models.Model):
     DATE_TYPES = [('use_by', 'Use by'), ('best_before', 'Best before'), ('expiry', 'Expiry')]
     Breference = models.CharField(max_length=100, unique=True, verbose_name='Batch reference')

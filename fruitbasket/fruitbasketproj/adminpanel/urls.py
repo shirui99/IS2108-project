@@ -13,6 +13,7 @@ urlpatterns = [
     path('customer_new', views.CustomerView.as_view(), name='customer_new'),
     path('customer_new/<pk>', views.CustomerView.as_view(), name='customer_new'),
     path('orders/', views.order_inspection_list, name='staff_order_list'),
+    path('orders/<str:pk>/cancel/', views.staff_cancel_order, name='staff_order_cancel'),
     path('orders/<str:pk>/fulfil/', views.fulfil_order, name='staff_order_fulfil'),
     path('orders/<str:pk>/', views.order_inspection_detail, name='staff_order_detail'),
     path('order_new', views.OrderView.as_view(), name='order_new'),

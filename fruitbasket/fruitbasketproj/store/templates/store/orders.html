@@ -79,6 +79,7 @@
                 </div>
                 <a class="fb-text-link" href="/store/pantry">Check my pantry &rarr;</a>
             </div>
+            {% include 'cancellation_history.html' %}
             <p>Dispatched: {{ order.Odispatched|default:'Not recorded' }}<br>Delivered: {{ order.Odelivered|default:'Not recorded' }}</p>
             <div class="fb-table-wrap fb-records-table" role="region" aria-label="Items in order {{ order.Oid }}" tabindex="0">
                 <p class="fb-table-hint">Scroll to see all columns.</p>

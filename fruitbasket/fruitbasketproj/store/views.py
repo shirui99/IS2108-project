@@ -14,6 +14,7 @@ from django.db.models import F
 from adminpanel.models import Review, Subscription, SavedItem, StockNotice
 from .restock import get_customer_purchase_history, get_restock_suggestions
 from .ordering import OrderNotPlaced, generate_order_id, place_order
+from .cancellation import cancel_order
 from .forms import ProfileForm, ReviewForm, SignupForm
 
 # Create your views here.
@@ -431,19 +432,7 @@ def orders(request, pk=None):
 
                 # Claim the placed order first; preparation uses the same conditional status update.
                 try:
-                    with transaction.atomic():
-                        cancelled = Orders.objects.filter(pk=order.pk, Ocustomer_id=request.session.get('Cid'),
-                            Ostatus='placed').update(Ostatus='cancelled', Opayment='refunded')
-                        if cancelled:
-                            packs = Item.objects.filter(Iorder_id=order.pk)
-                            total = packs.count()
-                            eligible = packs.filter(Istatus__in=['allocated', 'delivered'],
-                                Ifinished__isnull=True, Irating__isnull=True)
-                            if eligible.count() != total:
-                                raise ValueError('Some items in this order were already used or thrown away. Please contact support below.')
-                            released = eligible.update(Iorder=None, Istatus='available', Ipurchasedprice=None, Irating=None)
-                            if released != total:
-                                raise ValueError('Order items changed during cancellation. Please review the order and try again.')
+                    cancelled = cancel_order(order.pk, customer_id=request.session.get('Cid'))
                 except (ValueError, DatabaseError) as error:
                     status_type = 'error'
                     status_message = str(error) if isinstance(error, ValueError) else 'The order could not be cancelled because it changed or the database is busy. Please try again.'

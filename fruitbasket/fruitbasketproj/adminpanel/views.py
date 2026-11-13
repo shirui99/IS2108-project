@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.views import View
 
 from .models import Product, Customer, Orders, Item, SupportTicket, Category, category_code, InventoryBatch, StockAdjustment
-from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm, CategoryForm, StockAdjustmentForm
+from .forms import ProductForm, CustomerForm, OrderForm, ItemBatchForm, CategoryForm, StockAdjustmentForm, OrderCancellationForm
 from .stock_advice import get_stock_advice
 
 
@@ -479,7 +479,7 @@ def order_inspection_detail(request, pk):
                 unmatched.setdefault(line.GLcustomer_id, {'customer': line.GLcustomer, 'lines': [], 'unmatched': True})['lines'].append(line)
         members.extend(unmatched.values())
     return render(request, 'adminpanel/order_inspection_detail.html', {'order': order, 'origin': _order_origin(order),
-        'lines': list(grouped.values()), 'group': group, 'members': members, 'cycle': cycle})
+        'lines': list(grouped.values()), 'group': group, 'members': members, 'cycle': cycle, 'cancel_form': OrderCancellationForm()})
 
 
 class OrderView(View):
@@ -561,8 +561,13 @@ class OrderView(View):
                         if request.POST.get('Ostatus', current.Ostatus) != current.Ostatus:
                             form.add_error(None, 'Use the fulfilment actions to change status.')
                         owner_changed = form.cleaned_data['Ocustomer'].pk != current.Ocustomer_id
-                        if owner_changed and (current.order_items.exists() or getattr(current, 'group_purchase', None) or getattr(current, 'subscription_cycle', None)):
+                        if owner_changed and (current.order_items.exists() or getattr(current, 'cancellation', None) or getattr(current, 'group_purchase', None) or getattr(current, 'subscription_cycle', None)):
                             form.add_error('Ocustomer', 'The customer cannot change for an allocated or linked order.')
+                        if current.Ostatus == 'cancelled':
+                            if form.cleaned_data['Oaddress'] != current.Oaddress:
+                                form.add_error('Oaddress', 'The delivery address cannot change after cancellation.')
+                            if form.cleaned_data['Odate'] != current.Odate:
+                                form.add_error('Odate', 'The order date cannot change after cancellation.')
                         if not form.errors:
                             Orders.objects.filter(pk=current.pk).update(Ocustomer=form.cleaned_data['Ocustomer'], Oaddress=form.cleaned_data['Oaddress'], Odate=form.cleaned_data['Odate'])
                     elif request.POST.get('Ostatus', 'placed') != 'placed':
@@ -576,6 +581,27 @@ class OrderView(View):
                     return redirect('order_new')
         return render(request, self.template_name, {'order_id': original_pk or '', 'form': form.render('adminpanel/form_template.html'), 'action': action,
             'orders': Orders.objects.annotate(items=Count('order_items')), 'status_type': 'error', 'status_message': 'Please correct the order details.'})
+
+
+@require_POST
+def staff_cancel_order(request, pk):
+    if not _staff_order_access(request):
+        return redirect('adminpanel_login')
+    from store.cancellation import cancel_order
+    order = get_object_or_404(Orders, pk=pk)
+    form = OrderCancellationForm(request.POST)
+    if form.is_valid():
+        try:
+            cancelled = cancel_order(pk, employee=request.user, reason=form.cleaned_data['reason'])
+        except (ValueError, DatabaseError) as error:
+            form.add_error(None, str(error) if isinstance(error, ValueError) else 'The order could not be cancelled. Please review it and try again.')
+        else:
+            if cancelled:
+                messages.success(request, 'Order cancelled; allocation history retained and simulated payment refunded.')
+            else:
+                messages.info(request, 'Only a placed order can be cancelled. This order was not changed.')
+            return redirect('staff_order_detail', pk=pk)
+    return render(request, 'adminpanel/order_cancel.html', {'order': order, 'form': form})
 
 
 @require_POST

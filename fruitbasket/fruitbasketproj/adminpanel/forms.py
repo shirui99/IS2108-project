@@ -104,3 +104,7 @@ class StockAdjustmentForm(forms.Form):
         if action != self.expected_action:
             raise forms.ValidationError('Invalid adjustment action.')
         return action
+
+
+class OrderCancellationForm(forms.Form):
+    reason = forms.CharField(max_length=1000, label='Cancellation reason', widget=forms.Textarea(attrs={'rows': 3}))

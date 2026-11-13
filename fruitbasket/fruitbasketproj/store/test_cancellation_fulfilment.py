@@ -90,6 +90,12 @@ class CancellationTests(TestCase):
 
 class CancelPrepareRaceTests(TransactionTestCase):
     def test_two_clients_cancel_and_prepare(self):
+        self.run_race()
+
+    def test_staff_cancel_races_preparation(self):
+        self.run_race(staff_cancel=True)
+
+    def run_race(self, staff_cancel=False):
         from adminpanel.models import Category
         Category.objects.get_or_create(Ccode='dairy', defaults={'Cname':'Dairy, Chilled & Eggs'})
         user=User.objects.create_user('race_customer');staff=User.objects.create_user('race_staff',is_staff=True)
@@ -99,11 +105,12 @@ class CancelPrepareRaceTests(TransactionTestCase):
         pack=Item.objects.create(Iproduct=product,Ireceived=date.today(),Iorder=order,Istatus='allocated',Ipurchasedprice=2)
         customer_client=Client();customer_client.force_login(user);session=customer_client.session;session['Cid']=customer.pk;session.save()
         staff_client=Client();staff_client.force_login(staff)
+        cancel_client=Client();cancel_client.force_login(staff)
         barrier=Barrier(2)
         def run(kind):
             close_old_connections();barrier.wait()
             try:
-                return (customer_client.post(f'/store/orders/{order.pk}',{'action':'cancel'}).status_code if kind=='cancel' else staff_client.post(f'/adminpanel/orders/{order.pk}/fulfil/',{'action':'prepare'}).status_code)
+                return ((cancel_client.post(f'/adminpanel/orders/{order.pk}/cancel/',{'reason':'Race cancellation'}).status_code if staff_cancel else customer_client.post(f'/store/orders/{order.pk}',{'action':'cancel'}).status_code) if kind=='cancel' else staff_client.post(f'/adminpanel/orders/{order.pk}/fulfil/',{'action':'prepare'}).status_code)
             except OperationalError: return 'sqlite busy'
             finally: close_old_connections()
         with ThreadPoolExecutor(max_workers=2) as pool: results=list(pool.map(run,['cancel','prepare']))
@@ -111,9 +118,15 @@ class CancelPrepareRaceTests(TransactionTestCase):
         self.assertTrue(all(result in (200,302,'sqlite busy') for result in results))
         self.assertIn(order.Ostatus,['placed','preparing','cancelled'])
         print(f'Cancel/prepare race: responses={results}; final_status={order.Ostatus}')
-        if order.Ostatus=='cancelled': self.assertEqual((order.Opayment,pack.Iorder_id,pack.Istatus,pack.Ipurchasedprice),('refunded',None,'available',None))
+        if order.Ostatus=='cancelled':
+            self.assertEqual((order.Opayment,pack.Iorder_id,pack.Istatus,pack.Ipurchasedprice),('refunded',None,'available',None))
+            self.assertEqual(order.cancellation.allocations.get().quantity,1)
+            self.assertEqual(order.cancellation.source,'staff' if staff_cancel else 'customer')
         else: self.assertEqual((order.Opayment,pack.Iorder_id,pack.Istatus,pack.Ipurchasedprice),('paid',order.pk,'allocated',2))
         if order.Ostatus=='placed':
-            customer_client.post(f'/store/orders/{order.pk}',{'action':'cancel'})
+            if staff_cancel:
+                cancel_client.post(f'/adminpanel/orders/{order.pk}/cancel/',{'reason':'Race cancellation retry'})
+            else:
+                customer_client.post(f'/store/orders/{order.pk}',{'action':'cancel'})
             order.refresh_from_db();pack.refresh_from_db()
             self.assertEqual((order.Ostatus,pack.Iorder_id),('cancelled',None))
