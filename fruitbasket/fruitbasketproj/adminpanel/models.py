@@ -479,3 +479,15 @@ class StockNotice(models.Model):
     def __str__(self):
 
         return f'{self.SNcustomer.Cname} waiting for {self.SNproduct.Pname}'
+
+
+class RestockCapture(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    employee = models.ForeignKey(User, on_delete=models.PROTECT)
+    captured_at = models.DateTimeField(auto_now_add=True)
+    fingerprint = models.CharField(max_length=64, unique=True)
+    snapshot = models.JSONField()
+
+    class Meta:
+        ordering = ['-captured_at', '-pk']

@@ -8,6 +8,7 @@
     <li><a class="{% if '/adminpanel/customer_new' in request.path %}is-active{% endif %}" href="/adminpanel/customer_new">Customers</a></li>
     <li><a class="{% if '/adminpanel/order_new' in request.path or '/adminpanel/orders/' in request.path %}is-active{% endif %}" href="{% url 'staff_order_list' %}">Orders</a></li>
     <li><a class="{% if '/adminpanel/support' in request.path %}is-active{% endif %}" href="/adminpanel/support">Support</a></li>
+    <li><a class="{% if '/adminpanel/predictions/' in request.path %}is-active{% endif %}" href="{% url 'prediction_list' %}">Prediction records</a></li>
     <li><form action="/adminpanel/logout" method="post">{% csrf_token %}<button class="fb-nav-logout" type="submit">Log out</button></form></li>
     <li><a href="/">FruitBasket home</a></li>
 </ul>

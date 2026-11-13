@@ -15,14 +15,18 @@ class CategoryMigrationTests(TransactionTestCase):
         return executor.loader.project_state(target).apps
 
     def setUp(self):
+        # Register before downgrading so setup failures also restore the graph.
+        self.addCleanup(self.restore_schema)
         self.apps = self.migrate(self.old)
 
-    def tearDown(self):
-        # Restore the schema for Django's test cleanup even after a rejected migration.
-        Product = self.apps.get_model('adminpanel', 'Product')
-        Product.objects.filter(Pcategory='unexpected').update(Pcategory='fruit')
-        self.migrate(self.new)
-        super().tearDown()
+    def restore_schema(self):
+        executor = MigrationExecutor(connection)
+        try:
+            Product = executor.loader.project_state(self.old).apps.get_model('adminpanel', 'Product')
+            Product.objects.filter(Pcategory='unexpected').update(Pcategory='fruit')
+        finally:
+            executor = MigrationExecutor(connection)
+            executor.migrate(executor.loader.graph.leaf_nodes())
 
     def product(self, code='fruit'):
         return self.apps.get_model('adminpanel', 'Product').objects.create(

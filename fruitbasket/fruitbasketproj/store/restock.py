@@ -36,10 +36,8 @@ def get_customer_purchase_history(customer_id):
         `purchased_quantity`. Products with no qualifying history are absent.
 
     Notes:
-        The ownership filter uses `Orders.Ocustomer_id` and delivered status.
-        There is no separate personal-order marker in the current schema, so
-        future subscription/group orders will need an explicit type or
-        ownership field before they can be excluded here.
+        Linked group and subscription orders are excluded. Unlinked legacy
+        orders remain eligible because their origin cannot be determined.
     """
     from adminpanel.models import Item
 
@@ -47,6 +45,8 @@ def get_customer_purchase_history(customer_id):
         Item.objects.filter(
             Iorder__Ocustomer_id=customer_id,
             Iorder__Ostatus="delivered",
+            Iorder__group_purchase__isnull=True,
+            Iorder__subscription_cycle__isnull=True,
         )
         .values("Iproduct_id", "Iorder__Odate")
         .annotate(purchased_quantity=Count("id"))

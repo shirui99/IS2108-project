@@ -1,0 +1,15 @@
+﻿{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Prediction records | FruitBasket staff{% endblock %}
+{% block content %}
+<h1 class="fb-staff-page-title">Restock prediction records</h1>
+<p>Staff captures record a calculation at a point in time. They do not show that a customer saw an estimate or that a product was available to buy.</p>
+<section class="fb-staff-section"><h2>Capture current estimate</h2>
+<form method="post" action="{% url 'prediction_capture' %}" class="fb-form">{% csrf_token %}{{ capture_form.as_p }}<button type="submit">Capture estimate</button></form></section>
+<section class="fb-staff-section"><h2>Saved records</h2>
+<form method="get" class="fb-form">{{ filters.as_p }}<button type="submit">Apply filters</button></form>
+<div class="fb-table-wrap fb-records-table" role="region" aria-label="Prediction records" tabindex="0"><p class="fb-table-hint">Scroll to see all columns.</p>
+<table><thead><tr><th>Source</th><th>Captured</th><th>Customer at capture</th><th>Product at capture</th><th>Result</th><th>Details</th></tr></thead><tbody>
+{% for record in records %}<tr><td>Staff capture</td><td>{{ record.captured_at }}</td><td>{{ record.snapshot.customer_name }} ({{ record.snapshot.customer_id }})</td><td>{{ record.snapshot.product_name }} ({{ record.snapshot.product_id }})</td><td>{{ record.snapshot.result.status }}</td><td><a href="{% url 'prediction_detail' record.pk %}">Inspect capture {{ record.pk }}</a></td></tr>
+{% empty %}<tr><td colspan="6">No prediction records match these filters. Past predictions were not recorded.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

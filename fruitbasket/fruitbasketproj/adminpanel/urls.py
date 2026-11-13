@@ -1,8 +1,11 @@
 from django.urls import path
 
-from . import views
+from . import views, prediction_records
 
 urlpatterns = [
+    path('predictions/', prediction_records.prediction_list, name='prediction_list'),
+    path('predictions/capture/', prediction_records.prediction_capture, name='prediction_capture'),
+    path('predictions/<int:pk>/', prediction_records.prediction_detail, name='prediction_detail'),
     path('category_new', views.CategoryView.as_view(), name='category_new'),
     path('', views.index, name='adminpanel_index'),
     path('product_new', views.ProductView.as_view(), name='product_new'),

@@ -14,11 +14,12 @@ class CancellationMigrationTests(TransactionTestCase):
         return executor.loader.project_state(target).apps
 
     def setUp(self):
+        self.addCleanup(self.restore_schema)
         self.apps = self.migrate(self.old)
 
-    def tearDown(self):
-        self.migrate(self.new)
-        super().tearDown()
+    def restore_schema(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
 
     def test_existing_cancelled_order_and_links_survive_without_backfill(self):
         apps=self.apps

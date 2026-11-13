@@ -1,0 +1,24 @@
+﻿{% extends 'adminpanel/adminpanel_base.html' %}
+{% block title %}Staff capture {{ record.pk }} | FruitBasket{% endblock %}
+{% block content %}
+<h1 class="fb-staff-page-title">Staff capture {{ record.pk }}</h1>
+<p>Captured {{ record.captured_at }} by {{ record.employee.username }}.</p>
+<p>This is a saved calculation. It does not establish customer exposure or product availability. Values below are snapshots, not current customer or product details.</p>
+<div class="fb-table-wrap" role="region" aria-label="Saved calculation" tabindex="0"><table><tbody>
+<tr><th>Customer at capture</th><td>{{ s.customer_name }} ({{ s.customer_id }})</td></tr>
+<tr><th>Product at capture</th><td>{{ s.product_name }} ({{ s.product_id }})</td></tr>
+<tr><th>Category at capture</th><td>{{ s.category_name }} ({{ s.inputs.category }})</td></tr>
+<tr><th>Purchase-date anchor</th><td>{{ s.inputs.latest_purchase_at|default_if_none:'Unknown — no qualifying purchase date' }}</td></tr>
+<tr><th>Household size</th><td>{{ s.inputs.household_size|default_if_none:'Unknown' }}</td></tr>
+<tr><th>Latest purchased pack quantity</th><td>{{ s.inputs.purchased_quantity|default_if_none:'Unknown' }}</td></tr>
+<tr><th>Previous interval (days)</th><td>{{ s.inputs.previous_interval_days|default_if_none:'Unknown' }}</td></tr>
+<tr><th>Distinct purchase dates</th><td>{{ s.inputs.history_count }}</td></tr>
+<tr><th>Result</th><td>{{ s.result.status }} — {% if s.result.status == 'MODEL' %}ML estimate{% elif s.result.status == 'INITIAL' %}Initial estimate{% else %}No estimate available{% endif %}</td></tr>
+<tr><th>Estimated interval (days)</th><td>{{ s.result.interval_days|default_if_none:'Unavailable' }}</td></tr>
+<tr><th>Suggested date</th><td>{{ s.result.restock_date|default_if_none:'Unavailable' }}</td></tr>
+<tr><th>Explanation</th><td>{{ s.result.reason|default_if_none:'Not recorded' }}</td></tr>
+<tr><th>Declared metadata version</th><td>{{ s.declared_version|default_if_none:'Unknown' }}. This is not a verified artifact identity.</td></tr>
+</tbody></table></div>
+<p>Current calculations exclude linked group and subscription orders. Unlinked orders have no recorded origin and remain eligible. History is grouped by order date, not verified delivery date. Saved captures reflect the rules in effect when captured.</p>
+<a href="{% url 'prediction_list' %}">Prediction records</a>
+{% endblock %}
