@@ -51,11 +51,18 @@ class ItemBatchForm(forms.Form):
         return data
 
 class CustomerForm(forms.ModelForm):
+    email = forms.EmailField(required=False, max_length=254, label='Email')
 
     class Meta:
-
         model = Customer
-        fields = ['Cid', 'Cname', 'Caddress', 'Chouseholdsize', 'Cmealsperweek', 'Cuser']
+        fields = ['Cname', 'Caddress']
+        labels = {'Cname': 'Name', 'Caddress': 'Current delivery address'}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields['email'].initial = self.instance.Cuser.email
+
 
 class OrderForm(forms.ModelForm):
 

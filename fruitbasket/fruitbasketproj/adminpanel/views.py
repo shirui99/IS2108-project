@@ -220,187 +220,56 @@ class ProductView(View):
         return render(request, self.template_name, context)
 
 class CustomerView(View):
-
-    form_class = CustomerForm
     template_name = 'adminpanel/customer_new.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not _staff_order_access(request):
+            return redirect('/adminpanel/login')
+        return super().dispatch(request, *args, **kwargs)
 
-
-    def get(self, request, *args, **kwargs):
-
-        pk = kwargs.get('pk') # returns None if not provided
-        form = None
-        action = 'create'
-        status_type = None
-        status_message = None
-
-        if pk is not None:
-
-            try:
-
-                customer = Customer.objects.get(pk=pk)
-
-                form = self.form_class(instance=customer)
-                action = 'update'
-
-            except Customer.DoesNotExist:
-
-                form = self.form_class()
-
-                status_type = 'error'
-                status_message = 'Customer not found.'
-
-        else:
-
-            form = self.form_class()
-
-        rendered_form = form.render('adminpanel/form_template.html')
-
-        customers = Customer.objects.all()
-
-        context = {
-            'form': rendered_form,
-            'action': action,
-            'customers': customers,
-            'status_type': status_type,
-            'status_message': status_message,
-        }
-
+    def page(self, request, customer=None, form=None):
+        query = request.GET.get('q', '').strip()
+        customers = Customer.objects.select_related('Cuser').order_by('Cname', 'Cid')
+        if query:
+            customers = customers.filter(
+                Q(Cid__icontains=query) | Q(Cname__icontains=query)
+                | Q(Cuser__username__icontains=query) | Q(Cuser__email__icontains=query)
+            )
+        context = {'customers': customers, 'query': query, 'customer': customer}
+        if customer:
+            context.update({
+                'form': form if form is not None else CustomerForm(instance=customer),
+                'orders': Orders.objects.filter(Ocustomer=customer).order_by('-Odate', '-Oid'),
+                'tickets': SupportTicket.objects.filter(Torder__Ocustomer=customer).select_related('Torder').order_by('-Tsubmitted'),
+            })
         return render(request, self.template_name, context)
 
+    def get(self, request, pk=None):
+        customer = get_object_or_404(Customer.objects.select_related('Cuser'), pk=pk) if pk is not None else None
+        return self.page(request, customer)
 
+    def post(self, request, pk=None):
+        # The old root URL posted updates by ID; never allow it to create or delete.
+        if request.POST.get('action', 'update') != 'update':
+            return HttpResponse('Only contact updates are supported.', status=405)
+        customer_id = pk if pk is not None else request.POST.get('Cid')
+        customer = get_object_or_404(Customer.objects.select_related('Cuser'), pk=customer_id)
+        form = CustomerForm(request.POST, instance=customer)
+        valid = form.is_valid()
+        allowed = {'Cname', 'Caddress', 'email', 'action', 'Cid', 'csrfmiddlewaretoken'}
+        if set(request.POST) - allowed or (request.POST.get('Cid') and request.POST['Cid'] != customer.pk):
+            form.add_error(None, 'Only the displayed contact fields can be changed.')
+            valid = False
+        if valid:
+            with transaction.atomic():
+                customer = form.save(commit=False)
+                customer.save(update_fields=['Cname', 'Caddress'])
+                customer.Cuser.email = form.cleaned_data['email']
+                customer.Cuser.save(update_fields=['email'])
+            messages.success(request, 'Contact details updated.')
+            return redirect('customer_new', pk=customer.pk)
+        return self.page(request, customer, form)
 
-    def post(self, request, *args, **kwargs):
-
-        action = request.POST.get('action')  # returns None if not provided
-        form = self.form_class(request.POST)
-        status_type = None
-        status_message = None
-        save_succeeded = False
-
-        if action == 'delete':
-            form = self.form_class()
-            try:
-                Customer.objects.get(pk=request.POST.get('Cid')).delete()
-                status_type = 'success'
-                status_message = 'Customer deleted successfully.'
-            except Customer.DoesNotExist:
-                status_type = 'error'
-                status_message = 'Customer could not be found.'
-            except RestrictedError:
-                status_type = 'error'
-                status_message = 'This customer cannot be deleted while related orders exist.'
-            except Exception:
-                status_type = 'error'
-                status_message = 'The customer could not be deleted.'
-
-            rendered_form = form.render('adminpanel/form_template.html')
-            customers = Customer.objects.all()
-            context = {
-                'form': rendered_form,
-                'action': 'create',
-                'customers': customers,
-                'status_type': status_type,
-                'status_message': status_message,
-            }
-            return render(request, self.template_name, context)
-
-
-
-        if action == 'update':
-
-            customer = Customer.objects.get(pk=request.POST.get('Cid'))
-            form = self.form_class(request.POST, instance=customer)
-
-        else:
-
-            form = self.form_class(request.POST)
-
-        if form.is_valid():
-
-            if action == 'create':
-
-                newCustomer = Customer(
-                    Cid=form.cleaned_data['Cid'],
-                    Cname=form.cleaned_data['Cname'],
-                    Caddress=form.cleaned_data['Caddress'],
-                    Chouseholdsize=form.cleaned_data['Chouseholdsize'],
-                    Cmealsperweek=form.cleaned_data['Cmealsperweek'],
-                    Cuser=form.cleaned_data['Cuser']
-                )
-
-                try:
-
-                    newCustomer.save()
-
-                    save_succeeded = True
-                    status_type = 'success'
-                    status_message = 'Customer created successfully.'
-
-                except Exception as e:
-
-                    status_type = 'error'
-                    status_message = f'Error creating customer: {str(e)}'
-
-            elif action == 'update':
-
-                try:
-
-                    customer = Customer.objects.get(pk=form.cleaned_data['Cid'])
-                    customer.Cname = form.cleaned_data['Cname']
-                    customer.Caddress = form.cleaned_data['Caddress']
-                    customer.Chouseholdsize = form.cleaned_data['Chouseholdsize']
-                    customer.Cmealsperweek = form.cleaned_data['Cmealsperweek']
-                    customer.Cuser = form.cleaned_data['Cuser']
-
-                    try:
-
-                        customer.save()
-
-                        save_succeeded = True
-                        status_type = 'success'
-                        status_message = 'Customer updated successfully.'
-
-                    except Exception as e:
-
-                        status_type = 'error'
-                        status_message = f'Error updating customer: {str(e)}'
-
-                except Customer.DoesNotExist:
-
-                    status_type = 'error'
-                    status_message = 'Customer not found.'
-
-        else:
-
-            if action == 'create':
-
-                status_type = 'error'
-                status_message = f'Error creating customer'
-
-            else:
-
-                status_type = 'error'
-                status_message = f'Error updating customer'
-
-        if save_succeeded:
-            # Keep invalid bound data visible so staff can correct the submitted form.
-            form = self.form_class()
-            action = 'create'
-
-        rendered_form = form.render('adminpanel/form_template.html')
-
-        customers = Customer.objects.all()
-
-        context = {
-            'form': rendered_form,
-            'action': action,
-            'customers': customers,
-            'status_type': status_type,
-            'status_message': status_message,
-        }
-
-        return render(request, self.template_name, context)
 
 def _staff_order_access(request):
     return request.user.is_authenticated and request.user.is_active and request.user.is_staff

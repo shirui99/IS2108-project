@@ -1,95 +1,57 @@
-{% extends 'adminpanel/adminpanel_base.html' %}
-
-{% load static %}
+﻿{% extends 'adminpanel/adminpanel_base.html' %}
 {% block title %}Customers | FruitBasket staff{% endblock %}
-
 {% block content %}
-
-    <div class="fb-staff-section">
-        {% if status_type and status_message %}
-            <div class="fb-alert {% if status_type != 'success' %}error{% endif %}" role="status">
-                {{ status_message }}
-            </div>
-        {% endif %}
-    </div>
-
-    <div class="fb-staff-section">
-        <h1 class="fb-staff-page-title">Customers</h1>
-        <p class="fb-page-help">Create a customer record or update an existing one below.</p>
-        
-        <form class="fb-staff-editor" action="/adminpanel/customer_new" method="post">
-            {% csrf_token %}
-
-            <div class="fb-table-wrap" role="region" aria-label="Staff data table" tabindex="0">
-                <table>
-                    <tbody>
-                        {{ form }}
-
-                        <tr>
-                            <td colspan="3" style="text-align: center;">
-                                <input type="hidden" id="action" name="action" value="{{ action }}" />
-                                <input type="submit" value="Create/Update">
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </form>
-    </div>
-    <hr />
-    <div class="fb-staff-section">
-        <h2 class="fb-records-heading">All customers</h2>
-        <div class="fb-table-wrap fb-records-table" role="region" aria-label="Staff data table" tabindex="0">
-            <p class="fb-table-hint">Scroll to see all columns.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Customer ID</th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Address</th>
-                        <th scope="col">Household size</th>
-                        <th scope="col">Meals per week</th>
-                        <th scope="col">Username</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                    {% for customer in customers %}
-                
-                    <tr>
-                        <td>{{ customer.Cid }}</td>
-                        <td>{{ customer.Cname }}</td>
-                        <td>{{ customer.Caddress }}</td>
-                        <td>{{ customer.Chouseholdsize }}</td>
-                        <td>{{ customer.Cmealsperweek }}</td>
-                        <td>{{ customer.Cuser.username }}</td>
-                        <td>
-                            <a href="/adminpanel/customer_new/{{ customer.Cid }}">Update</a>
-                            <form action="/adminpanel/customer_new/{{ customer.Cid }}" method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="Cid" value="{{ customer.Cid }}">
-                                <button class="fb-danger" type="submit">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-
-                    {% empty %}
-                
-                    <tr>
-                        <td colspan="7">No customer record available.</td>
-                    </tr>
-                
-                    {% endfor %}
-                
-                </tbody>
-            </table>
+<div class="fb-staff-section">
+    <h1 class="fb-staff-page-title">Customers</h1>
+    <form method="get" action="{% url 'customer_new' %}" class="fb-form">
+        <label for="customer-search">Search by customer ID, name, username or email</label>
+        <input id="customer-search" name="q" value="{{ query }}" type="search">
+        <button type="submit">Search</button>
+    </form>
+</div>
+{% if customer %}
+<div class="fb-staff-section">
+    <h2>Customer profile: {{ customer.Cid }}</h2>
+    <p>Account: {{ customer.Cuser.username }}</p>
+    <p>Update current contact details. Existing order addresses remain unchanged.</p>
+    <form class="fb-staff-editor" method="post" action="{% url 'customer_new' customer.pk %}">
+        {% csrf_token %}
+        <div class="fb-table-wrap" role="region" aria-label="Contact details" tabindex="0">
+            <table><tbody>{{ form.as_table }}</tbody></table>
         </div>
+        <button type="submit">Save contact details</button>
+    </form>
+</div>
+<div class="fb-staff-section">
+    <h2>Orders</h2>
+    <div class="fb-table-wrap" role="region" aria-label="Customer orders" tabindex="0">
+        <table><thead><tr><th>Order</th><th>Date</th><th>Status</th></tr></thead><tbody>
+        {% for order in orders %}
+            <tr><td><a href="{% url 'staff_order_detail' order.pk %}">{{ order.pk }}</a></td><td>{{ order.Odate }}</td><td>{{ order.get_Ostatus_display }}</td></tr>
+        {% empty %}<tr><td colspan="3">No orders for this customer.</td></tr>{% endfor %}
+        </tbody></table>
     </div>
-    <hr />
-    <div class="fb-staff-section">
-        <a href="/adminpanel">Staff workspace</a>
+</div>
+<div class="fb-staff-section">
+    <h2>Support tickets</h2>
+    <div class="fb-table-wrap" role="region" aria-label="Customer support tickets" tabindex="0">
+        <table><thead><tr><th>Ticket</th><th>Order</th><th>Subject</th><th>Status</th></tr></thead><tbody>
+        {% for ticket in tickets %}
+            <tr><td><a href="{% url 'support' ticket.pk %}">{{ ticket.pk }}</a></td><td>{{ ticket.Torder_id }}</td><td>{{ ticket.Tsubject }}</td><td>{{ ticket.get_Tstatus_display }}</td></tr>
+        {% empty %}<tr><td colspan="4">No support tickets for this customer.</td></tr>{% endfor %}
+        </tbody></table>
     </div>
-
+</div>
+{% endif %}
+<div class="fb-staff-section">
+    <h2 class="fb-records-heading">{% if query %}Search results{% else %}All customers{% endif %}</h2>
+    <div class="fb-table-wrap fb-records-table" role="region" aria-label="Customers" tabindex="0">
+        <p class="fb-table-hint">Scroll to see all columns.</p>
+        <table><thead><tr><th>Customer ID</th><th>Name</th><th>Account</th><th>Action</th></tr></thead><tbody>
+        {% for result in customers %}
+            <tr><td>{{ result.Cid }}</td><td>{{ result.Cname }}</td><td>{{ result.Cuser.username }}</td><td><a href="{% url 'customer_new' result.pk %}">View profile</a></td></tr>
+        {% empty %}<tr><td colspan="4">No customers found.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</div>
 {% endblock %}
