@@ -1,1 +1,12 @@
-{"0": "Store Operations", "1": "Product and Inventory", "2": "Customer Accounts", "3": "Project Runtime", "4": "Admin Panel Pages", "5": "Application Routing", "6": "Site Layout and Setup", "7": "Database Migrations", "8": "Storefront Pages", "9": "App Configuration", "10": "Login Access Control", "11": "Item Management", "12": "Application Tests", "13": "Project Settings", "14": "Graphify Instructions", "15": "Admin Migration Package", "16": "Admin Form Components", "17": "Store Migration Package"}
+{
+  "3": "Project Runtime",
+  "4": "Admin Panel Pages",
+  "5": "Application Routing",
+  "6": "Site Layout and Setup",
+  "8": "Storefront Pages",
+  "9": "App Configuration",
+  "14": "Graphify Instructions",
+  "15": "Admin Migration Package",
+  "16": "Admin Form Components",
+  "17": "Store Migration Package"
+}

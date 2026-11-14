@@ -1,0 +1,326 @@
+{
+  "fruitbasket/fruitbasketproj/adminpanel/__init__.py": {
+    "mtime": 1794047406.7127602,
+    "seen": 1794058130.9577377,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/admin.py": {
+    "mtime": 1794047406.7127602,
+    "seen": 1794058130.9577467,
+    "ast_hash": "c038afd36d7697484ccfb23b964b31b4",
+    "semantic_hash": "c038afd36d7697484ccfb23b964b31b4"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/apps.py": {
+    "mtime": 1794047406.7137601,
+    "seen": 1794058130.9577506,
+    "ast_hash": "bf58488739ce1e121fc1dabc643e44bc",
+    "semantic_hash": "bf58488739ce1e121fc1dabc643e44bc"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/forms.py": {
+    "mtime": 1794049854.4708505,
+    "seen": 1794058130.9577532,
+    "ast_hash": "1672d031226aed3a967f87e781a9df33",
+    "semantic_hash": "1672d031226aed3a967f87e781a9df33"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/migrations/0001_initial.py": {
+    "mtime": 1794047406.7152653,
+    "seen": 1794058130.957755,
+    "ast_hash": "11665c6bdf41707ddc3fb29555ae6f82",
+    "semantic_hash": "11665c6bdf41707ddc3fb29555ae6f82"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/migrations/0002_rename_iclosed_item_ifinished.py": {
+    "mtime": 1794047406.7162714,
+    "seen": 1794058130.9577572,
+    "ast_hash": "6857b68bb6ccccf7ecf09609f54f12fe",
+    "semantic_hash": "6857b68bb6ccccf7ecf09609f54f12fe"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/migrations/0003_alter_product_pprice.py": {
+    "mtime": 1794049854.4708505,
+    "seen": 1794058130.9577594,
+    "ast_hash": "f4bd879912ba22bc1ddc1223109892f3",
+    "semantic_hash": "f4bd879912ba22bc1ddc1223109892f3"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/migrations/__init__.py": {
+    "mtime": 1794047406.7162714,
+    "seen": 1794058130.9577613,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/models.py": {
+    "mtime": 1794049854.4729106,
+    "seen": 1794058130.9577634,
+    "ast_hash": "7b19dedecce4cc337fcfea5e3eb869b3",
+    "semantic_hash": "7b19dedecce4cc337fcfea5e3eb869b3"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/tests.py": {
+    "mtime": 1794047406.7439988,
+    "seen": 1794058130.9577653,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/urls.py": {
+    "mtime": 1794049854.513746,
+    "seen": 1794058130.9577675,
+    "ast_hash": "e342c165a666eaef20591903b7dee889",
+    "semantic_hash": "e342c165a666eaef20591903b7dee889"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/views.py": {
+    "mtime": 1794049854.5147455,
+    "seen": 1794058130.9577696,
+    "ast_hash": "3e315c986915a9e32805ab440da6c428",
+    "semantic_hash": "3e315c986915a9e32805ab440da6c428"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/__init__.py": {
+    "mtime": 1794047406.748517,
+    "seen": 1794058130.9577715,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/asgi.py": {
+    "mtime": 1794047406.7495172,
+    "seen": 1794058130.9577732,
+    "ast_hash": "cae405bbe952566ff9206f6998b20fb4",
+    "semantic_hash": "cae405bbe952566ff9206f6998b20fb4"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/settings.py": {
+    "mtime": 1794049854.5187447,
+    "seen": 1794058130.9577756,
+    "ast_hash": "dbded6cfd11f1419d58a00343597ec48",
+    "semantic_hash": "dbded6cfd11f1419d58a00343597ec48"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/urls.py": {
+    "mtime": 1794047406.769547,
+    "seen": 1794058130.9577777,
+    "ast_hash": "f39564386701dead92a23d53b30c563c",
+    "semantic_hash": "f39564386701dead92a23d53b30c563c"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/views.py": {
+    "mtime": 1794047406.769547,
+    "seen": 1794058130.9577804,
+    "ast_hash": "32d4348631420e8079de86280cf4586a",
+    "semantic_hash": "32d4348631420e8079de86280cf4586a"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/wsgi.py": {
+    "mtime": 1794047406.7705464,
+    "seen": 1794058130.9577825,
+    "ast_hash": "83e4d973473d7ef37bdf7169b63aa930",
+    "semantic_hash": "83e4d973473d7ef37bdf7169b63aa930"
+  },
+  "fruitbasket/fruitbasketproj/manage.py": {
+    "mtime": 1794047406.771546,
+    "seen": 1794058130.9577847,
+    "ast_hash": "3971fa231290b0eac5d68ea63e55f318",
+    "semantic_hash": "3971fa231290b0eac5d68ea63e55f318"
+  },
+  "fruitbasket/fruitbasketproj/store/__init__.py": {
+    "mtime": 1794047406.771546,
+    "seen": 1794058130.9577866,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "fruitbasket/fruitbasketproj/store/admin.py": {
+    "mtime": 1794047406.772545,
+    "seen": 1794058130.9577885,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "fruitbasket/fruitbasketproj/store/apps.py": {
+    "mtime": 1794047406.7735472,
+    "seen": 1794058130.9577904,
+    "ast_hash": "89d273f2b5d2f2ce7738eddfc1d1cbf0",
+    "semantic_hash": "89d273f2b5d2f2ce7738eddfc1d1cbf0"
+  },
+  "fruitbasket/fruitbasketproj/store/middlewares.py": {
+    "mtime": 1794049854.522962,
+    "seen": 1794058130.9577935,
+    "ast_hash": "83c78dfcfe2eb7a2d0516b1c2102e470",
+    "semantic_hash": "83c78dfcfe2eb7a2d0516b1c2102e470"
+  },
+  "fruitbasket/fruitbasketproj/store/migrations/__init__.py": {
+    "mtime": 1794047406.7735472,
+    "seen": 1794058130.9577956,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "fruitbasket/fruitbasketproj/store/models.py": {
+    "mtime": 1794047406.775057,
+    "seen": 1794058130.957798,
+    "ast_hash": "d66d26e53e7ac2028454d3dd6f7e92ad",
+    "semantic_hash": "d66d26e53e7ac2028454d3dd6f7e92ad"
+  },
+  "fruitbasket/fruitbasketproj/store/tests.py": {
+    "mtime": 1794047406.792399,
+    "seen": 1794058130.9578001,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "fruitbasket/fruitbasketproj/store/urls.py": {
+    "mtime": 1794049854.5680275,
+    "seen": 1794058130.9578028,
+    "ast_hash": "d9a12b41a8fb94bb0c41ca62bf77d1bc",
+    "semantic_hash": "d9a12b41a8fb94bb0c41ca62bf77d1bc"
+  },
+  "fruitbasket/fruitbasketproj/store/views.py": {
+    "mtime": 1794049854.5690253,
+    "seen": 1794058130.957805,
+    "ast_hash": "fe077d9dd6bc0337e0b62a7449328660",
+    "semantic_hash": "fe077d9dd6bc0337e0b62a7449328660"
+  },
+  ".github/copilot-instructions.md": {
+    "mtime": 1794057711.6427808,
+    "seen": 1794058130.957807,
+    "ast_hash": "ec2dc0dc7bef63488889f34de2f5584d",
+    "semantic_hash": "ec2dc0dc7bef63488889f34de2f5584d"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/adminpanel_base.html": {
+    "mtime": 1794047406.7182715,
+    "seen": 1794058130.9578094,
+    "ast_hash": "7272189bf917975132e092808f3fc297",
+    "semantic_hash": "7272189bf917975132e092808f3fc297"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/adminpanel_header.html": {
+    "mtime": 1794047406.725272,
+    "seen": 1794058130.9578116,
+    "ast_hash": "9afe5c06282f5d7d00da25f846e7a35f",
+    "semantic_hash": "9afe5c06282f5d7d00da25f846e7a35f"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/adminpanel_navigation.html": {
+    "mtime": 1794047406.7284873,
+    "seen": 1794058130.9578137,
+    "ast_hash": "d5293b0e3d3bb73c993c04fb3850a8ff",
+    "semantic_hash": "d5293b0e3d3bb73c993c04fb3850a8ff"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/customer_new.html": {
+    "mtime": 1794049854.47391,
+    "seen": 1794058130.957816,
+    "ast_hash": "e43172c9916bc5b7347a8fdcd4764c7d",
+    "semantic_hash": "e43172c9916bc5b7347a8fdcd4764c7d"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/form_template.html": {
+    "mtime": 1794049854.4812324,
+    "seen": 1794058130.9578178,
+    "ast_hash": "7982ecd697184eb0e876af6b8ba4829c",
+    "semantic_hash": "7982ecd697184eb0e876af6b8ba4829c"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/index.html": {
+    "mtime": 1794047406.730489,
+    "seen": 1794058130.9578202,
+    "ast_hash": "e08088c47d080d0c774303dffb6cffa0",
+    "semantic_hash": "e08088c47d080d0c774303dffb6cffa0"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/item_new.html": {
+    "mtime": 1794049854.488034,
+    "seen": 1794058130.9578226,
+    "ast_hash": "e5f64c5c89c589c7bf1d6c241b057e8e",
+    "semantic_hash": "e5f64c5c89c589c7bf1d6c241b057e8e"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/order_new.html": {
+    "mtime": 1794049854.4955423,
+    "seen": 1794058130.9578247,
+    "ast_hash": "4ba34319354d44c897e05e1c09c3173b",
+    "semantic_hash": "4ba34319354d44c897e05e1c09c3173b"
+  },
+  "fruitbasket/fruitbasketproj/adminpanel/templates/adminpanel/product_new.html": {
+    "mtime": 1794049854.5046792,
+    "seen": 1794058130.9578273,
+    "ast_hash": "89518167b38dcc9eace98073afb4e528",
+    "semantic_hash": "89518167b38dcc9eace98073afb4e528"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/templates/base.html": {
+    "mtime": 1794047406.750518,
+    "seen": 1794058130.9578302,
+    "ast_hash": "28a371227d91102ff92438de533ff839",
+    "semantic_hash": "28a371227d91102ff92438de533ff839"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/templates/index.html": {
+    "mtime": 1794047406.7580357,
+    "seen": 1794058130.957832,
+    "ast_hash": "91587c879fd52eabb096882f6c33f77b",
+    "semantic_hash": "91587c879fd52eabb096882f6c33f77b"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/templates/proj_header.html": {
+    "mtime": 1794047406.7640364,
+    "seen": 1794058130.9578345,
+    "ast_hash": "93b797edfc6eddd1dcabf462f7fe367a",
+    "semantic_hash": "93b797edfc6eddd1dcabf462f7fe367a"
+  },
+  "fruitbasket/fruitbasketproj/fruitbasketproj/templates/proj_navigation.html": {
+    "mtime": 1794049854.5197453,
+    "seen": 1794058130.9578366,
+    "ast_hash": "0dddb84ceb0b571c8b224e0bca69ca2b",
+    "semantic_hash": "0dddb84ceb0b571c8b224e0bca69ca2b"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/cart.html": {
+    "mtime": 1794049854.5239625,
+    "seen": 1794058130.9578388,
+    "ast_hash": "db2de90a33e4f2f2768755732bb42c6d",
+    "semantic_hash": "db2de90a33e4f2f2768755732bb42c6d"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/checkout.html": {
+    "mtime": 1794049854.5311036,
+    "seen": 1794058130.9578426,
+    "ast_hash": "05fa126ee81b79fa12966666f008703d",
+    "semantic_hash": "05fa126ee81b79fa12966666f008703d"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/index.html": {
+    "mtime": 1794049854.539109,
+    "seen": 1794058130.957845,
+    "ast_hash": "ecfb8a1c3961ca25d521fe22d6cdb269",
+    "semantic_hash": "ecfb8a1c3961ca25d521fe22d6cdb269"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/login.html": {
+    "mtime": 1794049854.5426486,
+    "seen": 1794058130.957847,
+    "ast_hash": "a8aa806ca09198b3800e91da5e05d1e9",
+    "semantic_hash": "a8aa806ca09198b3800e91da5e05d1e9"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/orders.html": {
+    "mtime": 1794049854.5476463,
+    "seen": 1794058130.957849,
+    "ast_hash": "a449800136e725b59d9d04f711ed0ce3",
+    "semantic_hash": "a449800136e725b59d9d04f711ed0ce3"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/pantry.html": {
+    "mtime": 1794049854.5508847,
+    "seen": 1794058130.957851,
+    "ast_hash": "5ffd640dd9ed4ad29093bf56b7df11d2",
+    "semantic_hash": "5ffd640dd9ed4ad29093bf56b7df11d2"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/signup.html": {
+    "mtime": 1794049854.5588944,
+    "seen": 1794058130.957853,
+    "ast_hash": "5b1e578dc528047f425024d654bdb216",
+    "semantic_hash": "5b1e578dc528047f425024d654bdb216"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/store_base.html": {
+    "mtime": 1794047406.7830684,
+    "seen": 1794058130.9578552,
+    "ast_hash": "68ffbd325879fea65fcc933930a9f668",
+    "semantic_hash": "68ffbd325879fea65fcc933930a9f668"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/store_header.html": {
+    "mtime": 1794047406.7874,
+    "seen": 1794058130.9578574,
+    "ast_hash": "8d49499ce4db3c2e91b6d10c9df6bda7",
+    "semantic_hash": "8d49499ce4db3c2e91b6d10c9df6bda7"
+  },
+  "fruitbasket/fruitbasketproj/store/templates/store/store_navigation.html": {
+    "mtime": 1794049854.565027,
+    "seen": 1794058130.9578595,
+    "ast_hash": "ed69f2ba304e00076d08c6da5aed1133",
+    "semantic_hash": "ed69f2ba304e00076d08c6da5aed1133"
+  },
+  "fruitbasket/readme.txt": {
+    "mtime": 1794047406.7944007,
+    "seen": 1794058130.957862,
+    "ast_hash": "42029229936e51f7bc3570fef613bcfe",
+    "semantic_hash": "42029229936e51f7bc3570fef613bcfe"
+  },
+  "fruitbasket/requirements.txt": {
+    "mtime": 1794047406.7954006,
+    "seen": 1794058130.9578643,
+    "ast_hash": "f2926d5e2ca35c11443a2a11891ded18",
+    "semantic_hash": "f2926d5e2ca35c11443a2a11891ded18"
+  }
+}
