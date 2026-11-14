@@ -1,5 +1,13 @@
 {
-  "model_version": "restock-random-forest-v1",
+  "model_version": "restock-hist-gradient-boosting-v1",
+  "version_note": "Declared version label; artifact_sha256 records the file digest at save time.",
+  "artifact_sha256": "5a83e23e698c8bee41b5fb433dd0f10c2bec2c50fe6e262c6b9e6facb13db83d",
+  "estimator": "HistGradientBoostingRegressor(loss='absolute_error', max_depth=5, min_samples_leaf=20, l2_regularization=1.0, random_state=2108)",
+  "training_data": {
+    "generator_seed": 3108,
+    "horizon": "2024-01-01..2024-12-31",
+    "synthetic": true
+  },
   "feature_names": [
     "household_size",
     "category",
@@ -9,26 +17,26 @@
   "target_column": "target_days",
   "training_only_category_medians": {
     "bakery": 6.0,
-    "dairy": 11.0,
+    "dairy": 10.0,
     "frozen": 21.0,
     "fruit": 9.0,
-    "household": 31.0,
-    "meat": 17.0,
-    "rice": 28.0,
-    "snacks": 11.0
+    "household": 30.0,
+    "meat": 16.0,
+    "rice": 29.0,
+    "snacks": 12.0
   },
-  "training_only_overall_median": 14.0,
+  "training_only_overall_median": 11.0,
   "cutoff": "2024-09-01",
   "counts": {
-    "eligible_examples": 4320,
-    "training_examples": 4092,
-    "test_examples": 107,
-    "cross_boundary_excluded": 121
+    "eligible_examples": 16094,
+    "training_examples": 9850,
+    "test_examples": 5524,
+    "cross_boundary_excluded": 720
   },
   "evaluation": {
-    "previous_interval_mae_days": 5.373831775700935,
-    "category_median_mae_days": 7.158878504672897,
-    "random_forest_mae_days": 5.071291673287618
+    "previous_interval_mae_days": 5.375090514120203,
+    "category_median_mae_days": 4.012128892107168,
+    "hgb_mae_days": 3.77595351742585
   },
   "pipeline_reload_predictions_match": true,
   "dependencies": {

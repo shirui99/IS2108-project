@@ -313,7 +313,7 @@ def predict_restock(
             "MODEL",
             latest_date,
             max(1, math.ceil(prediction)),
-            reason="Random Forest prediction",
+            reason="Trained restock model prediction",
         )
     except (
         TypeError,

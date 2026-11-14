@@ -1,3 +1,4 @@
+import hashlib
 import json
 from importlib.metadata import version
 from pathlib import Path
@@ -8,7 +9,7 @@ import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
@@ -164,11 +165,11 @@ def split_by_cutoff(prepared, cutoff=CUTOFF_DATE):
 
 
 def build_pipeline():
-    """Build the unfit preprocessing and Random Forest regression pipeline.
+    """Build the unfit preprocessing and HistGradientBoosting regression pipeline.
 
     Returns:
         A scikit-learn Pipeline with categorical one-hot encoding, numeric
-        passthrough, and a fixed-seed RandomForestRegressor.
+        passthrough, and a fixed-seed MAE-loss HistGradientBoostingRegressor.
     """
     categorical_columns = ["category"]
     numeric_columns = [
@@ -180,7 +181,7 @@ def build_pipeline():
         [
             (
                 "categorical",
-                OneHotEncoder(handle_unknown="ignore"),
+                OneHotEncoder(handle_unknown="ignore", sparse_output=False),
                 categorical_columns,
             ),
             ("numeric", "passthrough", numeric_columns),
@@ -191,10 +192,12 @@ def build_pipeline():
             ("preprocessing", preprocessing),
             (
                 "model",
-                RandomForestRegressor(
-                    n_estimators=200,
+                HistGradientBoostingRegressor(
+                    loss="absolute_error",
+                    max_depth=5,
+                    min_samples_leaf=20,
+                    l2_regularization=1.0,
                     random_state=2108,
-                    n_jobs=-1,
                 ),
             ),
         ]
@@ -236,7 +239,7 @@ def train_and_evaluate(prepared, cutoff=CUTOFF_DATE):
         "category_median_mae_days": float(
             mean_absolute_error(test[TARGET_COLUMN], category_predictions)
         ),
-        "random_forest_mae_days": float(
+        "hgb_mae_days": float(
             mean_absolute_error(test[TARGET_COLUMN], forest_predictions)
         ),
     }
@@ -277,8 +280,17 @@ def save_model_and_metadata(evaluation, cutoff=CUTOFF_DATE):
     if not reload_matches:
         raise ValueError("Reloaded pipeline predictions do not match fitted predictions.")
 
+    artifact_sha256 = hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()
     metadata = {
-        "model_version": "restock-random-forest-v1",
+        "model_version": "restock-hist-gradient-boosting-v1",
+        "version_note": "Declared version label; artifact_sha256 records the file digest at save time.",
+        "artifact_sha256": artifact_sha256,
+        "estimator": "HistGradientBoostingRegressor(loss='absolute_error', max_depth=5, min_samples_leaf=20, l2_regularization=1.0, random_state=2108)",
+        "training_data": {
+            "generator_seed": 3108,
+            "horizon": "2024-01-01..2024-12-31",
+            "synthetic": True,
+        },
         "feature_names": PREDICTOR_COLUMNS,
         "target_column": TARGET_COLUMN,
         "training_only_category_medians": evaluation["category_medians"],

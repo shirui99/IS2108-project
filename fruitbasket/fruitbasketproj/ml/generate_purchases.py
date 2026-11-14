@@ -5,10 +5,11 @@ from datetime import date, timedelta
 from pathlib import Path
 
 
-SEED = 2108
+SEED = 3108
 HOUSEHOLD_COUNT = 120
 PRODUCTS_PER_HOUSEHOLD = 6
-PURCHASES_PER_HISTORY = 8
+START_DATE = date(2024, 1, 1)
+END_DATE = date(2024, 12, 31)
 OUTPUT_PATH = Path(__file__).resolve().parent / "data" / "purchases.csv"
 FIELDNAMES = (
     "customer_id",
@@ -46,18 +47,19 @@ CATEGORIES = {
 }
 
 
-def generate_events(seed=SEED):
-    """Generate reproducible household-product events; return rows without targets.
+def generate_events(seed=SEED, start_date=START_DATE, end_date=END_DATE):
+    """Generate reproducible household-product events over a calendar horizon; return rows without targets.
 
     Args:
         seed: Seed for the local random generator.
+        start_date: Earliest initial purchase date.
+        end_date: Inclusive end of the synthetic calendar horizon.
 
     Returns:
         CSV-ready event dictionaries with one row per distinct purchase date.
     """
     rng = random.Random(seed)
     rows = []
-    first_possible_date = date(2024, 1, 1)
 
     for household_number in range(1, HOUSEHOLD_COUNT + 1):
         household_id = f"H{household_number:03d}"
@@ -65,20 +67,10 @@ def generate_events(seed=SEED):
         selected_products = sorted(rng.sample(PRODUCTS, PRODUCTS_PER_HOUSEHOLD))
 
         for product_id, category, _pack_definition, typical_interval, max_quantity in selected_products:
-            purchase_date = first_possible_date + timedelta(days=rng.randint(0, 90))
+            purchase_date = start_date + timedelta(days=rng.randint(0, 60))
             household_cadence = rng.uniform(0.8, 1.2)
 
-            for purchase_number in range(PURCHASES_PER_HISTORY):
-                if purchase_number:
-                    interval = max(
-                        3,
-                        round(typical_interval * household_cadence + rng.randint(-4, 4)),
-                    )
-                    # A small share of periods are longer, reflecting occasional stock-up gaps.
-                    if rng.random() < 0.12:
-                        interval += rng.randint(8, 24)
-                    purchase_date += timedelta(days=interval)
-
+            while purchase_date <= end_date:
                 rows.append(
                     {
                         "customer_id": household_id,
@@ -90,6 +82,14 @@ def generate_events(seed=SEED):
                         "purchased_at": purchase_date.isoformat(),
                     }
                 )
+                interval = max(
+                    3,
+                    round(typical_interval * household_cadence + rng.randint(-4, 4)),
+                )
+                # A small share of periods are longer, reflecting occasional stock-up gaps.
+                if rng.random() < 0.12:
+                    interval += rng.randint(8, 24)
+                purchase_date += timedelta(days=interval)
 
     return rows
 
@@ -114,23 +114,22 @@ def validate_events(rows):
         household_products[row["customer_id"]].add(row["product_id"])
         product_definitions[row["product_id"]].add(row["category"])
 
-    expected_rows = HOUSEHOLD_COUNT * PRODUCTS_PER_HOUSEHOLD * PURCHASES_PER_HISTORY
     valid_histories = len(histories) == HOUSEHOLD_COUNT * PRODUCTS_PER_HOUSEHOLD
     for events in histories.values():
         dates = [date.fromisoformat(row["purchased_at"]) for row in events]
-        if len(dates) != PURCHASES_PER_HISTORY or any(
+        if len(dates) < 3 or any(
             current <= previous for previous, current in zip(dates, dates[1:])
         ):
             valid_histories = False
             break
     return {
-        "row_count": len(rows) == expected_rows,
+        "row_count": len(rows) > 0,
         "household_count": len(household_sizes) == HOUSEHOLD_COUNT,
         "six_products_per_household": all(
             len(products) == PRODUCTS_PER_HOUSEHOLD
             for products in household_products.values()
         ),
-        "eight_strictly_increasing_dates_per_history": valid_histories,
+        "strictly_increasing_dates_per_history": valid_histories,
         "stable_household_size": all(len(sizes) == 1 for sizes in household_sizes.values()),
         "positive_whole_quantities": all(
             isinstance(row["purchased_quantity"], int)

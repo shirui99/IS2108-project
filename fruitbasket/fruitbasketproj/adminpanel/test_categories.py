@@ -123,7 +123,7 @@ class CategoryMLTests(TestCase):
         artifacts = load_restock_artifacts()
         self.assertIsNotNone(artifacts['pipeline'], artifacts['error'])
         self.assertEqual(self.predict('fruit')['status'], 'MODEL')
-        self.assertEqual(self.predict('fruit')['interval_days'], 19)
+        self.assertEqual(self.predict('fruit')['interval_days'], 10)
         self.assertEqual(self.predict('fruit', 1)['interval_days'], 9)
 
     @patch('store.restock.load_restock_artifacts')
