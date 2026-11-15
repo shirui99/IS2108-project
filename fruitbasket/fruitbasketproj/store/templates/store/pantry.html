@@ -30,6 +30,9 @@
         <div class="fb-alert warning" role="status">
             {{ expiring_soon }} item{{ expiring_soon|pluralize }} expire{{ expiring_soon|pluralize:'s,' }} within 3 days or {{ expiring_soon|pluralize:'is,are' }} already past the expiry date. Check the dates below.</div>
     {% endif %}
+    {% if expiring_soon > past_expiry %}
+        <p><a class="fb-button secondary" href="/store/recipes">Get recipe ideas for expiring items &rarr;</a></p>
+    {% endif %}
     {% if past_expiry > 0 %}
         <div class="fb-alert error" role="status">
             {{ past_expiry }} item{{ past_expiry|pluralize }} {{ past_expiry|pluralize:'is,are' }} past the expiry date. Check {{ past_expiry|pluralize:'it,them' }} before use.</div>

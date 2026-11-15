@@ -29,3 +29,10 @@ Subscriptions: orders for due subscriptions are created by running this from the
 (run it once a day, or by hand for a demo):
 
 python manage.py process_subscriptions
+
+Recipe ideas (optional): the Recipe ideas page asks a generative AI service (Anthropic Claude API) for recipes
+that use pantry items expiring soon. It needs an API key in an environment variable before runserver is started.
+Without a key the page still opens and says recipe ideas are not set up. Never put the key in the code.
+
+PowerShell:  $env:ANTHROPIC_API_KEY = "your key"
+Optional:    $env:FRUITBASKET_AI_MODEL = "claude-haiku-5-5"

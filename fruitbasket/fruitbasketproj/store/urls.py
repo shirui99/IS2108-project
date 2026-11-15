@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, subscription_views, group_views, account_views
+from . import views, subscription_views, group_views, account_views, recipe_views
 
 urlpatterns = [
     path('', views.index, name='store_index'),
@@ -15,6 +15,7 @@ urlpatterns = [
     path('pantry', views.pantry, name='pantry'),
     path('pantry/<int:pk>', views.pantry, name='pantry'),
     path('restock/', views.restock, name='restock'),
+    path('recipes', recipe_views.recipes, name='recipes'),
     path('product/<pk>', views.product, name='product'),
     path('profile', views.profile, name='profile'),
     path('profile/password', account_views.change_password, name='change_password'),

@@ -26,6 +26,7 @@ def login_middleware(get_response):
             '/store/orders',
             '/store/pantry',
             '/store/restock',
+            '/store/recipes',
             '/store/profile',
             '/store/subscriptions',
             '/store/groups',
