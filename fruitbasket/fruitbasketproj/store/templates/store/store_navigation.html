@@ -2,6 +2,9 @@
     <li>
         <a class="{% if request.path == '/store/' %}is-active{% endif %}" {% if request.path == '/store/' %}aria-current="page"{% endif %} href="/store/">Shop</a>
     </li>
+    <li>
+        <a href="{% url 'index' %}#how-it-works">How it works</a>
+    </li>
     {% if request.session.Cid %}
         <li>
             <a class="{% if '/store/pantry' in request.path %}is-active{% endif %}" {% if '/store/pantry' in request.path %}aria-current="page"{% endif %} href="/store/pantry">My pantry</a>
@@ -34,11 +37,11 @@
         <li>
             <a class="{% if request.path == '/store/login' %}is-active{% endif %}" href="/store/login">Log in</a>
         </li>
-        <li>
-            <a class="{% if request.path == '/store/signup' %}is-active{% endif %}" href="/store/signup">Join FruitBasket</a>
-        </li>
     {% endif %}
-    <li>
+    <li class="fb-nav-actions">
+        {% if not request.session.Cid %}
+            <a class="nav-join {% if request.path == '/store/signup' %}is-active{% endif %}" href="/store/signup">Join FruitBasket</a>
+        {% endif %}
         <a class="nav-cart {% if '/store/cart' in request.path or '/store/checkout' in request.path %}is-active{% endif %}" href="/store/cart">Cart <span class="fb-count" aria-label="{{ request.session.cart|length }} product types">{{ request.session.cart|length }}</span>
         </a>
     </li>

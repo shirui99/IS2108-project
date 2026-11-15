@@ -23,36 +23,83 @@
         <div class="fb-home-steps">
             <article class="fb-home-shop">
                 <div class="fb-home-step-copy">
-                    <h3><span>01 /</span> Shop</h3>
+                    <div class="fb-home-card-head">
+                        <h3><span>01 /</span> Shop</h3>
+                        <span class="fb-home-icon-badge"><svg class="fb-home-step-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                            <path d="M13 18h6l5 28h23l5-20H21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="27" cy="53" r="2" stroke="currentColor" stroke-width="2.5"/>
+                            <circle cx="46" cy="53" r="2" stroke="currentColor" stroke-width="2.5"/>
+                        </svg></span>
+                    </div>
                     <p>Find your everyday groceries. Compare prices, pack sizes and customer ratings before adding to your basket.</p>
-                    <a class="fb-text-link" href="/store/">Browse products &rarr;</a>
-                </div>
-                <div class="fb-home-shop-art" aria-hidden="true">
-                    {% include 'grocery_art.html' %}
+                    <a class="fb-text-link" href="/store/">Browse products <span class="fb-home-link-arrow" aria-hidden="true">&rarr;</span></a>
                 </div>
             </article>
             <article class="fb-home-track">
                 <div class="fb-home-step-copy">
-                    <h3><span>02 /</span> Track</h3>
-                    <p>Your purchased items appear in your pantry. Check expiry dates and record what you use or throw away.</p>
-                    <a class="fb-text-link" href="/store/pantry">Open my pantry &rarr;</a>
+                    <div class="fb-home-card-head">
+                        <h3><span>02 /</span> Track</h3>
+                        <span class="fb-home-icon-badge"><svg class="fb-home-step-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                            <path d="m32 12 20 10v29L32 60 12 51V22l20-10Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+                            <path d="M12 22 32 32l20-10M32 32v28" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+                        </svg></span>
+                    </div>
+                    <p>See your delivered personal and subscription purchases in your pantry. Check recorded dates and mark items as used or discarded.</p>
+                    <a class="fb-text-link" href="/store/pantry">Open my pantry <span class="fb-home-link-arrow" aria-hidden="true">&rarr;</span></a>
                 </div>
-                <svg class="fb-home-step-art" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-                    <rect x="27" y="30" width="66" height="70" rx="10" stroke="currentColor" stroke-width="3"/>
-                    <path d="M27 49h66M43 23v15m34-15v15" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                    <path d="m44 73 11 11 22-23" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+            </article>
+            <article class="fb-home-cook">
+                <div class="fb-home-step-copy">
+                    <div class="fb-home-card-head">
+                        <h3><span>03 /</span> Cook</h3>
+                        <span class="fb-home-icon-badge"><svg class="fb-home-step-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                            <path d="M14 27h36l-4 27H18l-4-27Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+                            <path d="M10 27h44M22 20c0-5 4-8 10-8s10 3 10 8M8 36h6m36 0h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg></span>
+                    </div>
+                    <p>Get tailor-made recipe ideas for pantry items approaching their recorded dates, with ingredients and simple steps.</p>
+                    <a class="fb-text-link" href="/store/pantry">Explore recipe ideas <span class="fb-home-link-arrow" aria-hidden="true">&rarr;</span></a>
+                </div>
             </article>
             <article class="fb-home-restock">
                 <div class="fb-home-step-copy">
-                    <h3><span>03 /</span> Restock</h3>
-                    <p>See when you may need to buy again, based on your purchase history. Add suggested groceries to your cart.</p>
-                    <a class="fb-text-link" href="{% url 'restock' %}">See restock suggestions &rarr;</a>
+                    <div class="fb-home-card-head">
+                        <h3><span>04 /</span> Restock</h3>
+                        <span class="fb-home-icon-badge"><svg class="fb-home-step-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                            <path d="M51 31a20 20 0 1 0-5 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M51 18v13H38" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg></span>
+                    </div>
+                    <p>See when you may need to buy again, based on your purchase history. Add suggested groceries to your basket.</p>
+                    <a class="fb-text-link" href="{% url 'restock' %}">See restock suggestions <span class="fb-home-link-arrow" aria-hidden="true">&rarr;</span></a>
                 </div>
-                <svg class="fb-home-step-art" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-                    <path d="M91 46a35 35 0 1 0 2 24M91 24v22H69" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M46 56h28l-4 22H50l-4-22Zm6 0 8-13 8 13" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-                </svg>
+            </article>
+            <article class="fb-home-subscribe">
+                <div class="fb-home-step-copy">
+                    <div class="fb-home-card-head">
+                        <h3><span>05 /</span> Subscribe</h3>
+                        <span class="fb-home-icon-badge"><svg class="fb-home-step-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                            <rect x="13" y="16" width="38" height="38" rx="4" stroke="currentColor" stroke-width="2.5"/>
+                            <path d="M13 27h38M23 12v9m18-9v9M22 36h6m8 0h6m-20 8h6m8 0h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg></span>
+                    </div>
+                    <p>Set up repeat orders for products you buy regularly. Choose your schedule and spending limit, and pause or cancel when needed.</p>
+                    <a class="fb-text-link" href="/store/subscriptions">Explore subscriptions <span class="fb-home-link-arrow" aria-hidden="true">&rarr;</span></a>
+                </div>
+            </article>
+            <article class="fb-home-groups">
+                <div class="fb-home-step-copy">
+                    <div class="fb-home-card-head">
+                        <h3><span>06 /</span> Buy together</h3>
+                        <span class="fb-home-icon-badge"><svg class="fb-home-step-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                            <circle cx="23" cy="19" r="6" stroke="currentColor" stroke-width="2.5"/>
+                            <circle cx="43" cy="19" r="6" stroke="currentColor" stroke-width="2.5"/>
+                            <path d="M12 43c0-7 5-12 11-12s11 5 11 12M32 43c0-7 5-12 11-12s11 5 11 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg></span>
+                    </div>
+                    <p>Invite others to a shared basket and pool quantities for eligible bulk prices. One organiser checks out and arranges delivery.</p>
+                    <a class="fb-text-link" href="/store/groups">Explore group purchases <span class="fb-home-link-arrow" aria-hidden="true">&rarr;</span></a>
+                </div>
             </article>
         </div>
     </section>

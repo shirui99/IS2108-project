@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.utils import timezone
 
 from adminpanel.models import (
@@ -101,8 +101,8 @@ class SeedDemoSafetyTests(TestCase):
         self.assertEqual(SupportTicket.objects.count(), ticket_count_before)
 
     def test_collisions_with_unrelated_user_customer_and_product_are_safe(self):
-        unrelated_staff_slot = User.objects.create_user(
-            username="demo_staff", password="KeepThisPassword1!", is_staff=False
+        unrelated_staff = User.objects.create_user(
+            username="unrelated_staff", password="KeepThisPassword1!", is_staff=True
         )
         unrelated_cust_user = User.objects.create_user(username="demo_alice", password="KeepCustomerPass1!")
         unrelated_cust = Customer.objects.create(
@@ -123,26 +123,74 @@ class SeedDemoSafetyTests(TestCase):
             Pactive=True,
         )
 
-        staff_hash = unrelated_staff_slot.password
+        staff_hash = unrelated_staff.password
         cust_hash = unrelated_cust_user.password
 
         call_command("seed_demo")
 
-        unrelated_staff_slot.refresh_from_db()
+        unrelated_staff.refresh_from_db()
         unrelated_cust_user.refresh_from_db()
         unrelated_cust.refresh_from_db()
         unrelated_prod.refresh_from_db()
 
-        self.assertFalse(unrelated_staff_slot.is_staff)
-        self.assertEqual(unrelated_staff_slot.password, staff_hash)
+        self.assertTrue(unrelated_staff.is_staff)
+        self.assertEqual(unrelated_staff.password, staff_hash)
         self.assertEqual(unrelated_cust.Cname, "Unrelated Person")
         self.assertEqual(unrelated_cust_user.password, cust_hash)
         self.assertEqual(unrelated_prod.Pname, "Unrelated Turnips")
 
         # Demo records were still created under non-colliding IDs/usernames
-        self.assertTrue(User.objects.filter(username__startswith="demo_staff_", is_staff=True).exists())
+        self.assertTrue(User.objects.filter(username="demo_staff", is_staff=True).exists())
         self.assertTrue(Customer.objects.filter(Cname="Demo Alice Tan").exclude(pk="DM001").exists())
         self.assertTrue(Product.objects.filter(Pname="Organic Avocados").exclude(pk="FB001").exists())
+
+    def test_demo_staff_repaired_when_inactive_nonstaff_or_stale_password(self):
+        stale_staff = User.objects.create_user(
+            username="demo_staff",
+            password="OldStalePassword999!",
+            is_staff=False,
+            is_active=False,
+        )
+        self.assertFalse(stale_staff.is_staff)
+        self.assertFalse(stale_staff.is_active)
+        self.assertFalse(stale_staff.check_password("DemoStaff123!"))
+
+        call_command("seed_demo")
+
+        stale_staff.refresh_from_db()
+        self.assertTrue(stale_staff.is_staff)
+        self.assertTrue(stale_staff.is_active)
+        self.assertTrue(stale_staff.check_password("DemoStaff123!"))
+
+    def test_staff_login_with_demo_credentials(self):
+        call_command("seed_demo")
+
+        client = Client(enforce_csrf_checks=True)
+        login_page = client.get("/adminpanel/login")
+        self.assertEqual(login_page.status_code, 200)
+        csrf_token = client.cookies["csrftoken"].value
+
+        # Valid staff login
+        response = client.post(
+            "/adminpanel/login",
+            {"username": "demo_staff", "password": "DemoStaff123!", "csrfmiddlewaretoken": csrf_token},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Authentication successful!", response.content)
+        self.assertIn("staff_user_id", client.session)
+        self.assertEqual(client.session["staff_user_id"], User.objects.get(username="demo_staff").pk)
+
+        # Invalid password rejected
+        client_bad = Client(enforce_csrf_checks=True)
+        client_bad.get("/adminpanel/login")
+        csrf_bad = client_bad.cookies["csrftoken"].value
+        bad_response = client_bad.post(
+            "/adminpanel/login",
+            {"username": "demo_staff", "password": "WrongPassword999!", "csrfmiddlewaretoken": csrf_bad},
+        )
+        self.assertEqual(bad_response.status_code, 200)
+        self.assertIn(b"Invalid username or password.", bad_response.content)
+        self.assertNotIn("staff_user_id", client_bad.session)
 
     def test_prediction_captures_and_customer_restock_screening(self):
         call_command("seed_demo")

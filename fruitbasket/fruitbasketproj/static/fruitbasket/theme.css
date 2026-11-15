@@ -2,7 +2,7 @@
     --forest:#214d39;
     --green:#35634b;
     --lime:#d9e9b0;
-    --cream:#f8f7f2;
+    --cream:#f8f7f1;
     --ink:#24392d;
     --muted:#657166;
     --border:#e0e4d9;
@@ -908,88 +908,131 @@ img {
 }
 
 #how-it-works {
+    --home-forest:#1a4331;
     margin-top:56px
 }
 
 .fb-home-steps {
     display:grid;
-    grid-template-columns:5fr 7fr;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-auto-rows:1fr;
     gap:20px
 }
 
 .fb-home-steps article {
-    padding:36px;
+    padding:28px;
+    border:1px solid transparent;
+    transition:border-color 160ms ease;
     border-radius:16px;
-    min-width:0
+    min-width:0;
+    min-height:260px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between
+}
+
+.fb-home-step-copy {
+    display:flex;
+    flex-direction:column;
+    height:100%
+}
+
+#how-it-works h2 {
+    color:var(--home-forest);
+    font-family:Georgia,serif;
+    font-weight:400
+}
+
+.fb-home-steps article:hover {
+    border-color:rgba(26,67,49,.3)
 }
 
 .fb-home-steps h3 {
-    margin:0 0 16px;
-    font:normal clamp(2rem,3vw,2.75rem)/1.1 Georgia,serif;
+    color:var(--home-forest);
+    margin:0;
+    font:normal clamp(1.6rem,2.2vw,2rem)/1.15 Georgia,serif;
     letter-spacing:-.02em
 }
 
+.fb-home-card-head {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px
+}
+
+.fb-home-card-head h3 {
+    flex:1;
+    min-width:0
+}
+
+.fb-home-icon-badge {
+    display:grid;
+    place-items:center;
+    width:48px;
+    height:48px;
+    flex:0 0 48px;
+    border-radius:50%;
+    background:rgba(26,67,49,.08)
+}
+
+.fb-home-step-icon {
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    color:var(--home-forest)
+}
+
 .fb-home-steps h3 span {
-    color:#66824d;
+    color:var(--home-forest);
+    white-space:nowrap;
     font-variant-numeric:tabular-nums
 }
 
 .fb-home-step-copy p {
     max-width:44ch;
-    margin-bottom:20px;
-    color:#52634f
+    margin:0 0 20px;
+    color:#2f4d3a
 }
 
-.fb-home-shop {
-    grid-row:span 2;
-    background:#eaf0df;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    overflow:hidden
-}
-
-.fb-home-shop-art .fb-hero-art {
-    min-height:0;
-    margin:20px auto -12px;
-    max-width:300px
-}
-
-.fb-home-shop-art .fb-art-note {
-    display:none
-}
-
-.fb-home-track,.fb-home-restock {
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 100px;
+.fb-home-step-copy .fb-text-link {
+    display:inline-flex;
     align-items:center;
-    gap:24px
+    gap:8px;
+    min-height:44px;
+    color:var(--home-forest);
+    text-decoration:none;
+    margin-top:auto;
+    align-self:flex-start
 }
 
-.fb-home-track {
-    background:var(--forest)
+.fb-home-link-arrow {
+    display:inline-block;
+    flex-shrink:0;
+    transition:transform 160ms ease
 }
 
-.fb-home-track h3,.fb-home-track h3 span {
-    color:var(--lime)
+.fb-home-step-copy .fb-text-link:hover,
+.fb-home-step-copy .fb-text-link:focus-visible {
+    text-decoration:underline
 }
 
-.fb-home-track p,.fb-home-track a {
-    color:#edf2e5
+.fb-home-step-copy .fb-text-link:hover .fb-home-link-arrow,
+.fb-home-step-copy .fb-text-link:focus-visible .fb-home-link-arrow {
+    transform:translateX(4px)
 }
 
-.fb-home-restock {
-    background:#eeeade
+.fb-home-step-copy .fb-text-link:focus-visible {
+    outline-color:var(--home-forest)
 }
 
-.fb-home-step-art {
-    width:100%;
-    color:#66824d
-}
-
-.fb-home-track .fb-home-step-art {
-    color:var(--lime)
-}
+.fb-home-shop { background:#e4ece0 }
+.fb-home-track { background:#efe7da }
+.fb-home-cook { background:#f4e3dc }
+.fb-home-restock { background:#dfece9 }
+.fb-home-subscribe { background:#f4ead5 }
+.fb-home-groups { background:#ece4ec }
 
 .fb-home-account {
     margin-top:24px;
@@ -1108,22 +1151,7 @@ img {
     }
 
     .fb-home-steps {
-        grid-template-columns:1fr
-    }
-
-    .fb-home-shop {
-        grid-row:auto;
-        flex-direction:row;
-        align-items:center;
-        gap:24px
-    }
-
-    .fb-home-shop-art {
-        flex:0 0 200px
-    }
-
-    .fb-home-shop-art .fb-hero-art {
-        margin:0
+        grid-template-columns:repeat(2,minmax(0,1fr))
     }
 
     .fb-two-column {
@@ -1310,27 +1338,8 @@ img {
         padding:28px
     }
 
-    .fb-home-shop {
-        flex-direction:column;
-        align-items:stretch;
-        gap:0
-    }
-
-    .fb-home-shop-art {
-        flex:auto
-    }
-
-    .fb-home-shop-art .fb-hero-art {
-        max-width:220px;
-        margin-top:8px
-    }
-
-    .fb-home-track,.fb-home-restock {
-        display:block
-    }
-
-    .fb-home-step-art {
-        display:none
+    .fb-home-steps {
+        grid-template-columns:1fr
     }
 
     .fb-home-account {
@@ -2139,4 +2148,59 @@ img {
 .fb-order-summary .fb-summary-line > strong {
     white-space:nowrap;
     flex-shrink:0
+}
+
+/* Keep customer navigation readable and reachable as account links wrap. */
+.fb-header nav {
+    min-width:0
+}
+
+.fb-header .fb-nav-list {
+    gap:8px
+}
+
+.fb-header .fb-nav-actions {
+    display:flex;
+    align-items:center;
+    gap:8px
+}
+
+.fb-header .fb-nav-list a,
+.fb-header .fb-nav-logout {
+    display:flex;
+    align-items:center;
+    min-height:44px;
+    color:#1a4331
+}
+
+.fb-header .fb-nav-list .nav-join,
+.fb-header .fb-nav-list .nav-cart {
+    border:1px solid #1a4331;
+    border-radius:999px;
+    white-space:nowrap
+}
+
+.fb-header .fb-nav-list a:focus-visible,
+.fb-header .fb-nav-logout:focus-visible,
+.fb-header .fb-brand:focus-visible {
+    outline-color:#1a4331
+}
+
+@media(max-width:1050px) {
+    .fb-header nav { width:100% }
+}
+
+@media(max-width:700px) {
+    .fb-header .fb-nav-list a,
+    .fb-header .fb-nav-logout { font-size:13px }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .fb-home-steps article,
+    .fb-home-link-arrow { transition:none }
+
+    .fb-home-step-copy .fb-text-link:hover .fb-home-link-arrow,
+    .fb-home-step-copy .fb-text-link:focus-visible .fb-home-link-arrow {
+        transform:none
+    }
 }

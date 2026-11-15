@@ -68,18 +68,33 @@ def _next_username(base):
 
 
 def _ensure_demo_staff():
-    existing = User.objects.filter(username=DEMO_STAFF_USERNAME).first()
-    if existing is not None and existing.is_staff and existing.is_active:
-        return existing, False
-    username = _next_username(DEMO_STAFF_USERNAME)
-    user = User.objects.create_user(
-        username=username,
-        email=f"{username}@example.com",
-        password=DEMO_STAFF_PASSWORD,
-        is_staff=True,
-        is_active=True,
-    )
-    return user, True
+    user = User.objects.filter(username=DEMO_STAFF_USERNAME).first()
+    if user is None:
+        user = User.objects.create_user(
+            username=DEMO_STAFF_USERNAME,
+            email=f"{DEMO_STAFF_USERNAME}@example.com",
+            password=DEMO_STAFF_PASSWORD,
+            is_staff=True,
+            is_active=True,
+        )
+        return user, True
+
+    updated_fields = []
+    if not user.is_staff:
+        user.is_staff = True
+        updated_fields.append("is_staff")
+    if not user.is_active:
+        user.is_active = True
+        updated_fields.append("is_active")
+    if not user.check_password(DEMO_STAFF_PASSWORD):
+        user.set_password(DEMO_STAFF_PASSWORD)
+        updated_fields.append("password")
+
+    if updated_fields:
+        user.save(update_fields=updated_fields)
+        return user, True
+
+    return user, False
 
 
 def _ensure_demo_customer(preferred_cid, base_username, name, address, household_size, meals_per_week):
