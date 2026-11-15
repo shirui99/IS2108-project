@@ -51,7 +51,11 @@ class SignupForm(forms.Form):
 class ProfileForm(forms.Form):
 
     Cname = forms.CharField(max_length=255, label='Name')
-    email = forms.EmailField(required=False, label='Email')
+    email = forms.EmailField(
+        required=True,
+        label='Email',
+        error_messages={'required': 'Enter an email address.', 'invalid': 'Enter a valid email address.'},
+    )
     Caddress = forms.CharField(max_length=255, label='Delivery address')
     Chouseholdsize = forms.IntegerField(min_value=1, max_value=20, label='Household size')
     Cmealsperweek = forms.IntegerField(min_value=0, max_value=100, label='Meals cooked at home per week')

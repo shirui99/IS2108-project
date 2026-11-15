@@ -44,11 +44,19 @@ class CustomerStoryTests(TestCase):
 
     # SF04
     def test_profile_update_validates_and_keeps_old_order_address(self):
+        self.user.email = 'original@example.com'
+        self.user.save(update_fields=['email'])
         order = Orders.objects.create(Oid='OOLD1', Odate=self.today, Oaddress='1 Test Road', Ocustomer=self.customer)
         bad = self.client.post('/store/profile', {'Cname': 'A', 'Caddress': 'x', 'Chouseholdsize': 0, 'Cmealsperweek': 3, 'email': ''})
         self.assertEqual(bad.status_code, 200)
+        self.assertContains(bad, 'Enter an email address.')
         self.customer.refresh_from_db()
         self.assertEqual(self.customer.Chouseholdsize, 2)
+        self.assertEqual(self.customer.Cuser.email, 'original@example.com')
+        invalid_email = self.client.post('/store/profile', {'Cname': 'A', 'Caddress': 'x', 'Chouseholdsize': 2, 'Cmealsperweek': 3, 'email': 'bad-email'})
+        self.assertContains(invalid_email, 'Enter a valid email address.')
+        self.customer.refresh_from_db()
+        self.assertEqual(self.customer.Cuser.email, 'original@example.com')
         self.client.post('/store/profile', {'Cname': 'New Name', 'Caddress': '9 New Road', 'Chouseholdsize': 4, 'Cmealsperweek': 3, 'email': 'a@example.com'})
         self.customer.refresh_from_db()
         order.refresh_from_db()

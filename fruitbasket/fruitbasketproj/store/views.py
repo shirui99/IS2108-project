@@ -1,6 +1,6 @@
 from django.db.models import Count, Avg, OuterRef, Subquery
 from django.db.models.functions import Coalesce
-from django.shortcuts import redirect, render, HttpResponse
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from django.contrib.auth.models import User
@@ -226,8 +226,8 @@ def login(request):
 def logout(request):
 
     request.session.flush()
-
-    return HttpResponse('You have logged out.')
+    messages.success(request, 'You have logged out successfully.')
+    return redirect('/store/login')
 
 def cart(request, pk=None):
 
@@ -678,7 +678,11 @@ def profile(request):
 
     # SF04: update household and contact details
 
-    customer = Customer.objects.get(pk=request.session['Cid'])
+    customer_id = request.session.get('Cid')
+    if not customer_id:
+        return redirect('/store/login')
+
+    customer = Customer.objects.get(pk=customer_id)
 
     if request.method == 'POST':
 

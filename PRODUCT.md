@@ -31,6 +31,7 @@ FruitBasket connects the grocery purchase journey to a personal pantry and resto
 
 - The existing application uses Python, Django, the Django ORM and server-rendered templates. Follow the project instructions in `AGENTS.md` and preserve existing workflows and data contracts.
 - The project uses a trained model persisted as a joblib artifact for restock suggestions, with an initial fallback when a model estimate is unavailable or unsuitable. Do not describe the fallback as a trained prediction or claim real-world effectiveness from synthetic evaluation.
+- The adopted restock pipeline uses `HistGradientBoostingRegressor` with household size, product category, latest purchase quantity and previous purchase interval as inputs. Its recorded chronological test MAE is 3.776 days on synthetic data; serving labels model predictions `MODEL`, median fallbacks `INITIAL`, and unusable estimates `UNAVAILABLE`. See `docs/ml/restock-model.md` for the training data, feature and evaluation details.
 - Preserve customer ownership and staff authorization. Customer and staff workflows have distinct access requirements.
 - Keep the interface usable with a keyboard, provide readable labels and textual status information, and support small screens without relying on a JavaScript navigation menu.
 - The existing catalogue and sample warehouse stock include synthetic records created for development. Treat sample prices, stock and customer information as test data, not evidence of a real commercial operation.
